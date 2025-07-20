@@ -1,6 +1,7 @@
 import { Heart, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
   id: number;
@@ -21,6 +22,7 @@ const ProductCard = ({
   isNew = false, 
   onSale = false 
 }: ProductCardProps) => {
+  const navigate = useNavigate();
   const formatPrice = (value: number) => 
     new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -28,7 +30,10 @@ const ProductCard = ({
     }).format(value);
 
   return (
-    <Card className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 bg-card border-0 overflow-hidden">
+    <Card 
+      className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 bg-card border-0 overflow-hidden"
+      onClick={() => navigate(`/produto/${id}`)}
+    >
       <div className="relative overflow-hidden aspect-[3/4]">
         {/* Product image */}
         <img
