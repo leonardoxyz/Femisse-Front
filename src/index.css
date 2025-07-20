@@ -137,4 +137,16 @@ Todas as cores em HSL para consistência
   .animate-marquee {
     animation: marquee 20s linear infinite;
   }
+
+  .writing-mode-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }
