@@ -12,22 +12,16 @@ import { useUserData } from "../hooks/useUserData";
 
 // Função para truncar o nome no header
 const truncateName = (name: string, maxLength: number = 8): string => {
-  console.log('truncateName called with:', name); // Debug
-  
   if (!name) return '';
   
   // Pega apenas o primeiro nome
   const firstName = name.split(' ')[0];
-  console.log('firstName:', firstName); // Debug
   
   // Se o primeiro nome é maior que maxLength, trunca e adiciona "..."
   if (firstName.length > maxLength) {
-    const truncated = firstName.substring(0, maxLength) + '...';
-    console.log('truncated:', truncated); // Debug
-    return truncated;
+    return firstName.substring(0, maxLength) + '...';
   }
   
-  console.log('returning:', firstName); // Debug
   return firstName;
 };
 
@@ -264,9 +258,6 @@ const Header = () => {
                   if (isAuthenticated && user) {
                     // Usar userData se disponível, senão usar dados do token
                     const displayName = userData?.nome || user.nome || '';
-                    console.log('Header - userData:', userData); // Debug
-                    console.log('Header - user from token:', user); // Debug
-                    console.log('Header - displayName:', displayName); // Debug
                     
                     return (
                       <>

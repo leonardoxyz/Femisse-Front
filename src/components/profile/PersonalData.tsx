@@ -185,7 +185,6 @@ export function PersonalData() {
       setEditedData(updatedData);
       
       // Atualizar o contexto global do usuário (para atualizar header)
-      console.log('PersonalData - Atualizando contexto com:', response.user); // Debug
       updateUserData(response.user);
       
       // Limpar mensagem de sucesso após 3 segundos
