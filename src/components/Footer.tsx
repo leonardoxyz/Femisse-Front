@@ -8,8 +8,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <h3 className="text-2xl font-bold">
-              Motta
-              <span className="text-primary italic font-light">conf</span>
+              Femisse
             </h3>
             <p className="text-background/80 text-sm leading-relaxed">
               Moda feminina com estilo e qualidade. Peças exclusivas para mulheres que sabem o que querem.
@@ -63,7 +62,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center gap-2 text-background/80">
                 <Mail className="h-4 w-4 text-primary" />
-                <span>contato@mottaconf.com.br</span>
+                <span>contato@femisse.com.br</span>
               </div>
               <div className="flex items-start gap-2 text-background/80">
                 <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
@@ -75,10 +74,9 @@ const Footer = () => {
 
         {/* Bottom section */}
         <div className="border-t border-background/20 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-background/60">
-          <p>&copy; 2024 Motta Conf. Todos os direitos reservados.</p>
+          <p>&copy; 2025 Femisse Todos os direitos reservados.</p>
           <div className="flex gap-6">
             <span>CNPJ: 00.000.000/0001-00</span>
-            <span>Desenvolvido com ❤️</span>
           </div>
         </div>
       </div>

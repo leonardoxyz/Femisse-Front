@@ -1,108 +1,145 @@
-import { Heart, ShoppingBag } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import { ShoppingBag, Heart } from "lucide-react";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import { useCart } from "@/contexts/CartContext";
 
 interface ProductCardProps {
-  id: number;
+  id: string;
   name: string;
   price: number;
   originalPrice?: number;
-  image: string;
-  isNew?: boolean;
-  onSale?: boolean;
+  images: string[];
+  stock: number;
+  image?: string;
+  onFavoriteChange?: (productId: string, isNowFavorite: boolean) => void;
 }
 
-const ProductCard = ({ 
-  id, 
-  name, 
-  price, 
-  originalPrice, 
-  image, 
-  isNew = false, 
-  onSale = false 
+const ProductCard = ({
+  id,
+  name,
+  price,
+  originalPrice,
+  images,
+  stock,
+  image,
+  onFavoriteChange,
 }: ProductCardProps) => {
   const navigate = useNavigate();
-  const formatPrice = (value: number) => 
-    new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+  const formatPrice = (value: number) =>
+    new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(value);
 
+  const [hovered, setHovered] = React.useState(false);
+  let safeImages: string[] = [];
+  if (Array.isArray(images) && images.length > 0) {
+    safeImages = images.filter(Boolean);
+  } else if (typeof image === 'string' && image.length > 0) {
+    safeImages = [image];
+  }
+  const mainImage = safeImages[0] || '';
+  const hoverImage = safeImages[1] || safeImages[0] || '';
+
+  const { addToCart } = useCart();
+  function handleAddToCart(e: React.MouseEvent) {
+    e.stopPropagation();
+    addToCart({
+      id,
+      name,
+      price,
+      image: mainImage,
+    });
+    toast({
+      title: "Adicionado ao carrinho",
+      description: `${name} foi adicionado ao seu carrinho!`,
+      variant: "default",
+    });
+  }
+
+  
+
+const { favoriteIds, addFavorite, removeFavorite } = useFavorites();
+const isFavorite = favoriteIds.includes(id);
+
+async function handleAddToFavorites(e: React.MouseEvent) {
+  e.stopPropagation();
+  if (!localStorage.getItem('token')) {
+    alert('Faça login para favoritar produtos!');
+    return;
+  }
+  if (isFavorite) {
+    await removeFavorite(id);
+    if (typeof onFavoriteChange === 'function') {
+      onFavoriteChange(id, false);
+    }
+    toast({
+      title: 'Removido dos favoritos',
+      description: 'O produto foi removido dos seus favoritos.',
+      variant: 'default',
+    });
+  } else {
+    await addFavorite(id);
+    if (typeof onFavoriteChange === 'function') {
+      onFavoriteChange(id, true);
+    }
+    toast({
+      title: 'Adicionado aos favoritos',
+      description: 'O produto foi adicionado aos seus favoritos!',
+      variant: 'default',
+    });
+  }
+}
+
   return (
-    <Card 
-      className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 bg-card border-0 overflow-hidden"
+    <Card
+      className="bg-white border-0 shadow-none cursor-pointer p-0 group rounded-lg"
       onClick={() => navigate(`/produto/${id}`)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <div className="relative overflow-hidden aspect-[3/4]">
-        {/* Product image */}
+      <div className="w-full aspect-[3/4] bg-white flex items-center justify-center relative rounded-lg overflow-hidden">
         <img
-          src={image}
+          src={hovered && safeImages.length > 1 ? hoverImage : mainImage}
           alt={name}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className="w-full h-full object-cover transition-all duration-300"
         />
-        
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
-          {isNew && (
-            <span className="bg-primary text-primary-foreground px-2 py-1 text-xs font-semibold rounded-full">
-              NEW
-            </span>
-          )}
-          {onSale && (
-            <span className="bg-destructive text-destructive-foreground px-2 py-1 text-xs font-semibold rounded-full">
-              SALE
-            </span>
-          )}
-        </div>
-
-        {/* Hover actions */}
-        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
-          <Button
-            size="sm"
-            variant="secondary"
-            className="h-8 w-8 p-0 rounded-full shadow-lg hover:bg-primary hover:text-primary-foreground transition-colors duration-300"
+        {/* Botões de ação */}
+        <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+          <button
+            onClick={handleAddToFavorites}
+            className="bg-white/90 hover:bg-pink-100 p-2 rounded-full shadow text-pink-600 hover:text-pink-900 transition"
+            title="Favoritar"
           >
-            <Heart className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Quick add to cart */}
-        <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0">
-          <Button 
-            size="sm" 
-            className="w-full bg-primary hover:bg-pink-dark text-white font-semibold rounded-full transition-all duration-300 hover:scale-105"
+            <Heart className={`w-6 h-6 ${isFavorite ? 'text-pink-500 fill-pink-500' : ''}`} />
+          </button>
+          <button
+            onClick={stock === 0 ? undefined : handleAddToCart}
+            className={`bg-white/90 p-2 rounded-full shadow transition ${stock === 0 ? 'text-gray-400 cursor-not-allowed opacity-60' : 'hover:bg-green-100 text-green-600 hover:text-green-900'}`}
+            title={stock === 0 ? 'Produto esgotado' : 'Adicionar ao carrinho'}
+            disabled={stock === 0}
+            tabIndex={stock === 0 ? -1 : 0}
           >
-            <ShoppingBag className="h-4 w-4 mr-2" />
-            Adicionar ao Carrinho
-          </Button>
+            <ShoppingBag className="w-6 h-6" />
+          </button>
         </div>
       </div>
-
-      <CardContent className="p-4 space-y-2">
-        <h3 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors duration-300 line-clamp-2">
+      <CardContent className="flex flex-col items-center justify-center py-6 px-2">
+        <h3 className="text-xs md:text-sm text-zinc-700 font-normal text-center mb-1 uppercase tracking-wide">
           {name}
         </h3>
-        
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-foreground">
-            {formatPrice(price)}
+        <span className="text-2xl font-bold text-zinc-900 text-center">
+          {formatPrice(price)}
+        </span>
+        {originalPrice && (
+          <span className="text-sm line-through text-muted-foreground">
+            {formatPrice(originalPrice)}
           </span>
-          {originalPrice && (
-            <span className="text-sm text-muted-foreground line-through">
-              {formatPrice(originalPrice)}
-            </span>
-          )}
-        </div>
+        )}
 
-        <div className="flex items-center justify-between">
-          <div className="flex gap-1">
-            {[1,2,3,4,5].map((star) => (
-              <div key={star} className="w-3 h-3 bg-muted rounded-full"></div>
-            ))}
-            <span className="text-xs text-muted-foreground ml-1">(0)</span>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );

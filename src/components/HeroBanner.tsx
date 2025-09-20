@@ -2,34 +2,25 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const HeroBanner = () => {
-  const [currentSlide, setCurrentSlide] = useState(0);
+const API_URL = "http://localhost:4000/api/banner-images";
 
-  const slides = [
-    {
-      id: 1,
-      title: "Primeira compra?",
-      subtitle: "BEMVINDA5",
-      description: "UTILIZE O CUPOM",
-      image: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=1200&h=600&fit=crop"
-    },
-    {
-      id: 2,
-      title: "Winter Collection",
-      subtitle: "ATÉ 50% OFF",
-      description: "Peças exclusivas",
-      image: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=1200&h=600&fit=crop"
-    },
-    {
-      id: 3,
-      title: "Lançamentos",
-      subtitle: "NEW IN",
-      description: "Confira as novidades",
-      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&h=600&fit=crop"
-    }
-  ];
+const HeroBanner = () => {
+  const [slides, setSlides] = useState<{ id: string; url: string; alt?: string|null }[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => {
+        setSlides(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!slides.length) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
@@ -45,41 +36,22 @@ const HeroBanner = () => {
   };
 
   return (
-    <section className="relative h-[70vh] md:h-[80vh] overflow-hidden bg-gradient-to-br from-pink-light to-background">
+    <section className="relative h-[70vh] md:h-[60vh] overflow-hidden bg-gradient-to-br from-pink-light to-background">
       {/* Slides */}
       <div className="relative h-full">
         {slides.map((slide, index) => (
           <div
             key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === currentSlide ? "opacity-100" : "opacity-0"
-            }`}
+            className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? "opacity-100" : "opacity-0"}`}
           >
-            <div
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            <img
+              src={slide.url}
+              alt={slide.alt || "Banner"}
+              className="w-full h-full object-cover"
               style={{
-                backgroundImage: `url(${slide.image})`,
                 filter: "brightness(0.7)"
               }}
             />
-            
-            {/* Content overlay */}
-            <div className="absolute inset-0 flex items-center justify-center text-center">
-              <div className="max-w-2xl mx-auto px-4 animate-fade-in">
-                <h2 className="text-4xl md:text-6xl font-bold text-white mb-4">
-                  {slide.title}
-                </h2>
-                <h3 className="text-6xl md:text-8xl font-black text-primary mb-2 drop-shadow-lg">
-                  {slide.subtitle}
-                </h3>
-                <p className="text-xl md:text-2xl font-medium text-white mb-8">
-                  {slide.description}
-                </p>
-                <Button size="lg" className="bg-primary hover:bg-pink-dark text-white px-8 py-3 text-lg font-semibold rounded-full transition-all duration-300 hover:scale-105 shadow-lg">
-                  Comprar Agora
-                </Button>
-              </div>
-            </div>
           </div>
         ))}
       </div>
@@ -107,11 +79,10 @@ const HeroBanner = () => {
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              index === currentSlide
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide
                 ? "bg-primary scale-125"
                 : "bg-white/50 hover:bg-white/70"
-            }`}
+              }`}
             aria-label={`Ir para slide ${index + 1}`}
           />
         ))}
