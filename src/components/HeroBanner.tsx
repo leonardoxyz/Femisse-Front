@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const API_URL = "http://localhost:4000/api/banner-images";
+import { API_ENDPOINTS } from "@/config/api";
 
 const HeroBanner = () => {
   const [slides, setSlides] = useState<{ id: string; url: string; alt?: string|null }[]>([]);
@@ -10,7 +9,7 @@ const HeroBanner = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(API_URL)
+    fetch(API_ENDPOINTS.bannerImages)
       .then(res => res.json())
       .then(data => {
         setSlides(Array.isArray(data) ? data : []);

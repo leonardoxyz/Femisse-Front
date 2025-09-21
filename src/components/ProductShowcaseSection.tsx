@@ -1,14 +1,13 @@
 import React from "react";
 import ProductShowcase from "./ProductShowcase";
-
-const API_URL = "http://localhost:4000/api/moment-products";
+import { API_ENDPOINTS } from "@/config/api";
 
 const ProductShowcaseSection = () => {
   const [momentProducts, setMomentProducts] = React.useState<{ id: number; image_url: string }[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    fetch(API_URL)
+    fetch(API_ENDPOINTS.momentProducts)
       .then(res => res.json())
       .then(data => {
         setMomentProducts(Array.isArray(data) ? data : []);

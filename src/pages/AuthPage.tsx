@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-
-const API_URL = "http://localhost:4000/api";
+import { API_ENDPOINTS } from '@/config/api';
 
 const AuthPage = () => {
   const [tab, setTab] = useState<'login' | 'register'>('login');
@@ -31,7 +30,7 @@ const AuthPage = () => {
     e.preventDefault();
     setLoading(true); setError(null); setSuccess(null);
     try {
-      const res = await axios.post(`${API_URL}/auth/login`, {
+      const res = await axios.post(`${API_ENDPOINTS.auth}/login`, {
         email: form.email,
         senha: form.senha,
       });
@@ -48,7 +47,7 @@ const AuthPage = () => {
     e.preventDefault();
     setLoading(true); setError(null); setSuccess(null);
     try {
-      await axios.post(`${API_URL}/auth/register`, {
+      await axios.post(`${API_ENDPOINTS.auth}/register`, {
         nome: form.nome,
         // data_nascimento: form.data_nascimento,
         // cpf: form.cpf,

@@ -22,7 +22,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return;
     }
     setLoading(true);
-    const res = await fetch("/api/users/me/favorites", {
+    const { API_ENDPOINTS } = await import('@/config/api');
+    const res = await fetch(`${API_ENDPOINTS.favorites}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const ids = await res.json();
@@ -37,7 +38,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const addFavorite = async (id: string) => {
     if (!token) return;
-    await fetch("/api/users/me/favorites", {
+    const { API_ENDPOINTS } = await import('@/config/api');
+    await fetch(`${API_ENDPOINTS.favorites}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -50,7 +52,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const removeFavorite = async (id: string) => {
     if (!token) return;
-    await fetch(`/api/users/me/favorites/${id}`, {
+    const { API_ENDPOINTS } = await import('@/config/api');
+    await fetch(`${API_ENDPOINTS.favorites}/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });

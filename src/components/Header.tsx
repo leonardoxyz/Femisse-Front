@@ -2,6 +2,7 @@ import { Search, Heart, ShoppingBag, Menu } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import logo from "@/assets/logo.png";
 import SidebarCart from "./SidebarCart";
 import { useCart } from "@/contexts/CartContext";
@@ -9,19 +10,21 @@ import { User } from "lucide-react";
 import React from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useUserData } from "../hooks/useUserData";
+import { API_ENDPOINTS } from "@/config/api";
+import { createSlug } from '@/utils/slugs';
 
 // Função para truncar o nome no header
 const truncateName = (name: string, maxLength: number = 8): string => {
   if (!name) return '';
-  
+
   // Pega apenas o primeiro nome
   const firstName = name.split(' ')[0];
-  
+
   // Se o primeiro nome é maior que maxLength, trunca e adiciona "..."
   if (firstName.length > maxLength) {
     return firstName.substring(0, maxLength) + '...';
   }
-  
+
   return firstName;
 };
 
@@ -35,9 +38,9 @@ const Header = () => {
   const [loadingSuggestions, setLoadingSuggestions] = React.useState(false);
 
   React.useEffect(() => {
-    fetch('/api/categories')
+    fetch(API_ENDPOINTS.categories)
       .then(res => res.json())
-      .then(data => setCategories(data))
+      .then(data => setCategories(Array.isArray(data) ? data : []))
       .catch(() => setCategories([]));
   }, []);
 
@@ -50,7 +53,7 @@ const Header = () => {
     }
     setLoadingSuggestions(true);
     const timeout = setTimeout(() => {
-      fetch(`/api/products?search=${encodeURIComponent(searchTerm)}`)
+      fetch(`${API_ENDPOINTS.products}?search=${encodeURIComponent(searchTerm)}`)
         .then(res => res.json())
         .then(data => {
           setSuggestions(data);
@@ -100,9 +103,8 @@ const Header = () => {
   }, [searchOpen]);
 
   const navigate = useNavigate();
-  function handleSuggestionClick(id: string) {
-    console.log('Sugestão clicada:', id);
-    navigate(`/produto/${id}`);
+  function handleSuggestionClick(product: any) {
+    navigate(`/produto/${createSlug(product.name || product.nome)}`);
     setSearchOpen(false);
     setSearchTerm("");
     setSuggestions([]);
@@ -139,7 +141,7 @@ const Header = () => {
             {categories.map((category) => (
               <a
                 key={category.id}
-                href={`/categoria/${category.id}`}
+                href={`/categoria/${createSlug(category.name)}`}
                 className="text-foreground hover:text-primary transition-colors duration-300 relative group"
               >
                 {category.name}
@@ -198,11 +200,11 @@ const Header = () => {
                           suggestions.map(s => (
                             <button
                               key={s.id}
-                              type="button" 
+                              type="button"
                               className="w-full text-left px-4 py-2 hover:bg-pink-50 text-sm text-foreground"
                               onClick={e => {
                                 e.preventDefault();
-                                handleSuggestionClick(s.id);
+                                handleSuggestionClick(s);
                               }}
                             >
                               {s.name || s.nome}
@@ -233,32 +235,14 @@ const Header = () => {
                   <Search className="h-5 w-5" />
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative hover:bg-pink-light hover:text-primary transition-colors duration-300"
-                onClick={() => window.location.href = '/perfil?sec=favorites'}
-                aria-label="Favoritos"
-              >
-                <Heart className="h-5 w-5" />
-                {(() => {
-                  const { favoriteIds, loading } = useFavorites();
-                  return !loading && favoriteIds.length > 0 ? (
-                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center font-bold border-2 border-white shadow">
-                      {favoriteIds.length}
-                    </span>
-                  ) : null;
-                })()}
-              </Button>
               <div className="flex items-center gap-2 md:gap-4">
                 {(() => {
                   const { user, isAuthenticated, logout } = useAuth();
                   const { userData } = useUserData();
-                  
+
                   if (isAuthenticated && user) {
-                    // Usar userData se disponível, senão usar dados do token
                     const displayName = userData?.nome || user.nome || '';
-                    
+
                     return (
                       <>
                         <span className="hidden md:inline text-sm font-medium text-muted-foreground mr-2">Olá, {truncateName(displayName)}</span>
@@ -270,6 +254,35 @@ const Header = () => {
                           aria-label="Perfil de usuário"
                         >
                           <User className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="relative hover:bg-pink-light hover:text-primary transition-colors duration-300"
+                          onClick={() => window.location.href = '/perfil?sec=favorites'}
+                          aria-label="Favoritos"
+                        >
+                          <Heart className="h-5 w-5" />
+                          {(() => {
+                            const { favoriteIds, loading } = useFavorites();
+                            return !loading && favoriteIds.length > 0 ? (
+                              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center font-bold border-2 border-white shadow">
+                                {favoriteIds.length}
+                              </span>
+                            ) : null;
+                          })()}
+                        </Button>
+                        <Button variant="ghost" size="icon" className="relative hover:bg-pink-light hover:text-primary transition-colors duration-300" onClick={() => setCartOpen(true)}>
+                          <ShoppingBag className="h-5 w-5" />
+                          {(() => {
+                            const { cart } = useCart();
+                            const count = cart.reduce((acc, item) => acc + item.quantity, 0);
+                            return count > 0 ? (
+                              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                {count}
+                              </span>
+                            ) : null;
+                          })()}
                         </Button>
                         <Button
                           variant="outline"
@@ -293,18 +306,6 @@ const Header = () => {
                     </Button>
                   );
                 })()}
-                <Button variant="ghost" size="icon" className="relative hover:bg-pink-light hover:text-primary transition-colors duration-300" onClick={() => setCartOpen(true)}>
-                  <ShoppingBag className="h-5 w-5" />
-                  {(() => {
-                    const { cart } = useCart();
-                    const count = cart.reduce((acc, item) => acc + item.quantity, 0);
-                    return count > 0 ? (
-                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {count}
-                      </span>
-                    ) : null;
-                  })()}
-                </Button>
               </div>
             </div>
           </div>

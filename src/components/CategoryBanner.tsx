@@ -1,13 +1,13 @@
 import React from 'react';
-
-const API_URL = "http://localhost:4000/api/popular";
+import { API_ENDPOINTS } from '@/config/api';
+import { createSlug } from '@/utils/slugs';
 
 const CategoryBanner = () => {
   const [popularies, setPopularies] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    fetch(API_URL)
+    fetch(API_ENDPOINTS.popular)
       .then(res => res.json())
       .then(data => {
         setPopularies(data);
@@ -26,9 +26,10 @@ const CategoryBanner = () => {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {popularies.map((popular, index) => (
-            <div
+            <a
               key={popular.name}
-              className="group relative overflow-hidden rounded-2xl aspect-[3/4] cursor-pointer transition-all duration-500 hover:scale-105 hover:shadow-2xl animate-scale-in"
+              href={`/categoria/${createSlug(popular.name)}`}
+              className="group relative overflow-hidden rounded-2xl aspect-[3/4] cursor-pointer transition-all duration-500 hover:scale-105 hover:shadow-2xl animate-scale-in block"
               style={{ animationDelay: `${index * 0.2}s` }}
             >
               <img
@@ -50,7 +51,7 @@ const CategoryBanner = () => {
 
               {/* Hover overlay */}
               <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </div>
+            </a>
           ))}
         </div>
       </div>

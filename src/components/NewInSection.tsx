@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
-
-const API_URL = "http://localhost:4000/api/products"; // Não exponha chaves ou secrets
+import { API_ENDPOINTS } from "@/config/api";
 
 const NewInSection = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(API_URL)
+    fetch(API_ENDPOINTS.products)
       .then((res) => res.json())
       .then((data) => {
         setProducts(data);

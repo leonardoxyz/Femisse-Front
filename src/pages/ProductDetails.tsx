@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ShoppingBag, Heart, Share2 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useFavorites } from "@/contexts/FavoritesContext";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,19 +9,22 @@ import { Card } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import React from 'react';
-
-const API_URL = "http://localhost:4000/api/products";
+import { API_ENDPOINTS } from '@/config/api';
+import { extractIdFromSlug, slugToText, removeAccents } from '@/utils/slugs';
+import { secureLog, obfuscateUrl } from '@/utils/secureApi';
 
 // Funções utilitárias para favoritos
 async function fetchFavorites(token: string) {
-  const res = await fetch('/api/users/me/favorites', {
+  const { API_ENDPOINTS } = await import('@/config/api');
+  const res = await fetch(`${API_ENDPOINTS.favorites}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   return res.json();
 }
 
 async function addFavorite(productId: string, token: string) {
-  const res = await fetch('/api/users/me/favorites', {
+  const { API_ENDPOINTS } = await import('@/config/api');
+  const res = await fetch(`${API_ENDPOINTS.favorites}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -32,7 +36,8 @@ async function addFavorite(productId: string, token: string) {
 }
 
 async function removeFavorite(productId: string, token: string) {
-  const res = await fetch(`/api/users/me/favorites/${productId}`, {
+  const { API_ENDPOINTS } = await import('@/config/api');
+  const res = await fetch(`${API_ENDPOINTS.favorites}/${productId}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` }
   });
@@ -41,54 +46,101 @@ async function removeFavorite(productId: string, token: string) {
 
 const ProductDetails = () => {
   const { addToCart } = useCart();
-  const { id } = useParams();
+  const { favoriteIds, addFavorite, removeFavorite } = useFavorites();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [mainImageIndex, setMainImageIndex] = React.useState(0);
   const [isZoomed, setIsZoomed] = React.useState(false);
 
-  // Favoritos
-  const [favorites, setFavorites] = React.useState<string[]>([]);
-  const [isFavorite, setIsFavorite] = React.useState(false);
+  // Verificar se produto está nos favoritos
+  const isFavorite = product ? favoriteIds.includes(product.id) : false;
   const token = localStorage.getItem('token');
-
-  React.useEffect(() => {
-    if (token && product?.id) {
-      fetchFavorites(token).then(favs => {
-        setFavorites(favs);
-        setIsFavorite(favs.includes(product.id));
-      });
-    }
-  }, [product?.id, token]);
 
   const handleToggleFavorite = async () => {
     if (!token) {
-      alert('Faça login para favoritar produtos!');
+      toast({
+        title: "Login necessário",
+        description: "Faça login para favoritar produtos!",
+        variant: "destructive",
+      });
       return;
     }
-    if (isFavorite) {
-      const favs = await removeFavorite(product.id, token);
-      setFavorites(favs);
-      setIsFavorite(false);
-    } else {
-      const favs = await addFavorite(product.id, token);
-      setFavorites(favs);
-      setIsFavorite(true);
+    
+    if (!product?.id) return;
+    
+    try {
+      if (isFavorite) {
+        await removeFavorite(product.id);
+        toast({
+          title: "Removido dos favoritos",
+          description: "O produto foi removido dos seus favoritos!",
+          variant: "default",
+        });
+      } else {
+        await addFavorite(product.id);
+        toast({
+          title: "Adicionado aos favoritos",
+          description: "O produto foi adicionado aos seus favoritos!",
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar os favoritos. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
 
   React.useEffect(() => {
-    fetch(`${API_URL}/${id}`)
-      .then((res) => res.json())
-      .then(async (data) => {
+    if (!slug) return;
+    
+    const fetchProduct = async () => {
+      try {
+        secureLog('Buscando produtos:', obfuscateUrl(API_ENDPOINTS.products));
+        const response = await fetch(API_ENDPOINTS.products);
+        const products = await response.json();
+        
+        // Converter slug de volta para nome e procurar produto correspondente
+        const searchName = slug.replace(/-/g, ' ').toLowerCase();
+        const foundProduct = products.find((product: any) => {
+          const productName = product.name.toLowerCase();
+          
+          return (
+            productName.includes(searchName) ||
+            searchName.includes(productName.split(' ')[0]) ||
+            // Busca mais flexível removendo acentos
+            removeAccents(productName).includes(removeAccents(searchName)) ||
+            removeAccents(searchName).includes(removeAccents(productName.split(' ')[0]))
+          );
+        });
+        
+        if (foundProduct) {
+          await processProductData(foundProduct);
+          return;
+        }
+        
+        // Se não encontrou, produto não existe
+        throw new Error('Produto não encontrado');
+        
+      } catch (error) {
+        console.error('Erro ao buscar produto:', error);
+        setProduct(null);
+        setLoading(false);
+      }
+    };
+    
+    const processProductData = async (data: any) => {
         let images = data.images || [];
         if (!data.images && data.image_ids && data.image_ids.length > 0) {
           try {
             const imagePromises = data.image_ids.map(async (imageId: string) => {
               if (!imageId) return null;
-              const response = await fetch(`http://localhost:4000/api/images/${imageId}`);
+              const response = await fetch(`${API_ENDPOINTS.images}/${imageId}`);
               if (response.ok) {
                 const imageData = await response.json();
                 return imageData.image_url;
@@ -106,12 +158,10 @@ const ProductDetails = () => {
         setProduct({ ...data, images });
         setLoading(false);
         setMainImageIndex(0);
-      })
-      .catch((err) => {
-        setProduct(null);
-        setLoading(false);
-      });
-  }, [id]);
+    };
+    
+    fetchProduct();
+  }, [slug]);
 
   const formatPrice = (value: number) =>
     new Intl.NumberFormat('pt-BR', {

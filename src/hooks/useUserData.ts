@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { getUserFromToken, getToken } from "./useAuth";
-
-const API_URL =
-  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL)
-    || (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL)
-    || 'http://localhost:4000/api';
+import { API_ENDPOINTS } from "@/config/api";
 
 export function useUserData() {
   const [userData, setUserData] = useState<any>(null);
@@ -19,7 +15,7 @@ export function useUserData() {
         return;
       }
       try {
-        const res = await axios.get(`${API_URL}/usuarios/${user.id}`, {
+        const res = await axios.get(API_ENDPOINTS.userProfile, {
           headers: { Authorization: `Bearer ${getToken()}` },
         });
         setUserData(res.data);

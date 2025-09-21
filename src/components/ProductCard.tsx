@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ShoppingBag, Heart } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useCart } from "@/contexts/CartContext";
+import { createSlug } from "@/utils/slugs";
 
 interface ProductCardProps {
   id: string;
@@ -68,7 +69,11 @@ const isFavorite = favoriteIds.includes(id);
 async function handleAddToFavorites(e: React.MouseEvent) {
   e.stopPropagation();
   if (!localStorage.getItem('token')) {
-    alert('Faça login para favoritar produtos!');
+    toast({
+      title: "Login necessário",
+      description: "Faça login para favoritar produtos!",
+      variant: "destructive",
+    });
     return;
   }
   if (isFavorite) {
@@ -97,7 +102,7 @@ async function handleAddToFavorites(e: React.MouseEvent) {
   return (
     <Card
       className="bg-white border-0 shadow-none cursor-pointer p-0 group rounded-lg"
-      onClick={() => navigate(`/produto/${id}`)}
+      onClick={() => navigate(`/produto/${createSlug(name)}`)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

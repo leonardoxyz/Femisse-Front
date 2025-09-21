@@ -8,9 +8,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    proxy: {
-      '/api': 'http://localhost:4000',
-    },
+    // Proxy apenas em desenvolvimento
+    ...(mode === 'development' && {
+      proxy: {
+        '/api': 'http://localhost:4000',
+      },
+    }),
   },
   plugins: [
     react(),
@@ -20,6 +23,19 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  // Configurações de build para produção
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+        },
+      },
     },
   },
 }));

@@ -3,8 +3,7 @@ import { useLocation } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-
-const API_URL = "/api/products";
+import { API_ENDPOINTS } from "@/config/api";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -18,7 +17,7 @@ const SearchResults = () => {
 
   React.useEffect(() => {
     setLoading(true);
-    fetch(`${API_URL}?search=${encodeURIComponent(search)}`)
+    fetch(`${API_ENDPOINTS.products}?search=${encodeURIComponent(search)}`)
       .then(res => res.json())
       .then(data => {
         setProducts(data);

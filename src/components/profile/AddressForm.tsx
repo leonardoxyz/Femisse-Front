@@ -1,0 +1,361 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Edit, Save, X, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { toast } from "@/components/ui/use-toast";
+
+interface Address {
+  id?: string;
+  label: string;
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  is_default: boolean;
+}
+
+interface AddressFormProps {
+  address?: Address;
+  onSave: (address: Address) => void;
+  onCancel: () => void;
+  isEditing?: boolean;
+}
+
+// Máscaras para formatação
+const formatCEP = (value: string): string => {
+  const numbers = value.replace(/\D/g, '');
+  if (numbers.length <= 8) {
+    return numbers.replace(/(\d{5})(\d{3})/, '$1-$2');
+  }
+  return value;
+};
+
+// Validações frontend
+const validateRequired = (value: string, fieldName: string): string | null => {
+  if (!value || value.trim().length === 0) {
+    return `${fieldName} é obrigatório`;
+  }
+  return null;
+};
+
+const validateCEP = (cep: string): string | null => {
+  if (!cep) return 'CEP é obrigatório';
+  const numbers = cep.replace(/\D/g, '');
+  if (numbers.length !== 8) {
+    return 'CEP deve ter 8 dígitos';
+  }
+  return null;
+};
+
+export function AddressForm({ address, onSave, onCancel, isEditing = false }: AddressFormProps) {
+  const [formData, setFormData] = useState<Address>({
+    label: '',
+    street: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: '',
+    zip_code: '',
+    is_default: false
+  });
+
+  const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string | null}>({
+    label: null,
+    street: null,
+    number: null,
+    neighborhood: null,
+    city: null,
+    state: null,
+    zip_code: null
+  });
+
+  // Inicializar dados quando address estiver disponível
+  useEffect(() => {
+    if (address) {
+      setFormData(address);
+    }
+  }, [address]);
+
+  // Verificar se há mudanças
+  useEffect(() => {
+    if (address) {
+      const hasChanged = 
+        formData.label !== (address.label || '') ||
+        formData.street !== (address.street || '') ||
+        formData.number !== (address.number || '') ||
+        formData.complement !== (address.complement || '') ||
+        formData.neighborhood !== (address.neighborhood || '') ||
+        formData.city !== (address.city || '') ||
+        formData.state !== (address.state || '') ||
+        formData.zip_code !== (address.zip_code || '') ||
+        formData.is_default !== (address.is_default || false);
+      setHasChanges(hasChanged);
+    } else {
+      // Para novo endereço, verificar se há dados preenchidos
+      const hasData = 
+        formData.label.trim() !== '' ||
+        formData.street.trim() !== '' ||
+        formData.number.trim() !== '' ||
+        formData.complement?.trim() !== '' ||
+        formData.neighborhood.trim() !== '' ||
+        formData.city.trim() !== '' ||
+        formData.state.trim() !== '' ||
+        formData.zip_code.trim() !== '';
+      setHasChanges(hasData);
+    }
+  }, [formData, address]);
+
+  const handleSave = async () => {
+    // Validar campos obrigatórios
+    const errors: {[key: string]: string | null} = {};
+    errors.label = validateRequired(formData.label, 'Rótulo');
+    errors.street = validateRequired(formData.street, 'Rua');
+    errors.number = validateRequired(formData.number, 'Número');
+    errors.neighborhood = validateRequired(formData.neighborhood, 'Bairro');
+    errors.city = validateRequired(formData.city, 'Cidade');
+    errors.state = validateRequired(formData.state, 'Estado');
+    errors.zip_code = validateCEP(formData.zip_code);
+
+    setFieldErrors(errors);
+
+    // Verificar se há erros de validação
+    const hasValidationErrors = Object.values(errors).some(error => error !== null);
+    if (hasValidationErrors) {
+      toast({
+        title: "Erro de validação",
+        description: "Corrija os erros nos campos antes de salvar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    
+    try {
+      await onSave(formData);
+      
+      toast({
+        title: address ? "Endereço atualizado" : "Endereço criado",
+        description: address ? "Endereço atualizado com sucesso!" : "Novo endereço adicionado com sucesso!",
+        variant: "default",
+      });
+      
+    } catch (error) {
+      toast({
+        title: "Erro ao salvar",
+        description: error instanceof Error ? error.message : 'Erro ao salvar endereço',
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string | boolean) => {
+    let processedValue = value;
+    let error: string | null = null;
+
+    // Aplicar máscaras e validações por campo
+    if (typeof value === 'string') {
+      switch (field) {
+        case 'label':
+          error = validateRequired(value, 'Rótulo');
+          break;
+        case 'street':
+          error = validateRequired(value, 'Rua');
+          break;
+        case 'number':
+          error = validateRequired(value, 'Número');
+          break;
+        case 'neighborhood':
+          error = validateRequired(value, 'Bairro');
+          break;
+        case 'city':
+          error = validateRequired(value, 'Cidade');
+          break;
+        case 'state':
+          error = validateRequired(value, 'Estado');
+          break;
+        case 'zip_code':
+          processedValue = formatCEP(value);
+          error = validateCEP(processedValue as string);
+          break;
+      }
+    }
+
+    // Atualizar dados
+    setFormData(prev => ({
+      ...prev,
+      [field]: processedValue
+    }));
+
+    // Atualizar erros apenas para campos de string
+    if (typeof value === 'string') {
+      setFieldErrors(prev => ({
+        ...prev,
+        [field]: error
+      }));
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="text-lg">
+            {address ? 'Editar Endereço' : 'Novo Endereço'}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Preencha as informações do endereço
+          </p>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="label">Rótulo do endereço *</Label>
+            <Input 
+              id="label" 
+              placeholder="Ex: Casa, Trabalho, Apartamento" 
+              value={formData.label} 
+              onChange={(e) => handleInputChange('label', e.target.value)}
+              className={fieldErrors.label ? "border-red-500" : ""} 
+            />
+            {fieldErrors.label && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.label}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="zip_code">CEP *</Label>
+            <Input 
+              id="zip_code" 
+              placeholder="00000-000" 
+              value={formData.zip_code} 
+              onChange={(e) => handleInputChange('zip_code', e.target.value)}
+              className={fieldErrors.zip_code ? "border-red-500" : ""} 
+            />
+            {fieldErrors.zip_code && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.zip_code}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2">
+            <Label htmlFor="street">Rua *</Label>
+            <Input 
+              id="street" 
+              placeholder="Nome da rua" 
+              value={formData.street} 
+              onChange={(e) => handleInputChange('street', e.target.value)}
+              className={fieldErrors.street ? "border-red-500" : ""} 
+            />
+            {fieldErrors.street && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.street}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="number">Número *</Label>
+            <Input 
+              id="number" 
+              placeholder="123" 
+              value={formData.number} 
+              onChange={(e) => handleInputChange('number', e.target.value)}
+              className={fieldErrors.number ? "border-red-500" : ""} 
+            />
+            {fieldErrors.number && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.number}</p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="complement">Complemento</Label>
+          <Input 
+            id="complement" 
+            placeholder="Apartamento, bloco, etc. (opcional)" 
+            value={formData.complement || ''} 
+            onChange={(e) => handleInputChange('complement', e.target.value)}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <Label htmlFor="neighborhood">Bairro *</Label>
+            <Input 
+              id="neighborhood" 
+              placeholder="Nome do bairro" 
+              value={formData.neighborhood} 
+              onChange={(e) => handleInputChange('neighborhood', e.target.value)}
+              className={fieldErrors.neighborhood ? "border-red-500" : ""} 
+            />
+            {fieldErrors.neighborhood && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.neighborhood}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="city">Cidade *</Label>
+            <Input 
+              id="city" 
+              placeholder="Nome da cidade" 
+              value={formData.city} 
+              onChange={(e) => handleInputChange('city', e.target.value)}
+              className={fieldErrors.city ? "border-red-500" : ""} 
+            />
+            {fieldErrors.city && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.city}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="state">Estado *</Label>
+            <Input 
+              id="state" 
+              placeholder="SP" 
+              value={formData.state} 
+              onChange={(e) => handleInputChange('state', e.target.value)}
+              className={fieldErrors.state ? "border-red-500" : ""} 
+            />
+            {fieldErrors.state && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.state}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="is_default" 
+            checked={formData.is_default}
+            onCheckedChange={(checked) => handleInputChange('is_default', checked as boolean)}
+          />
+          <Label htmlFor="is_default">Definir como endereço padrão</Label>
+        </div>
+        
+        {/* Botões de ação */}
+        <div className="flex justify-end space-x-2 pt-4 border-t">
+          <Button variant="outline" onClick={onCancel}>
+            <X className="h-4 w-4 mr-2" />
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSave} 
+            disabled={!hasChanges || isSaving}
+            style={{ backgroundColor: hasChanges && !isSaving ? '#58090d' : undefined }}
+            className={hasChanges && !isSaving ? "text-white hover:opacity-90" : ""}
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {isSaving ? 'Salvando...' : (address ? 'Salvar alterações' : 'Adicionar endereço')}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-const API_URL = "http://localhost:4000/api";
+import { API_ENDPOINTS } from '@/config/api';
 
 export interface UpdateProfileData {
   nome: string;
@@ -32,7 +31,7 @@ export const updateUserProfile = async (data: UpdateProfileData): Promise<Update
     }
 
     const response = await axios.put(
-      `${API_URL}/usuarios/me/profile`,
+      API_ENDPOINTS.userProfile,
       data,
       {
         headers: {
