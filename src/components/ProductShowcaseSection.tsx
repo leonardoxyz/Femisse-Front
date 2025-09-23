@@ -17,19 +17,21 @@ const ProductShowcaseSection = () => {
   }, []);
 
   return (
-    <section className="py-16 bg-gradient-to-br from-background to-muted/20">
+    <section className="py-8 md:py-12 lg:py-16 bg-gradient-to-br from-background to-muted/20">
       <div className="container mx-auto px-4">
         {loading ? (
-          <div className="text-center py-12">Carregando produtos...</div>
+          <div className="text-center py-8 md:py-12">Carregando produtos...</div>
         ) : (
-          <div className="flex flex-col lg:flex-row lg:justify-center lg:items-start lg:gap-16 space-y-16 lg:space-y-0">
+          <div className="flex flex-col lg:flex-row lg:justify-center lg:items-start gap-12 md:gap-8">
             {momentProducts.map((product, index) => (
               <div
                 key={product.id}
-                className="animate-fade-in flex justify-center"
+                className="animate-fade-in flex justify-center w-full lg:w-auto"
                 style={{ animationDelay: `${index * 0.2}s` }}
               >
-                <ProductShowcase image={product.image_url} />
+                <div className="w-full max-w-sm md:max-w-md lg:max-w-none">
+                  <ProductShowcase image={product.image_url} />
+                </div>
               </div>
             ))}
           </div>

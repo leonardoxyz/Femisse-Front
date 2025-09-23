@@ -99,6 +99,11 @@ const ProductDetails = () => {
   React.useEffect(() => {
     if (!slug) return;
     
+    // Reset do estado quando slug muda
+    setLoading(true);
+    setProduct(null);
+    setMainImageIndex(0);
+    
     const fetchProduct = async () => {
       try {
         secureLog('Buscando produtos:', obfuscateUrl(API_ENDPOINTS.products));
@@ -107,17 +112,56 @@ const ProductDetails = () => {
         
         // Converter slug de volta para nome e procurar produto correspondente
         const searchName = slug.replace(/-/g, ' ').toLowerCase();
+        console.log('Buscando produto com slug:', slug, 'searchName:', searchName);
+        
         const foundProduct = products.find((product: any) => {
           const productName = product.name.toLowerCase();
+          console.log('Comparando com produto:', productName);
           
-          return (
-            productName.includes(searchName) ||
-            searchName.includes(productName.split(' ')[0]) ||
-            // Busca mais flexível removendo acentos
-            removeAccents(productName).includes(removeAccents(searchName)) ||
-            removeAccents(searchName).includes(removeAccents(productName.split(' ')[0]))
+          // Criar slug do nome do produto para comparação exata
+          const productSlug = productName
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[àáâãäå]/g, 'a')
+            .replace(/[èéêë]/g, 'e')
+            .replace(/[ìíîï]/g, 'i')
+            .replace(/[òóôõö]/g, 'o')
+            .replace(/[ùúûü]/g, 'u')
+            .replace(/[ç]/g, 'c')
+            .replace(/[^a-z0-9-]/g, '');
+          
+          const normalizedSlug = slug
+            .toLowerCase()
+            .replace(/[àáâãäå]/g, 'a')
+            .replace(/[èéêë]/g, 'e')
+            .replace(/[ìíîï]/g, 'i')
+            .replace(/[òóôõö]/g, 'o')
+            .replace(/[ùúûü]/g, 'u')
+            .replace(/[ç]/g, 'c')
+            .replace(/[^a-z0-9-]/g, '');
+          
+          console.log('Comparando slugs:', normalizedSlug, 'vs', productSlug);
+          
+          // Primeiro tenta match exato do slug
+          if (normalizedSlug === productSlug) {
+            return true;
+          }
+          
+          // Se não encontrou match exato, tenta busca por palavras completas
+          const searchWords = searchName.split(' ').filter(word => word.length > 2);
+          const productWords = productName.split(' ').filter(word => word.length > 2);
+          
+          // Verifica se todas as palavras da busca estão no nome do produto
+          const allWordsMatch = searchWords.every(searchWord => 
+            productWords.some(productWord => 
+              productWord.includes(searchWord) || searchWord.includes(productWord)
+            )
           );
+          
+          return allWordsMatch && searchWords.length === productWords.length;
         });
+        
+        console.log('Produto encontrado:', foundProduct);
         
         if (foundProduct) {
           await processProductData(foundProduct);

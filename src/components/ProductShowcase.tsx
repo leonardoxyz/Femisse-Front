@@ -9,16 +9,16 @@ const ProductShowcase = ({ image }: ProductShowcaseProps) => {
         <div className="splide__track">
           <ul className="splide__list">
             <li 
-              className="splide__slide flex items-center justify-center"
-              style={{ width: '560px', height: '720px' }}
-            >
-              <a href="#" aria-label="Produto">
+              className="splide__slide flex items-center justify-center w-full">
+              <a href="#" aria-label="Produto" className="w-full h-full">
                 <img
                   src={image}
                   alt="Produto"
-                  className="lazy-img-fadein w-full h-full object-contain"
+                  className=""
                   style={{
-                    height: '720px'
+                    minHeight: '400px',
+                    maxHeight: '720px',
+                    height: 'auto'
                   }}
                 />
               </a>

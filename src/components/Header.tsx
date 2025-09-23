@@ -141,19 +141,6 @@ const Header = () => {
         <div className="container mx-auto px-4">
           {/* Main header layout */}
           <div className="flex items-center justify-between py-6 md:py-8">
-            {/* Center: Categories (desktop only) */}
-            <nav className="hidden md:flex items-center gap-6">
-              {categories.map((category) => (
-                <a
-                  key={category.id}
-                  href={`/categoria/${createSlug(category.name)}`}
-                  className="text-foreground hover:text-primary transition-colors duration-300 relative group text-sm font-medium"
-                >
-                  {category.name}
-                  <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
-                </a>
-              ))}
-            </nav>
 
             {/* Left: Logo + Menu mobile */}
             <div className="flex items-center gap-4">
@@ -184,10 +171,24 @@ const Header = () => {
                   <input
                     ref={searchInputRef}
                     type="text"
-                    className="w-full px-4 py-2 pl-10 border border-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm text-foreground bg-background transition-all duration-200 shadow-sm"
+                    className="w-full px-4 py-2 pl-10 border-0 border-b-2 border-muted focus:outline-none focus:border-b-primary focus:ring-0 focus:shadow-none text-sm text-foreground bg-transparent transition-all duration-200 appearance-none"
                     placeholder="Buscar produtos..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
+                    style={{ 
+                      border: 'none',
+                      borderBottom: '2px solid hsl(var(--muted))',
+                      boxShadow: 'none',
+                      outline: 'none'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderBottom = '2px solid hsl(var(--primary))';
+                      e.target.style.boxShadow = 'none';
+                      e.target.style.outline = 'none';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderBottom = '2px solid hsl(var(--muted))';
+                    }}
                   />
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   {searchTerm && (
@@ -312,6 +313,21 @@ const Header = () => {
               })()}
             </div>
           </div>
+        </div>
+        <div className="flex items-center justify-center md:pb-8">
+          {/* Center: Categories (desktop only) */}
+          <nav className="hidden md:flex items-center gap-6">
+            {categories.map((category) => (
+              <a
+                key={category.id}
+                href={`/categoria/${createSlug(category.name)}`}
+                className="text-foreground hover:text-primary transition-colors duration-300 relative group text-sm font-medium"
+              >
+                {category.name}
+                <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
+              </a>
+            ))}
+          </nav>
         </div>
       </header>
 
