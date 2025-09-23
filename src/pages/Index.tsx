@@ -5,6 +5,7 @@ import CategoryBanner from "@/components/CategoryBanner";
 import ProductShowcaseSection from "@/components/ProductShowcaseSection";
 import NewInSection from "@/components/NewInSection";
 import FeaturesCarousel from "@/components/FeaturesCarousel";
+import DeliverySection from "@/components/DeliverySection";
 
 const Index = () => {
   return (
@@ -12,9 +13,10 @@ const Index = () => {
       <Header />
       <HeroBanner />
       <ProductShowcaseSection />
-      <CategoryBanner />
-      <FeaturesCarousel />
       <NewInSection />
+      <FeaturesCarousel />
+      <CategoryBanner />
+      <DeliverySection />
       <Footer />
     </div>
   );

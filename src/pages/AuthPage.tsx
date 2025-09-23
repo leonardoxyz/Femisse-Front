@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Eye, EyeOff, Mail, Lock, User, Phone, Calendar, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,8 +6,12 @@ import { Card } from '@/components/ui/card';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { API_ENDPOINTS } from '@/config/api';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 const AuthPage = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
@@ -22,6 +26,13 @@ const AuthPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Redireciona se já estiver logado
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/perfil', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
@@ -35,7 +46,7 @@ const AuthPage = () => {
         senha: form.senha,
       });
       localStorage.setItem('token', res.data.token);
-      window.location.href = '/perfil';
+      navigate('/perfil', { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao fazer login');
     } finally {

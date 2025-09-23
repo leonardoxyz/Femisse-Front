@@ -11,8 +11,17 @@ export function getUserFromToken() {
     // JWT: header.payload.signature
     const payload = token.split('.')[1];
     const decoded = JSON.parse(atob(payload));
+    
+    // Verifica se o token expirou
+    if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+      localStorage.removeItem('token');
+      return null;
+    }
+    
     return decoded;
   } catch {
+    // Se houver erro ao decodificar, remove o token inválido
+    localStorage.removeItem('token');
     return null;
   }
 }

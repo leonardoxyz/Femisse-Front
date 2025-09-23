@@ -31,6 +31,36 @@
     width: 100%;
     overflow-x: hidden;
   }
+
+  /* Swiper customizations */
+  .swiper-pagination {
+    position: absolute !important;
+    bottom: 24px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: auto !important;
+    display: flex !important;
+    gap: 8px !important;
+  }
+
+  .swiper-pagination-bullet {
+    width: 12px !important;
+    height: 12px !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    opacity: 1 !important;
+    border-radius: 50% !important;
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
+  }
+
+  .swiper-pagination-bullet-active {
+    background: hsl(var(--primary)) !important;
+    transform: scale(1.25) !important;
+  }
+
+  .swiper-pagination-bullet:hover {
+    background: rgba(255, 255, 255, 0.7) !important;
+  }
   
   :root {
     --background: 0 0% 98%;

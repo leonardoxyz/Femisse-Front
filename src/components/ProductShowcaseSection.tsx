@@ -22,11 +22,11 @@ const ProductShowcaseSection = () => {
         {loading ? (
           <div className="text-center py-12">Carregando produtos...</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-16 w-full">
+          <div className="flex flex-col lg:flex-row lg:justify-center lg:items-start lg:gap-16 space-y-16 lg:space-y-0">
             {momentProducts.map((product, index) => (
               <div
                 key={product.id}
-                className="animate-fade-in w-full max-w-3xl min-h-[600px] mx-auto flex"
+                className="animate-fade-in flex justify-center"
                 style={{ animationDelay: `${index * 0.2}s` }}
               >
                 <ProductShowcase image={product.image_url} />

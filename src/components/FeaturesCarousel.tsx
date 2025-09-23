@@ -51,7 +51,7 @@ const FeaturesCarousel = () => {
         <div 
           className="flex whitespace-nowrap"
           style={{
-            animation: 'scroll 20s linear infinite'
+            animation: 'scroll 10s linear infinite'
           }}
         >
           {duplicatedFeatures.map((feature, index) => (

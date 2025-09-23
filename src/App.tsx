@@ -30,6 +30,7 @@ const App = () => (
               <Route path="/produto/:slug" element={<ProductDetails />} />
               <Route path="/categoria/:slug" element={<ProductsByCategory />} />
               <Route path="/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
+              <Route path="/perfil/:section" element={<PrivateRoute><Profile /></PrivateRoute>} />
               <Route path="/login" element={<AuthPage />} />
               <Route path="/busca" element={<SearchResults />} />
               <Route path="*" element={<NotFound />} />

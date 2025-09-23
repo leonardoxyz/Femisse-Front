@@ -4,11 +4,23 @@ import { Button } from "@/components/ui/button";
 import { API_ENDPOINTS } from "@/config/api";
 import bannerVideo from "@/assets/banner-video.mp4";
 
+// Swiper imports
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
+import type { Swiper as SwiperType } from 'swiper';
+
+// Swiper styles
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/effect-fade';
+
 const HeroBanner = () => {
   const [slides, setSlides] = useState<{ id: string; url: string; alt?: string|null; type?: 'image' | 'video' }[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
+  const swiperRef = useRef<SwiperType | null>(null);
 
   // Função para detectar o tipo de mídia baseado na extensão
   const getMediaType = (url: string): 'image' | 'video' => {
@@ -46,20 +58,12 @@ const HeroBanner = () => {
       });
   }, []);
 
-  useEffect(() => {
-    if (!slides.length) return;
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [slides.length]);
-
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    swiperRef.current?.slideNext();
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    swiperRef.current?.slidePrev();
   };
 
   // Efeito para controlar reprodução de vídeos
@@ -89,13 +93,38 @@ const HeroBanner = () => {
 
   return (
     <section className="relative h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[60vh] overflow-hidden bg-gradient-to-br from-pink-light to-background">
-      {/* Slides */}
-      <div className="relative h-full">
+      <Swiper
+        modules={[Navigation, Pagination, Autoplay, EffectFade]}
+        spaceBetween={0}
+        slidesPerView={1}
+        loop={true}
+        autoplay={{
+          delay: 5000,
+          disableOnInteraction: false,
+        }}
+        pagination={{
+          clickable: true,
+          bulletClass: 'swiper-pagination-bullet !bg-white/50 !w-3 !h-3',
+          bulletActiveClass: 'swiper-pagination-bullet-active !bg-primary !scale-125',
+        }}
+        navigation={{
+          prevEl: '.swiper-button-prev-custom',
+          nextEl: '.swiper-button-next-custom',
+        }}
+        onSwiper={(swiper) => {
+          swiperRef.current = swiper;
+        }}
+        onSlideChange={(swiper) => {
+          setCurrentSlide(swiper.realIndex);
+        }}
+        className="h-full"
+        style={{
+          '--swiper-pagination-bottom': '24px',
+          '--swiper-pagination-bullet-inactive-opacity': '0.5',
+        } as React.CSSProperties}
+      >
         {slides.map((slide, index) => (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? "opacity-100" : "opacity-0"}`}
-          >
+          <SwiperSlide key={slide.id}>
             {slide.type === 'video' ? (
               <video
                 ref={(el) => {
@@ -129,46 +158,26 @@ const HeroBanner = () => {
                 src={slide.url}
                 alt={slide.alt || "Banner"}
                 className="w-full h-full object-cover"
-                style={{
-                  filter: "brightness(0.7)"
-                }}
               />
             )}
-          </div>
+          </SwiperSlide>
         ))}
-      </div>
+      </Swiper>
 
-      {/* Navigation arrows */}
+      {/* Custom Navigation arrows */}
       <button
-        onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+        className="swiper-button-prev-custom absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm z-10"
         aria-label="Slide anterior"
       >
         <ChevronLeft className="h-6 w-6" />
       </button>
 
       <button
-        onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+        className="swiper-button-next-custom absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm z-10"
         aria-label="Próximo slide"
       >
         <ChevronRight className="h-6 w-6" />
       </button>
-
-      {/* Slide indicators */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide
-                ? "bg-primary scale-125"
-                : "bg-white/50 hover:bg-white/70"
-              }`}
-            aria-label={`Ir para slide ${index + 1}`}
-          />
-        ))}
-      </div>
     </section>
   );
 };

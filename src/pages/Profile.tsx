@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { PersonalData } from "@/components/profile/PersonalData";
 import { AddressList } from "@/components/profile/AddressList";
 import { OrderHistory } from "@/components/profile/OrderHistory";
@@ -10,17 +10,13 @@ import Footer from "@/components/Footer";
 import FavoritesList from "@/components/profile/FavoritesList";
 
 export default function Profile() {
-    const location = useLocation();
+    const { section } = useParams();
     const navigate = useNavigate();
-    function getSectionFromQuery() {
-        const params = new URLSearchParams(location.search);
-        return params.get("sec") || "profile";
-    }
-    const [currentSection, setCurrentSection] = useState(getSectionFromQuery());
+    const [currentSection, setCurrentSection] = useState(section || "profile");
 
     useEffect(() => {
-        setCurrentSection(getSectionFromQuery());
-    }, [location.search]);
+        setCurrentSection(section || "profile");
+    }, [section]);
 
     const renderContent = () => {
         switch (currentSection) {
@@ -51,9 +47,11 @@ export default function Profile() {
                                 currentSection={currentSection}
                                 onSectionChange={(section) => {
                                     setCurrentSection(section);
-                                    const params = new URLSearchParams(location.search);
-                                    params.set("sec", section);
-                                    navigate({ search: params.toString() }, { replace: true });
+                                    if (section === "profile") {
+                                        navigate("/perfil", { replace: true });
+                                    } else {
+                                        navigate(`/perfil/${section}`, { replace: true });
+                                    }
                                 }}
                             />
                         </div>

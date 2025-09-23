@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "react-router-dom";
-import { 
-  User, 
-  MapPin, 
-  Heart, 
-  ShoppingBag, 
-  CreditCard, 
+import {
+  User,
+  MapPin,
+  Heart,
+  ShoppingBag,
+  CreditCard,
   Settings,
   LogOut,
   Menu,
@@ -16,11 +16,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
-  { id: "profile", label: "Meus Dados", icon: User, path: "/profile" },
-  { id: "addresses", label: "Endereços", icon: MapPin, path: "/profile/addresses" },
-  { id: "favorites", label: "Favoritos", icon: Heart, path: "/profile/favorites" },
-  { id: "orders", label: "Histórico de Compras", icon: ShoppingBag, path: "/profile/orders" },
-  { id: "cards", label: "Cartões Salvos", icon: CreditCard, path: "/profile/cards" },
+  { id: "profile", label: "Meus Dados", icon: User, path: "/perfil" },
+  { id: "addresses", label: "Endereços", icon: MapPin, path: "/perfil/addresses" },
+  { id: "favorites", label: "Favoritos", icon: Heart, path: "/perfil/favorites" },
+  { id: "orders", label: "Histórico de Compras", icon: ShoppingBag, path: "/perfil/orders" },
+  { id: "cards", label: "Cartões Salvos", icon: CreditCard, path: "/perfil/cards" },
 ];
 
 interface ProfileSidebarProps {
@@ -30,7 +30,7 @@ interface ProfileSidebarProps {
 
 export function ProfileSidebar({ currentSection, onSectionChange }: ProfileSidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleSectionChange = (section: string) => {
     onSectionChange(section);
@@ -74,15 +74,15 @@ export function ProfileSidebar({ currentSection, onSectionChange }: ProfileSideb
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentSection === item.id;
-              
+
               return (
                 <button
                   key={item.id}
                   onClick={() => handleSectionChange(item.id)}
                   className={cn(
                     "w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-colors",
-                    isActive 
-                      ? "bg-primary/10 text-primary border border-primary/20" 
+                    isActive
+                      ? "bg-primary/10 text-primary border border-primary/20"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
@@ -94,7 +94,10 @@ export function ProfileSidebar({ currentSection, onSectionChange }: ProfileSideb
           </nav>
 
           <div className="mt-8 pt-6 border-t border-border">
-            <button className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left text-destructive hover:bg-destructive/10 transition-colors">
+            <button 
+              onClick={logout}
+              className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left text-destructive hover:bg-destructive/10 transition-colors"
+            >
               <LogOut className="h-4 w-4" />
               <span className="text-sm font-medium">Sair</span>
             </button>

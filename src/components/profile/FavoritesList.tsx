@@ -1,8 +1,7 @@
 import React from "react";
 import ProductCard from "@/components/ProductCard";
 import { useFavorites } from "@/contexts/FavoritesContext";
-
-const API_PRODUCTS = "/api/products";
+import { API_ENDPOINTS } from "@/config/api";
 
 export default function FavoritesList() {
   const { favoriteIds, loading } = useFavorites();
@@ -13,7 +12,7 @@ export default function FavoritesList() {
       setProducts([]);
       return;
     }
-    fetch(`${API_PRODUCTS}?ids=${favoriteIds.join(",")}`)
+    fetch(`${API_ENDPOINTS.products}?ids=${favoriteIds.join(",")}`)
       .then((res) => res.json())
       .then((data) => setProducts(data));
   }, [favoriteIds]);

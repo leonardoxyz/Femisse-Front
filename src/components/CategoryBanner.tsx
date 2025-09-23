@@ -21,16 +21,25 @@ const CategoryBanner = () => {
   return (
     <section className="py-16 bg-gradient-to-br from-pink-light to-background">
       <div className="container mx-auto px-4">
-      <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in flex items-center justify-center">
-          MAIS VENDIDOS
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="text-center mb-12">
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in flex items-center justify-center">
+            MAIS VENDIDOS
+          </h2>
+          <span className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
+            Fique por dentro das coleções mais vendidas da Femisse.
+          </span>
+        </div>
+        <div className="flex flex-col lg:flex-row lg:justify-center lg:items-start lg:gap-16 space-y-16 lg:space-y-0">
           {popularies.map((popular, index) => (
             <a
               key={popular.name}
               href={`/categoria/${createSlug(popular.name)}`}
-              className="group relative overflow-hidden aspect-[3/4] cursor-pointer transition-all duration-500 hover:scale-105 animate-scale-in block"
-              style={{ animationDelay: `${index * 0.2}s` }}
+              className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-100 animate-scale-in block flex justify-center"
+              style={{ 
+                animationDelay: `${index * 0.2}s`,
+                width: '560px',
+                height: '720px'
+              }}
             >
               <img
                 src={popular.image}
