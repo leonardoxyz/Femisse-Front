@@ -21,7 +21,7 @@ const CategoryBanner = () => {
   return (
     <section className="py-16 bg-gradient-to-br from-pink-light to-background">
       <div className="container mx-auto px-4">
-      <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in flex items-center justify-center">
+      <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in flex items-center justify-center">
           MAIS VENDIDOS
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -29,7 +29,7 @@ const CategoryBanner = () => {
             <a
               key={popular.name}
               href={`/categoria/${createSlug(popular.name)}`}
-              className="group relative overflow-hidden rounded-2xl aspect-[3/4] cursor-pointer transition-all duration-500 hover:scale-105 hover:shadow-2xl animate-scale-in block"
+              className="group relative overflow-hidden aspect-[3/4] cursor-pointer transition-all duration-500 hover:scale-105 animate-scale-in block"
               style={{ animationDelay: `${index * 0.2}s` }}
             >
               <img

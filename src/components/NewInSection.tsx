@@ -24,7 +24,7 @@ const NewInSection = () => {
     <section className="py-16 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
             NOVIDADES
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
@@ -55,12 +55,6 @@ const NewInSection = () => {
             ))}
           </div>
         )}
-
-        <div className="text-center mt-12">
-          <button className="bg-primary hover:bg-pink-dark text-primary-foreground px-8 py-3 rounded-full font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
-            Ver Todos os Produtos
-          </button>
-        </div>
       </div>
     </section>
   );

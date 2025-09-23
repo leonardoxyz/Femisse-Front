@@ -11,43 +11,34 @@ import ProductsByCategory from "./pages/ProductsByCategory";
 import Profile from "./pages/Profile";
 import AuthPage from "./pages/AuthPage";
 import PrivateRoute from "./components/PrivateRoute";
-import { initDevToolsProtection, clearSensitiveData } from "@/utils/devToolsProtection";
-import { useEffect } from "react";
 
 const queryClient = new QueryClient();
 
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { CartProvider } from "@/contexts/CartContext";
 
-const App = () => {
-  useEffect(() => {
-    initDevToolsProtection();
-    clearSensitiveData();
-  }, []);
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <CartProvider>
-          <FavoritesProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/produto/:slug" element={<ProductDetails />} />
-                <Route path="/categoria/:slug" element={<ProductsByCategory />} />
-                <Route path="/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
-                <Route path="/login" element={<AuthPage />} />
-                <Route path="/busca" element={<SearchResults />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </FavoritesProvider>
-        </CartProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-};
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <CartProvider>
+        <FavoritesProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/produto/:slug" element={<ProductDetails />} />
+              <Route path="/categoria/:slug" element={<ProductsByCategory />} />
+              <Route path="/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
+              <Route path="/login" element={<AuthPage />} />
+              <Route path="/busca" element={<SearchResults />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </FavoritesProvider>
+      </CartProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

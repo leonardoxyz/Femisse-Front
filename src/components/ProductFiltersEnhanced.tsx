@@ -194,8 +194,8 @@ export function ProductFiltersEnhanced({
         {/* Cores */}
         {availableColors.length > 0 && (
           <div>
-            <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wide mb-3">
-              COR
+            <h3 className="text-sm font-medium text-gray-900 tracking-wide mb-3">
+              Cor
             </h3>
             <div className="space-y-2">
               {visibleColors.map((color) => (
@@ -239,8 +239,8 @@ export function ProductFiltersEnhanced({
         {/* Tamanhos */}
         {availableSizes.length > 0 && (
           <div>
-            <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wide mb-3">
-              TAMANHO
+            <h3 className="text-sm font-medium text-gray-900 tracking-wide mb-3">
+              Tamanho
             </h3>
             <div className="space-y-2">
               {visibleSizes.map((size) => (
@@ -277,8 +277,8 @@ export function ProductFiltersEnhanced({
 
         {/* Preço */}
         <div>
-          <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wide mb-3">
-            PREÇO
+          <h3 className="text-sm font-medium text-gray-900 tracking-wide mb-3">
+            Preço
           </h3>
           <div className="space-y-3">
             <div className="flex items-center space-x-2">

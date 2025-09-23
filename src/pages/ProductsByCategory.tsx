@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Filter, Grid, List, SlidersHorizontal } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { API_ENDPOINTS } from '@/config/api';
-import { extractIdFromSlug, slugToText, createSlug, removeAccents, SLUG_TO_CATEGORY_MAP } from '@/utils/slugs';
+import { slugToText, createSlug, removeAccents } from '@/utils/slugs';
 
 const ProductsByCategory = () => {
   const { slug } = useParams(); // Mudança: usar slug em vez de id

@@ -19,9 +19,6 @@ const ProductShowcaseSection = () => {
   return (
     <section className="py-16 bg-gradient-to-br from-background to-muted/20">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in flex items-center justify-center">
-          SENSAÇÃO DO MOMENTO
-        </h2>
         {loading ? (
           <div className="text-center py-12">Carregando produtos...</div>
         ) : (

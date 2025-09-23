@@ -1,17 +1,19 @@
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import HeroBanner from "@/components/HeroBanner";
 import CategoryBanner from "@/components/CategoryBanner";
-import NewInSection from "@/components/NewInSection";
 import ProductShowcaseSection from "@/components/ProductShowcaseSection";
-import Footer from "@/components/Footer";
+import NewInSection from "@/components/NewInSection";
+import FeaturesCarousel from "@/components/FeaturesCarousel";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <HeroBanner />
-      <CategoryBanner />
       <ProductShowcaseSection />
+      <CategoryBanner />
+      <FeaturesCarousel />
       <NewInSection />
       <Footer />
     </div>

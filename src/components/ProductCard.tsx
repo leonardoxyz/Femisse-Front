@@ -101,12 +101,12 @@ async function handleAddToFavorites(e: React.MouseEvent) {
 
   return (
     <Card
-      className="bg-white border-0 shadow-none cursor-pointer p-0 group rounded-lg"
+      className="bg-white border-0 shadow-none cursor-pointer p-0 group"
       onClick={() => navigate(`/produto/${createSlug(name)}`)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div className="w-full aspect-[3/4] bg-white flex items-center justify-center relative rounded-lg overflow-hidden">
+      <div className="w-full aspect-[3/4] bg-white flex items-center justify-center relative overflow-hidden">
         <img
           src={hovered && safeImages.length > 1 ? hoverImage : mainImage}
           alt={name}
@@ -116,14 +116,14 @@ async function handleAddToFavorites(e: React.MouseEvent) {
         <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
           <button
             onClick={handleAddToFavorites}
-            className="bg-white/90 hover:bg-pink-100 p-2 rounded-full shadow text-pink-600 hover:text-pink-900 transition"
+            className="bg-white/90 hover:bg-pink-100 p-2 shadow text-pink-600 hover:text-pink-900 transition"
             title="Favoritar"
           >
             <Heart className={`w-6 h-6 ${isFavorite ? 'text-pink-500 fill-pink-500' : ''}`} />
           </button>
           <button
             onClick={stock === 0 ? undefined : handleAddToCart}
-            className={`bg-white/90 p-2 rounded-full shadow transition ${stock === 0 ? 'text-gray-400 cursor-not-allowed opacity-60' : 'hover:bg-green-100 text-green-600 hover:text-green-900'}`}
+            className={`bg-white/90 p-2 shadow transition ${stock === 0 ? 'text-gray-400 cursor-not-allowed opacity-60' : 'hover:bg-green-100 text-green-600 hover:text-green-900'}`}
             title={stock === 0 ? 'Produto esgotado' : 'Adicionar ao carrinho'}
             disabled={stock === 0}
             tabIndex={stock === 0 ? -1 : 0}
@@ -132,8 +132,8 @@ async function handleAddToFavorites(e: React.MouseEvent) {
           </button>
         </div>
       </div>
-      <CardContent className="flex flex-col items-center justify-center py-6 px-2">
-        <h3 className="text-xs md:text-sm text-zinc-700 font-normal text-center mb-1 uppercase tracking-wide">
+      <CardContent className="flex flex-col items-center justify-center py-6 px-2 rounded-none">
+        <h3 className="font-sans text-xs md:text-sm text-zinc-700 font-medium text-center mb-1 uppercase tracking-wide">
           {name}
         </h3>
         <span className="text-2xl font-bold text-zinc-900 text-center">

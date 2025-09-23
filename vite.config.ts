@@ -35,7 +35,23 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           vendor: ['react', 'react-dom'],
         },
+        // Configuração específica para assets de mídia
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name?.split('.') || [];
+          const extType = info[info.length - 1];
+          if (/mp4|webm|ogg|avi|mov/i.test(extType)) {
+            return `assets/videos/[name]-[hash][extname]`;
+          }
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
+            return `assets/images/[name]-[hash][extname]`;
+          }
+          return `assets/[name]-[hash][extname]`;
+        },
       },
     },
+    // Aumenta o limite para arquivos grandes (vídeos)
+    assetsInlineLimit: 0, // Força todos os assets a serem arquivos separados
   },
+  // Configuração para assets de mídia
+  assetsInclude: ['**/*.mp4', '**/*.webm', '**/*.ogg', '**/*.avi', '**/*.mov'],
 }));

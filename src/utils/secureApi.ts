@@ -33,7 +33,7 @@ export const getSecureHeaders = (additionalHeaders: Record<string, string> = {})
   };
 };
 
-// Wrapper para fetch com headers de segurança e ofuscação de parâmetros
+// Wrapper para fetch com headers de segurança
 export const secureFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
   const secureOptions: RequestInit = {
     ...options,
@@ -61,26 +61,6 @@ export const secureFetch = async (url: string, options: RequestInit = {}): Promi
     }
     throw error;
   }
-};
-
-// Função para criar URLs com parâmetros ofuscados (apenas em produção)
-export const createSecureUrl = (baseUrl: string, params?: Record<string, any>): string => {
-  if (!params || !isProduction) {
-    return baseUrl;
-  }
-
-  // Em produção, usar hash dos parâmetros em vez dos valores reais
-  const searchParams = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (isProduction && (key.includes('id') || key.includes('token'))) {
-      // Ofuscar IDs e tokens
-      searchParams.append(key, btoa(String(value)).slice(0, 8));
-    } else {
-      searchParams.append(key, String(value));
-    }
-  });
-  
-  return `${baseUrl}?${searchParams.toString()}`;
 };
 
 // Rate limiting simples

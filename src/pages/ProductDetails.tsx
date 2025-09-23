@@ -220,7 +220,7 @@ const ProductDetails = () => {
                     key={index}
                     src={image}
                     alt={`${product.name} ${index + 1}`}
-                    className={`w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border-2 ${mainImageIndex === index ? "border-primary" : "border-transparent"}`}
+                    className={`w-20 h-20 object-cover cursor-pointer hover:opacity-80 transition-opacity border-2 ${mainImageIndex === index ? "border-primary" : "border-transparent"}`}
                     onClick={() => setMainImageIndex(index)}
                   />
                 );
@@ -249,7 +249,7 @@ const ProductDetails = () => {
                 <img
                   src={product.images && product.images.length > 0 ? product.images[mainImageIndex] : product.image}
                   alt={product.name}
-                  className="w-full h-[600px] object-cover rounded-lg transition-transform duration-300 cursor-zoom-in"
+                  className="w-full h-[600px] object-cover transition-transform duration-300 cursor-zoom-in"
                   style={{ transformOrigin: 'center center', transition: 'transform 0.3s', transform: isZoomed ? 'scale(2)' : 'scale(1)' }}
                   onMouseEnter={() => setIsZoomed(true)}
                   onMouseLeave={e => { setIsZoomed(false); e.currentTarget.style.transformOrigin = 'center center'; }}
