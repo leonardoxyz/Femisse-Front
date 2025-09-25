@@ -175,7 +175,7 @@ const Header = () => {
                     placeholder="Buscar produtos..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    style={{ 
+                    style={{
                       border: 'none',
                       borderBottom: '2px solid hsl(var(--muted))',
                       boxShadow: 'none',
@@ -250,22 +250,30 @@ const Header = () => {
               >
                 <Search className="h-5 w-5" />
               </Button>
+              {(() => {
+                const { isAuthenticated } = useAuth();
+                const { userData } = useUserData();
 
-              <Link to="/perfil/favorites">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative"
-                  aria-label="Favoritos"
-                >
-                  <Heart className="h-5 w-5" />
-                  {favoriteIds.length > 0 && (
-                    <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs">
-                      {favoriteIds.length}
-                    </Badge>
-                  )}
-                </Button>
-              </Link>
+                if (isAuthenticated && userData) {
+                  return (
+                    <Link to="/perfil/favorites">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="relative"
+                        aria-label="Favoritos"
+                    >
+                      <Heart className="h-5 w-5" />
+                      {favoriteIds.length > 0 && (
+                        <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs">
+                          {favoriteIds.length}
+                        </Badge>
+                      )}
+                    </Button>
+                  </Link>
+                );
+              }
+              })()}
 
               <Button
                 variant="ghost"

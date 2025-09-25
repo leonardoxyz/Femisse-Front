@@ -8,6 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ProductCard from "@/components/ProductCard";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 import React from 'react';
 import { API_ENDPOINTS } from '@/config/api';
 import { extractIdFromSlug, slugToText, removeAccents } from '@/utils/slugs';
@@ -53,6 +59,8 @@ const ProductDetails = () => {
   const [loading, setLoading] = React.useState(true);
   const [mainImageIndex, setMainImageIndex] = React.useState(0);
   const [isZoomed, setIsZoomed] = React.useState(false);
+  const [similarProducts, setSimilarProducts] = React.useState<any[]>([]);
+  const [loadingSimilar, setLoadingSimilar] = React.useState(false);
 
   // Verificar se produto está nos favoritos
   const isFavorite = product ? favoriteIds.includes(product.id) : false;
@@ -158,54 +166,108 @@ const ProductDetails = () => {
             )
           );
           
-          return allWordsMatch && searchWords.length === productWords.length;
+          return allWordsMatch;
         });
         
         console.log('Produto encontrado:', foundProduct);
-        
         if (foundProduct) {
           await processProductData(foundProduct);
-          return;
+          console.log('Produto encontrado:', foundProduct);
+          
+          // Buscar produtos similares da mesma categoria
+          fetchSimilarProducts(foundProduct, products);
+        } else {
+          console.log('Produto não encontrado');
+          navigate('/404');
         }
-        
-        // Se não encontrou, produto não existe
-        throw new Error('Produto não encontrado');
-        
       } catch (error) {
         console.error('Erro ao buscar produto:', error);
-        setProduct(null);
+        navigate('/404');
+      } finally {
         setLoading(false);
       }
     };
-    
+
     const processProductData = async (data: any) => {
-        let images = data.images || [];
-        if (!data.images && data.image_ids && data.image_ids.length > 0) {
-          try {
-            const imagePromises = data.image_ids.map(async (imageId: string) => {
-              if (!imageId) return null;
-              const response = await fetch(`${API_ENDPOINTS.images}/${imageId}`);
-              if (response.ok) {
-                const imageData = await response.json();
-                return imageData.image_url;
-              }
-              return null;
-            });
-            
-            const imageUrls = await Promise.all(imagePromises);
-            images = imageUrls.filter(url => url !== null);
-          } catch (error) {
-            console.error("Erro ao buscar URLs das imagens:", error);
-          }
+      let images = data.images || [];
+      if (!data.images && data.image_ids && data.image_ids.length > 0) {
+        try {
+          const imagePromises = data.image_ids.map(async (imageId: string) => {
+            if (!imageId) return null;
+            const response = await fetch(`${API_ENDPOINTS.images}/${imageId}`);
+            if (response.ok) {
+              const imageData = await response.json();
+              return imageData.image_url;
+            }
+            return null;
+          });
+          
+          const imageUrls = await Promise.all(imagePromises);
+          images = imageUrls.filter(url => url !== null);
+        } catch (error) {
+          console.error("Erro ao buscar URLs das imagens:", error);
         }
-        
-        setProduct({ ...data, images });
-        setLoading(false);
-        setMainImageIndex(0);
+      }
+      
+      setProduct({ ...data, images });
     };
-    
+
+    const fetchSimilarProducts = (currentProduct: any, allProducts: any[]) => {
+      setLoadingSimilar(true);
+      try {
+        // Extrair palavras-chave do slug da URL atual
+        const urlKeywords = slug ? slug.split('-').filter(word => word.length > 2) : [];
+        
+        // Também extrair palavras-chave do nome do produto como fallback
+        const nameKeywords = currentProduct.name.toLowerCase()
+          .split(' ')
+          .filter(word => word.length > 2);
+        
+        // Combinar palavras-chave da URL e do nome (URL tem prioridade)
+        const searchKeywords = [...new Set([...urlKeywords, ...nameKeywords])];
+        
+        console.log(`Produto atual: "${currentProduct.name}"`);
+        console.log(`Slug da URL: "${slug}"`);
+        console.log('Palavras-chave para busca:', searchKeywords);
+        
+        // Filtrar produtos similares baseado nas palavras-chave
+        const similar = allProducts
+          .filter(p => {
+            if (p.id === currentProduct.id) return false; // Excluir produto atual
+            
+            const productName = p.name.toLowerCase();
+            const productSlug = productName
+              .replace(/\s+/g, '-')
+              .replace(/[àáâãäå]/g, 'a')
+              .replace(/[èéêë]/g, 'e')
+              .replace(/[ìíîï]/g, 'i')
+              .replace(/[òóôõö]/g, 'o')
+              .replace(/[ùúûü]/g, 'u')
+              .replace(/[ç]/g, 'c')
+              .replace(/[^a-z0-9-]/g, '');
+            
+            // Verificar se alguma palavra-chave da busca está presente no nome ou slug do produto
+            return searchKeywords.some(keyword => 
+              productName.includes(keyword) || 
+              productSlug.includes(keyword) ||
+              keyword.includes(productName.split(' ')[0]) // Primeira palavra do produto
+            );
+          })
+          .slice(0, 8); // Limitar a 8 produtos similares
+        
+        setSimilarProducts(similar);
+        console.log('Produtos similares encontrados:', similar.length);
+        console.log('Produtos similares:', similar.map(p => p.name));
+      } catch (error) {
+        console.error('Erro ao buscar produtos similares:', error);
+        setSimilarProducts([]);
+      } finally {
+        setLoadingSimilar(false);
+      }
+    };
+
     fetchProduct();
-  }, [slug]);
+  }, [slug, navigate]);
 
   const formatPrice = (value: number) =>
     new Intl.NumberFormat('pt-BR', {
@@ -435,10 +497,138 @@ const ProductDetails = () => {
             </div>
           </div>
         </div>
-      </div >
+      </div>
+
+      {/* Seção de Produtos Similares */}
+      {similarProducts.length > 0 && (
+        <section className="py-16 bg-gradient-to-br from-background to-muted/20">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
+                PRODUTOS SIMILARES
+              </h2>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
+                Descubra outros produtos da mesma categoria que você pode gostar.
+              </p>
+            </div>
+
+            {loadingSimilar ? (
+              <div className="text-center py-12">Carregando produtos similares...</div>
+            ) : (
+              <div className="relative">
+                <Swiper
+                  modules={[Navigation, Pagination, Autoplay]}
+                  spaceBetween={24}
+                  slidesPerView={1}
+                  navigation={similarProducts.length > 4 ? {
+                    nextEl: '.swiper-button-next-similar',
+                    prevEl: '.swiper-button-prev-similar',
+                  } : false}
+                  pagination={{
+                    el: '.swiper-pagination-similar',
+                    clickable: true,
+                    bulletClass: 'swiper-pagination-bullet-similar',
+                    bulletActiveClass: 'swiper-pagination-bullet-active-similar',
+                  }}
+                  autoplay={similarProducts.length > 4 ? {
+                    delay: 4000,
+                    disableOnInteraction: false,
+                  } : false}
+                  breakpoints={{
+                    640: {
+                      slidesPerView: 2,
+                      spaceBetween: 20,
+                    },
+                    768: {
+                      slidesPerView: 3,
+                      spaceBetween: 24,
+                    },
+                    1024: {
+                      slidesPerView: 4,
+                      spaceBetween: 32,
+                    },
+                  }}
+                  className="similar-products-swiper"
+                  style={{
+                    '--swiper-navigation-color': '#000',
+                    '--swiper-pagination-color': '#000',
+                  } as React.CSSProperties}
+                >
+                  {similarProducts.map((product, index) => (
+                    <SwiperSlide key={product.id}>
+                      <div
+                        className="animate-fade-in h-full"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        <ProductCard
+                          id={product.id}
+                          name={product.name}
+                          price={product.price}
+                          stock={product.stock}
+                          originalPrice={product.original_price}
+                          images={product.images}
+                          image={product.image}
+                        />
+                      </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+
+                {/* Navegação customizada - só aparece se houver mais de 4 produtos */}
+                {similarProducts.length > 4 && (
+                  <>
+                    <div className="swiper-button-prev-similar absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-gray-50 rounded-full shadow-lg flex items-center justify-center cursor-pointer z-10 transition-all duration-300 hover:scale-110">
+                      <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </div>
+                    <div className="swiper-button-next-similar absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-gray-50 rounded-full shadow-lg flex items-center justify-center cursor-pointer z-10 transition-all duration-300 hover:scale-110">
+                      <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </>
+                )}
+
+                {/* Indicadores customizados */}
+                <div className="swiper-pagination-similar flex justify-center mt-8 gap-2"></div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Estilos customizados para o Swiper */}
+      <style jsx global>{`
+        .similar-products-swiper .swiper-pagination-bullet-similar {
+          width: 8px;
+          height: 8px;
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: 50%;
+          opacity: 1;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          margin: 0 4px;
+        }
+        
+        .similar-products-swiper .swiper-pagination-bullet-active-similar {
+          background: rgba(0, 0, 0, 0.8);
+          transform: scale(1.2);
+        }
+        
+        .similar-products-swiper .swiper-slide {
+          height: auto;
+          display: flex;
+          align-items: stretch;
+        }
+        
+        .similar-products-swiper .swiper-slide > div {
+          width: 100%;
+        }
+      `}</style>
 
       <Footer />
-    </div >
+    </div>
   );
 };
 

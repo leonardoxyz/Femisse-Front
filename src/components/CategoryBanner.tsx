@@ -29,38 +29,43 @@ const CategoryBanner = () => {
             Fique por dentro das coleções mais vendidas da Femisse.
           </span>
         </div>
-        <div className="flex flex-col lg:flex-row lg:justify-center lg:items-start lg:gap-16 space-y-16 lg:space-y-0">
+        <div className="flex flex-col lg:flex-row lg:justify-center lg:items-start gap-12 md:gap-8">
           {popularies.map((popular, index) => (
-            <a
+            <div
               key={popular.name}
-              href={`/categoria/${createSlug(popular.name)}`}
-              className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-100 animate-scale-in block flex justify-center"
-              style={{ 
-                animationDelay: `${index * 0.2}s`,
-                width: '560px',
-                height: '720px'
-              }}
+              className="animate-fade-in flex justify-center w-full lg:w-auto"
+              style={{ animationDelay: `${index * 0.2}s` }}
             >
-              <img
-                src={popular.image}
-                alt={popular.name}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-              />
-              
-              {/* Overlay gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
-              
-              {/* Category label */}
-              <div className="absolute bottom-6 left-6 right-6">
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 transform transition-transform duration-300 group-hover:translate-y-[-4px]">
-                  {popular.name}
-                </h3>
-                <div className="w-12 h-1 bg-primary rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
-              </div>
+              <a
+                href={`/categoria/${createSlug(popular.name)}`}
+                className="group relative overflow-hidden cursor-pointer transition-all duration-500 hover:scale-105 animate-scale-in block"
+                style={{ 
+                  width: '560px',
+                  height: '720px',
+                  flexShrink: 0
+                }}
+              >
+                <img
+                  src={popular.image}
+                  alt={popular.name}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+                
+                {/* Overlay gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+                
+                {/* Category label */}
+                <div className="absolute bottom-6 left-6 right-6">
+                  <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 transform transition-transform duration-300 group-hover:translate-y-[-4px]">
+                    {popular.name}
+                  </h3>
+                  <div className="w-12 h-1 bg-primary rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                </div>
 
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </a>
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </a>
+            </div>
           ))}
         </div>
       </div>

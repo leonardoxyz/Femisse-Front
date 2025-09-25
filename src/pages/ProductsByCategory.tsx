@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
+import CategoryPageBanner from '@/components/CategoryPageBanner';
 import { ProductFiltersEnhanced } from '@/components/ProductFiltersEnhanced';
 import { useProductFilters, FilterState } from '@/hooks/useProductFilters';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ const ProductsByCategory = () => {
   const { slug } = useParams(); // Mudança: usar slug em vez de id
   const [categoryName, setCategoryName] = React.useState('');
   const [categoryId, setCategoryId] = React.useState<string | null>(null);
+  const [categoryData, setCategoryData] = React.useState<any>(null);
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = React.useState<'name' | 'price' | 'newest'>('newest');
 
@@ -58,6 +60,7 @@ const ProductsByCategory = () => {
           if (foundCategory) {
             setCategoryName(foundCategory.name);
             setCategoryId(foundCategory.id);
+            setCategoryData(foundCategory);
             fetchProducts(foundCategory.id);
             return;
           }
@@ -104,6 +107,10 @@ const ProductsByCategory = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
+      
+      {/* Banner da Categoria */}
+      <CategoryPageBanner category={categoryData} />
+      
       <div className="flex-1">
         <div className="container mx-auto px-4 py-8">
           <div className="flex gap-8">
