@@ -101,49 +101,56 @@ async function handleAddToFavorites(e: React.MouseEvent) {
 
   return (
     <Card
-      className="bg-white border-0 shadow-none cursor-pointer p-0 group"
+      className="bg-white border-0 shadow-sm hover:shadow-md cursor-pointer p-0 group transition-all duration-300 overflow-hidden mx-auto"
       onClick={() => navigate(`/produto/${createSlug(name)}`)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      style={{
+        width: '320px',
+        height: 'auto',
+        flexShrink: 0
+      }}
     >
-      <div className="w-full aspect-[3/4] bg-white flex items-center justify-center relative overflow-hidden">
+      <div className="w-full bg-white flex items-center justify-center relative overflow-hidden" style={{ paddingTop: '150%' }}>
         <img
           src={hovered && safeImages.length > 1 ? hoverImage : mainImage}
           alt={name}
-          className="w-full h-full object-cover transition-all duration-300"
+          className="absolute top-0 left-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
         />
         {/* Botões de ação */}
-        <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">
           <button
             onClick={handleAddToFavorites}
-            className="bg-white/90 hover:bg-pink-100 p-2 shadow text-pink-600 hover:text-pink-900 transition"
+            className="bg-white/95 hover:bg-pink-50 p-2.5 shadow-lg hover:shadow-xl text-pink-600 hover:text-pink-700 transition-all duration-200 backdrop-blur-sm"
             title="Favoritar"
           >
-            <Heart className={`w-6 h-6 ${isFavorite ? 'text-pink-500 fill-pink-500' : ''}`} />
+            <Heart className={`w-5 h-5 ${isFavorite ? 'text-pink-500 fill-pink-500' : ''}`} />
           </button>
           <button
             onClick={stock === 0 ? undefined : handleAddToCart}
-            className={`bg-white/90 p-2 shadow transition ${stock === 0 ? 'text-gray-400 cursor-not-allowed opacity-60' : 'hover:bg-green-100 text-green-600 hover:text-green-900'}`}
+            className={`bg-white/95 p-2.5 shadow-lg hover:shadow-xl transition-all duration-200 backdrop-blur-sm ${stock === 0 ? 'text-gray-400 cursor-not-allowed opacity-60' : 'hover:bg-green-50 text-green-600 hover:text-green-700'}`}
             title={stock === 0 ? 'Produto esgotado' : 'Adicionar ao carrinho'}
             disabled={stock === 0}
             tabIndex={stock === 0 ? -1 : 0}
           >
-            <ShoppingBag className="w-6 h-6" />
+            <ShoppingBag className="w-5 h-5" />
           </button>
         </div>
       </div>
-      <CardContent className="flex flex-col items-center justify-center py-6 px-2 rounded-none">
-        <h3 className="font-sans text-xs md:text-sm text-zinc-700 font-medium text-center mb-1 uppercase tracking-wide">
+      <CardContent className="flex flex-col items-center justify-center py-4 px-4 bg-white min-h-[120px]">
+        <h3 className="font-sans text-sm md:text-base text-zinc-800 font-medium text-center mb-3 line-clamp-2 leading-tight min-h-[2.5rem] flex items-center">
           {name}
         </h3>
-        <span className="text-2xl font-bold text-zinc-900 text-center">
-          {formatPrice(price)}
-        </span>
-        {originalPrice && (
-          <span className="text-sm line-through text-muted-foreground">
-            {formatPrice(originalPrice)}
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-lg md:text-xl font-bold text-zinc-900 text-center">
+            {formatPrice(price)}
           </span>
-        )}
+          {originalPrice && (
+            <span className="text-lg line-through text-muted-foreground">
+              {formatPrice(originalPrice)}
+            </span>
+          )}
+        </div>
 
       </CardContent>
     </Card>

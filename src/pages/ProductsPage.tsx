@@ -54,7 +54,7 @@ export default function ProductsPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <div className="animate-spin h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-muted-foreground">Carregando produtos...</p>
             </div>
           </div>
@@ -131,7 +131,7 @@ export default function ProductsPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="px-3 py-2 border border-input bg-background rounded-md text-sm"
+                  className="px-3 py-2 border border-input bg-background text-sm"
                 >
                   <option value="newest">Mais recentes</option>
                   <option value="name">Nome A-Z</option>
@@ -139,7 +139,7 @@ export default function ProductsPage() {
                 </select>
 
                 {/* Modo de visualização */}
-                <div className="flex border border-input rounded-md">
+                <div className="flex border border-input">
                   <Button
                     variant={viewMode === 'grid' ? 'default' : 'ghost'}
                     size="sm"

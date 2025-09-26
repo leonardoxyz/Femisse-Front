@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
@@ -7,17 +7,17 @@ import CategoryPageBanner from '@/components/CategoryPageBanner';
 import { ProductFiltersEnhanced } from '@/components/ProductFiltersEnhanced';
 import { useProductFilters, FilterState } from '@/hooks/useProductFilters';
 import { Button } from '@/components/ui/button';
-import { Filter, Grid, List, SlidersHorizontal } from 'lucide-react';
+import { Filter, SlidersHorizontal } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { API_ENDPOINTS } from '@/config/api';
 import { slugToText, createSlug, removeAccents } from '@/utils/slugs';
 
 const ProductsByCategory = () => {
   const { slug } = useParams(); // Mudança: usar slug em vez de id
+  const navigate = useNavigate();
   const [categoryName, setCategoryName] = React.useState('');
   const [categoryId, setCategoryId] = React.useState<string | null>(null);
   const [categoryData, setCategoryData] = React.useState<any>(null);
-  const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = React.useState<'name' | 'price' | 'newest'>('newest');
 
   const {
@@ -156,37 +156,6 @@ const ProductsByCategory = () => {
                       </div>
                     </SheetContent>
                   </Sheet>
-
-                  {/* Ordenação */}
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
-                    className="px-3 py-2 border border-input bg-background rounded-md text-sm"
-                  >
-                    <option value="newest">Mais recentes</option>
-                    <option value="name">Nome A-Z</option>
-                    <option value="price">Menor preço</option>
-                  </select>
-
-                  {/* Modo de visualização */}
-                  <div className="flex border border-input rounded-md">
-                    <Button
-                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('grid')}
-                      className="rounded-r-none"
-                    >
-                      <Grid className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant={viewMode === 'list' ? 'default' : 'ghost'}
-                      size="sm"
-                      onClick={() => setViewMode('list')}
-                      className="rounded-l-none"
-                    >
-                      <List className="h-4 w-4" />
-                    </Button>
-                  </div>
                 </div>
               </div>
 
@@ -216,24 +185,90 @@ const ProductsByCategory = () => {
                   </p>
                 </div>
               ) : (
-                <div className={
-                  viewMode === 'grid'
-                    ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6"
-                    : "space-y-4"
-                }>
-                  {sortedProducts.map((product) => (
-                    <div key={product.id} className={viewMode === 'list' ? 'flex' : ''}>
-                      <ProductCard
-                        id={product.id}
-                        name={product.name}
-                        price={product.price}
-                        originalPrice={product.original_price}
-                        image={product.image}
-                        images={product.images}
-                        stock={product.stock}
-                      />
+                /* Grid de Produtos - Idêntico ao NewInSection */
+                <div className="w-full">
+                  {/* Container responsivo baseado no NewInSection */}
+                  <div className="mx-auto max-w-[1400px]">
+                    <div className="flex gap-6 lg:gap-8">
+                      {sortedProducts.map((product) => (
+                        <div key={product.id} className="flex-shrink-0" style={{ width: '320px' }}>
+                          <div>
+                            <div className="imgs relative overflow-hidden bg-primary group" style={{ paddingTop: '150%' }}>
+                              <a
+                                href={`/produto/${createSlug(product.name)}`}
+                                className="absolute inset-0 block"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  navigate(`/produto/${createSlug(product.name)}`);
+                                }}
+                                aria-label={product.name}
+                              >
+                                <div className="loading absolute inset-0 bg-gray-100"></div>
+
+                                <img
+                                  src={product.images?.[0] || product.image}
+                                  alt={product.name}
+                                  title={product.name}
+                                  className="lazy-img-fadein primary absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+                                  style={{ height: '100%' }}
+                                />
+
+                                {(product.images?.[1] || product.images?.[0]) && (
+                                  <img
+                                    src={product.images?.[1] || product.images?.[0]}
+                                    alt={product.name}
+                                    title={product.name}
+                                    className="lazy-img-fadein hover absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                    style={{ height: '100%' }}
+                                  />
+                                )}
+                              </a>
+
+                              <button
+                                className="w-5/6 absolute bottom-4 left-1/2 -translate-x-1/2 bg-primary text-white px-6 py-2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  navigate(`/produto/${createSlug(product.name)}`);
+                                }}
+                              >
+                                COMPRAR
+                              </button>
+                            </div>
+
+                            <div className="product-info-wrapper mt-4 text-center">
+                              <h3 className="h3 mb-2">
+                                <a
+                                  href={`/produto/${createSlug(product.name)}`}
+                                  className="name text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors line-clamp-2 uppercase"
+                                  title={product.name}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    navigate(`/produto/${createSlug(product.name)}`);
+                                  }}
+                                >
+                                  {product.name}
+                                </a>
+                              </h3>
+
+                              <div className="price-box mb-3">
+                                <div className="prices">
+                                  <span className="price primary-price text-lg font-bold text-gray-900">
+                                    R$ {product.price?.toFixed(2).replace('.', ',')}
+                                  </span>
+                                  {product.original_price && product.original_price > product.price && (
+                                    <span className="price text-sm text-gray-500 line-through ml-2">
+                                      R$ {product.original_price.toFixed(2).replace('.', ',')}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
                 </div>
               )}
             </div>

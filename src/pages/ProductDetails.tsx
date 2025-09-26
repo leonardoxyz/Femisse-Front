@@ -326,7 +326,7 @@ const ProductDetails = () => {
                     key={index}
                     src={image}
                     alt={`${product.name} ${index + 1}`}
-                    className={`w-20 h-20 object-cover cursor-pointer hover:opacity-80 transition-opacity border-2 ${mainImageIndex === index ? "border-primary" : "border-transparent"}`}
+                    className={`w-20 h-20 object-cover cursor-pointer hover:opacity-80 transition-opacity ${mainImageIndex === index ? "border-primary" : "border-transparent"}`}
                     onClick={() => setMainImageIndex(index)}
                   />
                 );
@@ -577,12 +577,12 @@ const ProductDetails = () => {
                 {/* Navegação customizada - só aparece se houver mais de 4 produtos */}
                 {similarProducts.length > 4 && (
                   <>
-                    <div className="swiper-button-prev-similar absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-gray-50 rounded-full shadow-lg flex items-center justify-center cursor-pointer z-10 transition-all duration-300 hover:scale-110">
+                    <div className="swiper-button-prev-similar absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-gray-50 shadow-lg flex items-center justify-center cursor-pointer z-10 transition-all duration-300 hover:scale-110">
                       <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                       </svg>
                     </div>
-                    <div className="swiper-button-next-similar absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-gray-50 rounded-full shadow-lg flex items-center justify-center cursor-pointer z-10 transition-all duration-300 hover:scale-110">
+                    <div className="swiper-button-next-similar absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-gray-50 shadow-lg flex items-center justify-center cursor-pointer z-10 transition-all duration-300 hover:scale-110">
                       <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
@@ -604,7 +604,6 @@ const ProductDetails = () => {
           width: 8px;
           height: 8px;
           background: rgba(0, 0, 0, 0.3);
-          border-radius: 50%;
           opacity: 1;
           cursor: pointer;
           transition: all 0.3s ease;
