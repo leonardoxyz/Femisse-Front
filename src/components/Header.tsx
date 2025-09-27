@@ -105,16 +105,16 @@ const Header = () => {
         >
           {[
             "★ PRIMEIRA COMPRA COM 10% DE DESCONTO",
-            "★ PARCELAMENTO EM ATÉ 12X SEM JUROS",
+            "★ PARCELAMENTO EM ATÉ 5X SEM JUROS",
             "★ ENVIAMOS PARA TODO BRASIL",
-            "★ FRETE GRÁTIS ACIMA DE R$ 200",
+            "★ FRETE GRÁTIS A PARTIR DE R$120,00",
             "★ DEVOLUÇÃO GRÁTIS EM 30 DIAS",
             "★ PAGAMENTO VIA PIX COM DESCONTO"
           ].concat([
             "★ PRIMEIRA COMPRA COM 10% DE DESCONTO",
-            "★ PARCELAMENTO EM ATÉ 12X SEM JUROS",
+            "★ PARCELAMENTO EM ATÉ 5X SEM JUROS",
             "★ ENVIAMOS PARA TODO BRASIL",
-            "★ FRETE GRÁTIS ACIMA DE R$ 200",
+            "★ FRETE GRÁTIS A PARTIR DE R$ 120,00",
             "★ DEVOLUÇÃO GRÁTIS EM 30 DIAS",
             "★ PAGAMENTO VIA PIX COM DESCONTO"
           ]).map((text, index) => (

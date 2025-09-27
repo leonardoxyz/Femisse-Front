@@ -6,6 +6,7 @@ import { ShoppingBag, Heart } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useCart } from "@/contexts/CartContext";
 import { createSlug } from "@/utils/slugs";
+import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   id: string;

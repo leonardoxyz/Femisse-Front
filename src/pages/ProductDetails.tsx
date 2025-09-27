@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import ProductCard from "@/components/ProductCard";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/css';
@@ -16,8 +15,9 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import React from 'react';
 import { API_ENDPOINTS } from '@/config/api';
-import { extractIdFromSlug, slugToText, removeAccents } from '@/utils/slugs';
+import { extractIdFromSlug, slugToText, removeAccents, createSlug } from '@/utils/slugs';
 import { secureLog, obfuscateUrl } from '@/utils/secureApi';
+import ShippingCalculator from "@/components/ShippingCalculator";
 
 // Funções utilitárias para favoritos
 async function fetchFavorites(token: string) {
@@ -61,6 +61,22 @@ const ProductDetails = () => {
   const [isZoomed, setIsZoomed] = React.useState(false);
   const [similarProducts, setSimilarProducts] = React.useState<any[]>([]);
   const [loadingSimilar, setLoadingSimilar] = React.useState(false);
+  const [selectedSize, setSelectedSize] = React.useState<string | null>(null);
+
+  const handleAddSimilarToCart = React.useCallback((similarProduct: any, event?: React.MouseEvent) => {
+    event?.preventDefault();
+    addToCart({
+      id: String(similarProduct.id),
+      name: similarProduct.name,
+      price: similarProduct.price,
+      image: Array.isArray(similarProduct.images) && similarProduct.images.length > 0 ? similarProduct.images[0] : similarProduct.image,
+    });
+    toast({
+      title: 'Adicionado ao carrinho',
+      description: `${similarProduct.name} foi adicionado ao seu carrinho!`,
+      variant: 'default',
+    });
+  }, [addToCart]);
 
   // Verificar se produto está nos favoritos
   const isFavorite = product ? favoriteIds.includes(product.id) : false;
@@ -75,9 +91,9 @@ const ProductDetails = () => {
       });
       return;
     }
-    
+
     if (!product?.id) return;
-    
+
     try {
       if (isFavorite) {
         await removeFavorite(product.id);
@@ -106,26 +122,27 @@ const ProductDetails = () => {
 
   React.useEffect(() => {
     if (!slug) return;
-    
+
     // Reset do estado quando slug muda
     setLoading(true);
     setProduct(null);
     setMainImageIndex(0);
-    
+    setSelectedSize(null);
+
     const fetchProduct = async () => {
       try {
         secureLog('Buscando produtos:', obfuscateUrl(API_ENDPOINTS.products));
         const response = await fetch(API_ENDPOINTS.products);
         const products = await response.json();
-        
+
         // Converter slug de volta para nome e procurar produto correspondente
         const searchName = slug.replace(/-/g, ' ').toLowerCase();
         console.log('Buscando produto com slug:', slug, 'searchName:', searchName);
-        
+
         const foundProduct = products.find((product: any) => {
           const productName = product.name.toLowerCase();
           console.log('Comparando com produto:', productName);
-          
+
           // Criar slug do nome do produto para comparação exata
           const productSlug = productName
             .toLowerCase()
@@ -137,7 +154,7 @@ const ProductDetails = () => {
             .replace(/[ùúûü]/g, 'u')
             .replace(/[ç]/g, 'c')
             .replace(/[^a-z0-9-]/g, '');
-          
+
           const normalizedSlug = slug
             .toLowerCase()
             .replace(/[àáâãäå]/g, 'a')
@@ -147,33 +164,33 @@ const ProductDetails = () => {
             .replace(/[ùúûü]/g, 'u')
             .replace(/[ç]/g, 'c')
             .replace(/[^a-z0-9-]/g, '');
-          
+
           console.log('Comparando slugs:', normalizedSlug, 'vs', productSlug);
-          
+
           // Primeiro tenta match exato do slug
           if (normalizedSlug === productSlug) {
             return true;
           }
-          
+
           // Se não encontrou match exato, tenta busca por palavras completas
           const searchWords = searchName.split(' ').filter(word => word.length > 2);
           const productWords = productName.split(' ').filter(word => word.length > 2);
-          
+
           // Verifica se todas as palavras da busca estão no nome do produto
-          const allWordsMatch = searchWords.every(searchWord => 
-            productWords.some(productWord => 
+          const allWordsMatch = searchWords.every(searchWord =>
+            productWords.some(productWord =>
               productWord.includes(searchWord) || searchWord.includes(productWord)
             )
           );
-          
+
           return allWordsMatch;
         });
-        
+
         console.log('Produto encontrado:', foundProduct);
         if (foundProduct) {
           await processProductData(foundProduct);
           console.log('Produto encontrado:', foundProduct);
-          
+
           // Buscar produtos similares da mesma categoria
           fetchSimilarProducts(foundProduct, products);
         } else {
@@ -201,14 +218,14 @@ const ProductDetails = () => {
             }
             return null;
           });
-          
+
           const imageUrls = await Promise.all(imagePromises);
           images = imageUrls.filter(url => url !== null);
         } catch (error) {
           console.error("Erro ao buscar URLs das imagens:", error);
         }
       }
-      
+
       setProduct({ ...data, images });
     };
 
@@ -217,24 +234,24 @@ const ProductDetails = () => {
       try {
         // Extrair palavras-chave do slug da URL atual
         const urlKeywords = slug ? slug.split('-').filter(word => word.length > 2) : [];
-        
+
         // Também extrair palavras-chave do nome do produto como fallback
         const nameKeywords = currentProduct.name.toLowerCase()
           .split(' ')
           .filter(word => word.length > 2);
-        
+
         // Combinar palavras-chave da URL e do nome (URL tem prioridade)
         const searchKeywords = [...new Set([...urlKeywords, ...nameKeywords])];
-        
+
         console.log(`Produto atual: "${currentProduct.name}"`);
         console.log(`Slug da URL: "${slug}"`);
         console.log('Palavras-chave para busca:', searchKeywords);
-        
+
         // Filtrar produtos similares baseado nas palavras-chave
         const similar = allProducts
           .filter(p => {
             if (p.id === currentProduct.id) return false; // Excluir produto atual
-            
+
             const productName = p.name.toLowerCase();
             const productSlug = productName
               .replace(/\s+/g, '-')
@@ -245,16 +262,16 @@ const ProductDetails = () => {
               .replace(/[ùúûü]/g, 'u')
               .replace(/[ç]/g, 'c')
               .replace(/[^a-z0-9-]/g, '');
-            
+
             // Verificar se alguma palavra-chave da busca está presente no nome ou slug do produto
-            return searchKeywords.some(keyword => 
-              productName.includes(keyword) || 
+            return searchKeywords.some(keyword =>
+              productName.includes(keyword) ||
               productSlug.includes(keyword) ||
               keyword.includes(productName.split(' ')[0]) // Primeira palavra do produto
             );
           })
           .slice(0, 8); // Limitar a 8 produtos similares
-        
+
         setSimilarProducts(similar);
         console.log('Produtos similares encontrados:', similar.length);
         console.log('Produtos similares:', similar.map(p => p.name));
@@ -332,11 +349,11 @@ const ProductDetails = () => {
                 );
               })}
             </div>
-            
+
             {/* Imagem principal */}
-            <div className="flex-1">
+            <div className="flex-1 max-w-[720px]">
               <div
-                className="relative overflow-hidden group w-full h-[600px]"
+                className="relative overflow-hidden group w-full h-[800px]"
                 style={{ maxWidth: '100%' }}
                 onMouseMove={e => {
                   const container = e.currentTarget;
@@ -355,7 +372,7 @@ const ProductDetails = () => {
                 <img
                   src={product.images && product.images.length > 0 ? product.images[mainImageIndex] : product.image}
                   alt={product.name}
-                  className="w-full h-[600px] object-cover transition-transform duration-300 cursor-zoom-in"
+                  className="w-full h-full object-cover transition-transform duration-300 cursor-zoom-in"
                   style={{ transformOrigin: 'center center', transition: 'transform 0.3s', transform: isZoomed ? 'scale(2)' : 'scale(1)' }}
                   onMouseEnter={() => setIsZoomed(true)}
                   onMouseLeave={e => { setIsZoomed(false); e.currentTarget.style.transformOrigin = 'center center'; }}
@@ -381,7 +398,7 @@ const ProductDetails = () => {
             </div>
 
             {/* Price */}
-            <Card className="p-6 bg-muted/30">
+            <Card className="border-none shadow-none bg-transparent p-0">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl font-bold text-primary">
@@ -405,62 +422,60 @@ const ProductDetails = () => {
             </Card>
 
             {/* Size Selection */}
-            <div>
-              <h3 className="font-semibold mb-3">Tamanho:</h3>
-              <div className="flex gap-2">
-                {Array.isArray(product.sizes) &&
-                  product.sizes.map((size) => (
-                    <Button
-                      key={size}
-                      variant="outline"
-                      size="sm"
-                      className="w-12 h-12"
-                    >
-                      {size}
-                    </Button>
-                  ))
-                }
+            {Array.isArray(product.sizes) && product.sizes.length > 0 && (
+              <div>
+                <div className="flex flex-wrap gap-2">
+                  {product.sizes.map((size: string) => {
+                    const isSelected = selectedSize === size;
+                    return (
+                      <Button
+                        key={size}
+                        variant={isSelected ? "default" : "outline"}
+                        size="sm"
+                        className={`w-12 h-12 transition-colors ${isSelected ? 'bg-primary text-white border-primary' : 'hover:border-primary/60'}`}
+                        onClick={() => setSelectedSize(size)}
+                        aria-pressed={isSelected}
+                      >
+                        {size}
+                      </Button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-
-            {/* Color Selection */}
-            <div>
-              <h3 className="font-semibold mb-3">Cor:</h3>
-              <div className="flex gap-2">
-                {Array.isArray(product.colors) &&
-                  product.colors.map((color) => (
-                    <Button
-                      key={color}
-                      variant="outline"
-                      size="sm"
-                      className="min-w-20"
-                    >
-                      {color}
-                    </Button>
-                  ))}
-              </div>
-            </div>
+            )}
 
             <div>
               <h3 className="font-semibold mb-3">Descrição:</h3>
               <p className="text-muted-foreground">{product.description}</p>
 
               {/* Action Buttons */}
-              <div className="space-y-3">
+              <div className="space-y-3 w-full max-w-[360px]">
                 <Button
                   size="lg"
                   className="w-full bg-primary hover:bg-pink-dark text-white font-semibold py-4"
-                  disabled={product.stock === 0}
+                  disabled={product.stock === 0 || (Array.isArray(product.sizes) && product.sizes.length > 0 && !selectedSize)}
                   onClick={() => {
+                    if (Array.isArray(product.sizes) && product.sizes.length > 0 && !selectedSize) {
+                      toast({
+                        title: "Selecione um tamanho",
+                        description: "Escolha o tamanho desejado antes de adicionar ao carrinho.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+
                     addToCart({
                       id: String(product.id),
                       name: product.name,
                       price: product.price,
                       image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : product.image,
+                      size: selectedSize || undefined,
                     });
                     toast({
                       title: "Adicionado ao carrinho",
-                      description: `${product.name} foi adicionado ao seu carrinho!`,
+                      description: selectedSize
+                        ? `${product.name} (${selectedSize}) foi adicionado ao seu carrinho!`
+                        : `${product.name} foi adicionado ao seu carrinho!`,
                       variant: "default",
                     });
                   }}
@@ -469,7 +484,7 @@ const ProductDetails = () => {
                   {product.stock > 0 ? "Adicionar ao Carrinho" : "Produto Esgotado"}
                 </Button>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full">
                   <Button
                     variant={isFavorite ? "default" : "outline"}
                     size="lg"
@@ -484,15 +499,14 @@ const ProductDetails = () => {
                     Compartilhar
                   </Button>
                 </div>
-              </div>
-            </div>
 
-            {/* Additional Info */}
-            <div className="pt-6 border-t border-border/20">
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>✓ Frete grátis para todo o Brasil</p>
-                <p>✓ Troca grátis em até 30 dias</p>
-                <p>✓ Pagamento seguro</p>
+                <div className="pt-4 border-t border-border/30 w-full">
+                  <div className="text-sm font-semibold text-zinc-800 mb-2">Calcular frete</div>
+                  <ShippingCalculator
+                    subtotal={product.price}
+                    minimal
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -554,21 +568,89 @@ const ProductDetails = () => {
                     '--swiper-pagination-color': '#000',
                   } as React.CSSProperties}
                 >
-                  {similarProducts.map((product, index) => (
-                    <SwiperSlide key={product.id}>
+                  {similarProducts.map((similarProduct, index) => (
+                    <SwiperSlide key={similarProduct.id}>
                       <div
-                        className="animate-fade-in h-full"
+                        className="animate-fade-in h-full flex justify-center"
                         style={{ animationDelay: `${index * 0.1}s` }}
                       >
-                        <ProductCard
-                          id={product.id}
-                          name={product.name}
-                          price={product.price}
-                          stock={product.stock}
-                          originalPrice={product.original_price}
-                          images={product.images}
-                          image={product.image}
-                        />
+                        <div className="flex-shrink-0" style={{ width: '320px' }}>
+                          <div>
+                            <div className="relative overflow-hidden bg-primary/5 group" style={{ paddingTop: '150%' }}>
+                              <a
+                                href={`/produto/${createSlug(similarProduct.name)}`}
+                                className="absolute inset-0 block"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  navigate(`/produto/${createSlug(similarProduct.name)}`);
+                                }}
+                                aria-label={similarProduct.name}
+                              >
+                                <div className="absolute inset-0 bg-gray-100"></div>
+
+                                <img
+                                  src={similarProduct.images?.[0] || similarProduct.image}
+                                  alt={similarProduct.name}
+                                  title={similarProduct.name}
+                                  className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+                                  style={{ height: '100%' }}
+                                />
+
+                                {(similarProduct.images?.[1] || similarProduct.images?.[0]) && (
+                                  <img
+                                    src={similarProduct.images?.[1] || similarProduct.images?.[0]}
+                                    alt={similarProduct.name}
+                                    title={similarProduct.name}
+                                    className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                    style={{ height: '100%' }}
+                                  />
+                                )}
+                              </a>
+
+                              <button
+                                className={`w-5/6 absolute bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10 ${
+                                  similarProduct.stock === 0
+                                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                    : 'bg-primary text-white hover:bg-primary/90'
+                                }`}
+                                onClick={(e) => handleAddSimilarToCart(similarProduct, e)}
+                                disabled={similarProduct.stock === 0}
+                                title={similarProduct.stock === 0 ? 'Produto esgotado' : 'Adicionar ao carrinho'}
+                              >
+                                {similarProduct.stock === 0 ? 'ESGOTADO' : 'ADICIONAR AO CARRINHO'}
+                              </button>
+                            </div>
+
+                            <div className="mt-4 text-center">
+                              <h3 className="mb-2">
+                                <a
+                                  href={`/produto/${createSlug(similarProduct.name)}`}
+                                  className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors line-clamp-2 uppercase"
+                                  title={similarProduct.name}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    navigate(`/produto/${createSlug(similarProduct.name)}`);
+                                  }}
+                                >
+                                  {similarProduct.name}
+                                </a>
+                              </h3>
+
+                              <div className="mb-3">
+                                <div>
+                                  <span className="text-lg font-bold text-gray-900">
+                                    R$ {similarProduct.price?.toFixed(2).replace('.', ',')}
+                                  </span>
+                                  {similarProduct.original_price && similarProduct.original_price > similarProduct.price && (
+                                    <span className="text-sm text-gray-500 line-through ml-2">
+                                      R$ {similarProduct.original_price.toFixed(2).replace('.', ',')}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </SwiperSlide>
                   ))}

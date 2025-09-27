@@ -1,5 +1,7 @@
 import React from "react";
 import { useCart } from "@/contexts/CartContext";
+import { useShipping, ShippingAddress } from "@/contexts/ShippingContext";
+import { Link } from "react-router-dom";
 
 interface SidebarCartProps {
   open: boolean;
@@ -8,6 +10,23 @@ interface SidebarCartProps {
 
 const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
   const [shouldRender, setShouldRender] = React.useState(open);
+  const FREE_SHIPPING_TARGET = 120; // R$120,00
+  const PIX_DISCOUNT_RATE = 0.05; // 5%
+  const formatBRL = (value: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  const { shippingInfo, updateShippingInfo } = useShipping();
+  const [cep, setCep] = React.useState<string>(shippingInfo.cep ?? "");
+  const [cepLoading, setCepLoading] = React.useState(false);
+  const [cepError, setCepError] = React.useState<string | null>(null);
+  const [address, setAddress] = React.useState<ShippingAddress | null>(shippingInfo.address ?? null);
+  const [shippingCost, setShippingCost] = React.useState<number | null>(shippingInfo.shippingCost ?? null);
+  const [locatingCep, setLocatingCep] = React.useState(false);
+
+  React.useEffect(() => {
+    setCep(shippingInfo.cep ?? "");
+    setAddress(shippingInfo.address ?? null);
+    setShippingCost(shippingInfo.shippingCost ?? null);
+  }, [shippingInfo.cep, shippingInfo.address, shippingInfo.shippingCost]);
 
   React.useEffect(() => {
     if (open) setShouldRender(true);
@@ -28,9 +47,136 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
-  if (!shouldRender) return null;
+  const { cart, removeFromCart, clearCart, updateQuantity } = useCart();
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = subtotal + (shippingCost ?? 0);
+  const pixTotal = Math.max(total - total * PIX_DISCOUNT_RATE, 0);
+  const freeShippingProgress = Math.min((subtotal / FREE_SHIPPING_TARGET) * 100, 100);
+  const remainingForFree = Math.max(FREE_SHIPPING_TARGET - subtotal, 0);
+  const shippingCalculated = shippingCost !== null;
 
-  const { cart, removeFromCart, clearCart } = useCart();
+  const setShippingContext = React.useCallback((nextCep: string, nextAddress: ShippingAddress | null, nextCost: number | null, source: "manual" | "auto" | null = null) => {
+    updateShippingInfo({ cep: nextCep, address: nextAddress, shippingCost: nextCost, source });
+  }, [updateShippingInfo]);
+
+  const calculateShippingCost = React.useCallback((targetCep: string) => {
+    if (subtotal >= FREE_SHIPPING_TARGET) {
+      return 0;
+    }
+    const first = parseInt(targetCep[0], 10);
+    if (Number.isNaN(first)) return null;
+    if (first <= 2) return 19.9;
+    if (first <= 5) return 24.9;
+    if (first <= 8) return 29.9;
+    return 34.9;
+  }, [subtotal]);
+
+  const handleCalculateShipping = React.useCallback(async (inputCep?: string, source: "manual" | "auto" = "manual") => {
+    const sanitized = (inputCep ?? cep).replace(/\D/g, "").slice(0, 8);
+    setCep(sanitized);
+    setCepError(null);
+    if (sanitized.length !== 8) {
+      setShippingCost(null);
+      setAddress(null);
+      setCepError('Informe um CEP válido (8 dígitos).');
+      return;
+    }
+    try {
+      setCepLoading(true);
+      const response = await fetch(`https://viacep.com.br/ws/${sanitized}/json/`);
+      const data = await response.json();
+      const cost = calculateShippingCost(sanitized);
+      if (cost === null) {
+        setAddress(null);
+        setShippingCost(null);
+        setCepError('Não foi possível calcular o frete.');
+        setShippingContext(sanitized, null, null, null);
+      } else {
+        setAddress(data);
+        setShippingCost(cost);
+        setShippingContext(sanitized, data, cost, source);
+      }
+    } catch (error) {
+      console.error('Erro ao calcular frete:', error);
+      setAddress(null);
+      setShippingCost(null);
+      setCepError('Não foi possível calcular o frete. Tente novamente.');
+      setShippingContext(sanitized, null, null, null);
+    } finally {
+      setCepLoading(false);
+    }
+  }, [calculateShippingCost, cep, setShippingContext]);
+
+  const handleUseMyLocation = React.useCallback(() => {
+    if (!navigator?.geolocation) {
+      setCepError('Geolocalização não suportada neste dispositivo.');
+      return;
+    }
+    setLocatingCep(true);
+    setCepError(null);
+
+    const resolveCepFromCoords = async (latitude: number, longitude: number) => {
+      try {
+        const baseParams = `format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1&accept-language=pt-BR`;
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${baseParams}`);
+        const result = await response.json();
+        let postalCode = (result?.address?.postcode || '').replace(/\D/g, '');
+
+        if (postalCode.length !== 8) {
+          const fallback = await fetch('https://ipapi.co/json/');
+          const fallbackData = await fallback.json();
+          postalCode = (fallbackData?.postal || '').replace(/\D/g, '');
+        }
+
+        if (postalCode.length !== 8) {
+          setCepError('Não foi possível identificar um CEP válido em sua localização.');
+          return;
+        }
+
+        await handleCalculateShipping(postalCode, "auto");
+      } catch (error) {
+        console.error('Erro ao obter CEP por localização:', error);
+        setCepError('Não foi possível obter o CEP pela sua localização.');
+      }
+    };
+
+    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+      await resolveCepFromCoords(coords.latitude, coords.longitude);
+      setLocatingCep(false);
+    }, (geoError) => {
+      console.error('Permissão de localização negada ou indisponível:', geoError);
+      setLocatingCep(false);
+      switch (geoError.code) {
+        case geoError.PERMISSION_DENIED:
+          setCepError('Permita o acesso à sua localização para buscar o CEP automaticamente.');
+          break;
+        case geoError.POSITION_UNAVAILABLE:
+          setCepError('Sua localização não está disponível no momento.');
+          break;
+        case geoError.TIMEOUT:
+          setCepError('Tempo esgotado ao obter sua localização.');
+          break;
+        default:
+          setCepError('Não foi possível obter sua localização.');
+      }
+    }, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    });
+  }, [handleCalculateShipping]);
+
+  // Cores dinâmicas para a barra conforme o progresso
+  const progressColor = freeShippingProgress >= 100
+    ? 'bg-green-500'
+    : freeShippingProgress >= 66
+      ? 'bg-yellow-500'
+      : 'bg-rose-500';
+  const shouldPulse = freeShippingProgress >= 85 && freeShippingProgress < 100;
+
+  if (!shouldRender) {
+    return null;
+  }
 
   return (
     <>
@@ -49,43 +195,164 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
         role="dialog"
         aria-modal="true"
       >
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-lg font-bold">Carrinho</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-primary text-2xl">&times;</button>
+        {/* Header */}
+        <div className="flex justify-between items-center px-4 py-3 border-b">
+          <h2 className="text-[15px] font-semibold text-zinc-800">Minha cestinha</h2>
+          <button onClick={onClose} className="text-zinc-500 hover:text-primary text-2xl" aria-label="Fechar">&times;</button>
         </div>
-        <div className="p-4 flex-1 overflow-y-auto">
+
+        {/* Conteúdo */}
+        <div className="px-4 py-3 flex-1 overflow-y-auto space-y-4">
           {cart.length === 0 ? (
-            <p className="text-gray-500 text-center mt-10">Seu carrinho está vazio.</p>
+            <p className="text-zinc-500 text-center mt-8">Seu carrinho está vazio.</p>
           ) : (
-            cart.map(item => (
-              <div key={item.id} className="flex items-center mb-4">
-                <img src={item.image} alt={item.name} className="w-12 h-12 rounded mr-3 border" />
-                <div className="flex-1">
-                  <div className="font-semibold text-sm">{item.name}</div>
-                  <div className="text-xs text-gray-500">Qtd: {item.quantity}</div>
-                  <div className="text-xs text-gray-500">R$ {(item.price * item.quantity).toFixed(2)}</div>
+            <div className="space-y-4">
+              {cart.map((item) => (
+                <div key={item.id} className="flex gap-3">
+                  <img src={item.image} alt={item.name} className="w-14 h-14 rounded border object-cover" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between">
+                      <div className="text-[13px] font-medium text-zinc-800 line-clamp-2 pr-2">
+                        {item.name}
+                        {item.size && (
+                          <span className="block text-[12px] text-zinc-500 mt-0.5">Tamanho: {item.size}</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => removeFromCart(item.id, item.size)}
+                        className="text-[12px] text-zinc-500 hover:text-zinc-700"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="inline-flex items-center border rounded-md overflow-hidden">
+                        <button
+                          className="px-2 py-1 text-[12px] text-zinc-700 hover:bg-zinc-100"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.size)}
+                          aria-label="Diminuir quantidade"
+                        >
+                          –
+                        </button>
+                        <span className="px-3 py-1 text-[12px] text-zinc-800">{item.quantity}</span>
+                        <button
+                          className="px-2 py-1 text-[12px] text-zinc-700 hover:bg-zinc-100"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.size)}
+                          aria-label="Aumentar quantidade"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div className="text-[13px] font-semibold text-zinc-900">
+                        {formatBRL(item.price * item.quantity)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Barra de frete grátis */}
+              <div className="pt-2">
+                <div className="relative w-full h-1.5 bg-zinc-200 rounded-full overflow-visible">
+                  <div
+                    className={`h-1.5 ${progressColor} rounded-full transition-all duration-500`}
+                    style={{ width: `${freeShippingProgress}%` }}
+                  />
+                  <div
+                    className={`absolute -top-1.5 w-4 h-4 bg-primary border border-zinc-300 rounded-full shadow transition-all duration-500 ${shouldPulse ? 'animate-pulse' : ''}`}
+                    style={{ left: `calc(${freeShippingProgress}% - 8px)` }}
+                    aria-hidden
+                  />
+                </div>
+                <div className="mt-2 text-[13px] text-zinc-800 font-medium">
+                  {freeShippingProgress >= 100 ? (
+                    <span className="text-green-600 font-semibold">Você ganhou frete grátis!</span>
+                  ) : (
+                    <>
+                      <span className="font-semibold">Frete grátis</span> a partir de {formatBRL(FREE_SHIPPING_TARGET)}
+                      <span className="ml-1 text-zinc-600">• Faltam {formatBRL(remainingForFree)}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Subtotal */}
+              <div className="pt-2 border-t" />
+              <div className="flex items-center justify-between text-[13px]">
+                <span className="text-zinc-700">Subtotal (sem frete) :</span>
+                <span className="text-zinc-900 font-medium">{formatBRL(subtotal)}</span>
+              </div>
+
+              <div>
+                <div className="text-[13px] text-zinc-800 font-medium mb-2">Meios de envio</div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={cep}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, '').slice(0, 8);
+                      setCep(v);
+                    }}
+                    placeholder="Seu CEP"
+                    className="flex-1 border rounded px-3 py-2 text-[13px] outline-none focus:ring-1 focus:ring-zinc-300"
+                  />
+                  <button
+                    className={`px-3 py-2 text-[13px] rounded text-white ${cepLoading || locatingCep ? 'bg-zinc-400 cursor-wait' : 'bg-primary'}`}
+                    onClick={() => handleCalculateShipping()}
+                    disabled={cepLoading || locatingCep}
+                  >
+                    {cepLoading ? 'Calculando...' : 'Calcular'}
+                  </button>
                 </div>
                 <button
-                  onClick={() => removeFromCart(item.id)}
-                  className="ml-2 text-red-500 hover:text-red-700 text-xs"
-                  title="Remover do carrinho"
+                  className="mt-1 text-[12px] underline text-zinc-600"
+                  onClick={handleUseMyLocation}
+                  disabled={locatingCep || cepLoading}
                 >
-                  Remover
+                  {locatingCep ? 'Buscando sua localização...' : 'Não sei meu CEP'}
                 </button>
+                {cepError && <div className="text-[12px] text-red-600 mt-1">{cepError}</div>}
+
+                {/* Endereço resolvido */}
+                {address && (
+                  <div className="mt-3 text-[12px] text-zinc-700 border rounded p-3">
+                    <div className="font-medium text-zinc-800 mb-1">Endereço para entrega</div>
+                    <div>{address.logradouro || '—'} {address.bairro ? `- ${address.bairro}` : ''}</div>
+                    <div>{address.localidade}/{address.uf} • CEP {address.cep}</div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-zinc-700">Frete</span>
+                      <span className="text-zinc-900 font-medium">{subtotal >= FREE_SHIPPING_TARGET ? 'GRÁTIS' : formatBRL(shippingCost ?? 0)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))
+
+              {/* Total */}
+              <div className="flex items-center justify-between text-[14px] font-medium">
+                <span className="text-zinc-800">Total:</span>
+                <span className="text-zinc-900">{formatBRL(total)}</span>
+              </div>
+              <div className="text-[12px] text-zinc-600">Ou {formatBRL(pixTotal)} com Pix</div>
+            </div>
           )}
         </div>
-        <div className="p-4 border-t flex flex-col gap-2">
-          {cart.length > 0 && (
-            <button
-              className="w-full bg-red-100 text-red-700 py-2 rounded font-semibold hover:bg-red-200 transition"
-              onClick={clearCart}
-            >
-              Limpar Carrinho
-            </button>
+
+        {/* Footer ações */}
+        <div className="px-4 py-3 border-t flex flex-col items-center gap-3">
+          {cart.length > 0 ? (
+            <>
+              <button
+                className={`w-full py-2 rounded-md text-[14px] font-medium text-white ${shippingCalculated ? 'bg-primary' : 'bg-zinc-300 cursor-not-allowed'}`}
+                disabled={!shippingCalculated}
+                title={shippingCalculated ? 'Finalizar compra' : 'Calcule o frete para continuar'}
+              >
+                Finalizar compra
+              </button>
+              <Link to="/"><button className="text-[12px] underline text-zinc-600">Ver mais produtos</button></Link>
+            </>
+          ) : (
+            <Link to="/"><button className="text-[12px] underline text-zinc-600">Ver mais produtos</button></Link>
           )}
-          <button className="w-full bg-primary text-white py-2 rounded font-semibold hover:bg-pink-dark transition">Finalizar Compra</button>
         </div>
       </div>
     </>

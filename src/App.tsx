@@ -16,6 +16,7 @@ const queryClient = new QueryClient();
 
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { ShippingProvider } from "@/contexts/ShippingContext";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -24,22 +25,23 @@ const App = () => (
       <Sonner />
       <CartProvider>
         <FavoritesProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/produto/:slug" element={<ProductDetails />} />
-              <Route path="/categoria/:slug" element={<ProductsByCategory />} />
-              <Route path="/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
-              <Route path="/perfil/:section" element={<PrivateRoute><Profile /></PrivateRoute>} />
-              <Route path="/login" element={<AuthPage />} />
-              <Route path="/busca" element={<SearchResults />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <ShippingProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/produto/:slug" element={<ProductDetails />} />
+                <Route path="/categoria/:slug" element={<ProductsByCategory />} />
+                <Route path="/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
+                <Route path="/perfil/:section" element={<PrivateRoute><Profile /></PrivateRoute>} />
+                <Route path="/login" element={<AuthPage />} />
+                <Route path="/busca" element={<SearchResults />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </ShippingProvider>
         </FavoritesProvider>
       </CartProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
-
 export default App;
