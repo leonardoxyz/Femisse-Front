@@ -11,8 +11,11 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { API_ENDPOINTS } from '@/config/api';
 import { slugToText, createSlug, removeAccents } from '@/utils/slugs';
 import ShowcaseProductCard from '@/components/cards/ShowcaseProductCard';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 const ProductsByCategory = () => {
+  useScrollRestoration();
+
   const { slug } = useParams(); // Mudança: usar slug em vez de id
   const [categoryName, setCategoryName] = React.useState('');
   const [categoryId, setCategoryId] = React.useState<string | null>(null);
@@ -31,20 +34,20 @@ const ProductsByCategory = () => {
   useEffect(() => {
     const fetchCategoryAndProducts = async () => {
       if (!slug) return;
-      
+
       try {
         // Buscar todas as categorias e encontrar a correspondente pelo nome
         const response = await fetch(`${API_ENDPOINTS.categories}`);
-        
+
         if (response.ok) {
           const categories = await response.json();
-          
+
           // Converter slug de volta para nome e procurar categoria correspondente
           const searchName = slugToText(slug).toLowerCase();
           const foundCategory = categories.find((category: any) => {
             const categoryName = category.name.toLowerCase();
             const categorySlug = createSlug(category.name);
-            
+
             return (
               categoryName === searchName ||
               categoryName.includes(searchName) ||
@@ -55,7 +58,7 @@ const ProductsByCategory = () => {
               removeAccents(categoryName).includes(removeAccents(searchName))
             );
           });
-          
+
           if (foundCategory) {
             setCategoryName(foundCategory.name);
             setCategoryId(foundCategory.id);
@@ -64,14 +67,14 @@ const ProductsByCategory = () => {
             return;
           }
         }
-        
+
         // Fallback: usar nome formatado do slug
         const displayName = slugToText(slug);
         setCategoryName(displayName);
-        
+
         // Tentar buscar produtos usando o slug como filtro
         fetchProducts(slug);
-        
+
       } catch (error) {
         console.error('Erro ao buscar categoria:', error);
         // Fallback final
@@ -91,7 +94,7 @@ const ProductsByCategory = () => {
 
   const sortedProducts = React.useMemo(() => {
     const sorted = [...filteredProducts];
-    
+
     switch (sortBy) {
       case 'name':
         return sorted.sort((a, b) => a.name.localeCompare(b.name));
@@ -106,17 +109,17 @@ const ProductsByCategory = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      
+
       {/* Banner da Categoria */}
       <CategoryPageBanner category={categoryData} />
-      
+
       <div className="flex-1">
         <div className="container mx-auto px-4 py-8">
           <div className="flex gap-8">
             {/* Filtros Desktop */}
             <div className="hidden lg:block w-80 flex-shrink-0">
               <div className="sticky top-4">
-                <ProductFiltersEnhanced 
+                <ProductFiltersEnhanced
                   onFiltersChange={handleFiltersChange}
                   productStats={filterStats}
                 />
@@ -148,7 +151,7 @@ const ProductsByCategory = () => {
                     <SheetContent side="left" className="w-80 p-0">
                       <div className="p-4">
                         <h2 className="text-lg font-semibold mb-4">Filtros</h2>
-                        <ProductFiltersEnhanced 
+                        <ProductFiltersEnhanced
                           onFiltersChange={handleFiltersChange}
                           productStats={filterStats}
                         />
@@ -184,7 +187,10 @@ const ProductsByCategory = () => {
                 </div>
               ) : (
                 <div className="mx-auto max-w-[1400px]">
-                  <div className="flex flex-wrap gap-6 lg:gap-8">
+                  <div className="
+  flex flex-wrap gap-6 justify-center
+  lg:grid lg:grid-cols-3 lg:gap-8 lg:justify-items-start
+">
                     {sortedProducts.map((product) => (
                       <div
                         key={product.id}

@@ -63,6 +63,10 @@ const ProductDetails = () => {
   const [loadingSimilar, setLoadingSimilar] = React.useState(false);
   const [selectedSize, setSelectedSize] = React.useState<string | null>(null);
 
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
+
   const handleAddSimilarToCart = React.useCallback((similarProduct: any, event?: React.MouseEvent) => {
     event?.preventDefault();
     addToCart({
@@ -334,26 +338,24 @@ const ProductDetails = () => {
 
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Product Images */}
-          <div className="flex gap-4">
-            {/* Thumbnail images - Coluna à esquerda */}
-            <div className="flex flex-col gap-2">
-              {product.images && product.images.map((image: string, index: number) => {
-                return (
-                  <img
-                    key={index}
-                    src={image}
-                    alt={`${product.name} ${index + 1}`}
-                    className={`w-20 h-20 object-cover cursor-pointer hover:opacity-80 transition-opacity ${mainImageIndex === index ? "border-primary" : "border-transparent"}`}
-                    onClick={() => setMainImageIndex(index)}
-                  />
-                );
-              })}
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Desktop thumbnail column */}
+            <div className="hidden lg:flex flex-col gap-2">
+              {product.images && product.images.map((image: string, index: number) => (
+                <img
+                  key={index}
+                  src={image}
+                  alt={`${product.name} ${index + 1}`}
+                  className={`w-20 h-20 object-cover cursor-pointer rounded-sm border transition-opacity hover:opacity-80 ${mainImageIndex === index ? "border-primary" : "border-transparent"}`}
+                  onClick={() => setMainImageIndex(index)}
+                />
+              ))}
             </div>
 
-            {/* Imagem principal */}
+            {/* Main image */}
             <div className="flex-1 max-w-[720px]">
               <div
-                className="relative overflow-hidden group w-full h-[800px]"
+                className="relative overflow-hidden group w-full h-[600px] sm:h-[720px] lg:h-[800px]"
                 style={{ maxWidth: '100%' }}
                 onMouseMove={e => {
                   const container = e.currentTarget;
@@ -385,6 +387,25 @@ const ProductDetails = () => {
                     {product.badge}
                   </Badge>
                 )}
+              </div>
+
+              {/* Mobile thumbnails */}
+              <div className="mt-4 flex gap-2 overflow-x-auto lg:hidden">
+                {product.images && product.images.map((image: string, index: number) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className={`relative flex-shrink-0 border rounded-sm ${mainImageIndex === index ? "border-primary" : "border-transparent"}`}
+                    onClick={() => setMainImageIndex(index)}
+                    aria-label={`Selecionar imagem ${index + 1}`}
+                  >
+                    <img
+                      src={image}
+                      alt={`${product.name} ${index + 1}`}
+                      className="w-20 h-20 object-cover"
+                    />
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -445,11 +466,8 @@ const ProductDetails = () => {
             )}
 
             <div>
-              <h3 className="font-semibold mb-3">Descrição:</h3>
-              <p className="text-muted-foreground">{product.description}</p>
-
               {/* Action Buttons */}
-              <div className="space-y-3 w-full max-w-[360px]">
+              <div className="space-y-3 w-full md:max-w-[450px] lg:max-w-[450px] xl:max-w-[450px]">
                 <Button
                   size="lg"
                   className="w-full bg-primary hover:bg-pink-dark text-white font-semibold py-4"
@@ -507,6 +525,9 @@ const ProductDetails = () => {
                     minimal
                   />
                 </div>
+
+                <h3 className="font-semibold mb-3">- DESCRIÇÃO DO PRODUTO</h3>
+                <p className="text-muted-foreground">{product.description}</p>
               </div>
             </div>
           </div>

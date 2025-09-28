@@ -7,6 +7,7 @@ import { useFavorites } from "@/contexts/FavoritesContext";
 import { useCart } from "@/contexts/CartContext";
 import { createSlug } from "@/utils/slugs";
 import { cn } from "@/lib/utils";
+import { storeCurrentScrollPosition } from "@/hooks/useScrollRestoration";
 
 interface ProductCardProps {
   id: string;
@@ -47,6 +48,12 @@ const ProductCard = ({
   const hoverImage = safeImages[1] || safeImages[0] || '';
 
   const { addToCart } = useCart();
+
+  const handleNavigateToDetails = React.useCallback(() => {
+    storeCurrentScrollPosition();
+    navigate(`/produto/${createSlug(name)}`);
+  }, [navigate, name]);
+
   function handleAddToCart(e: React.MouseEvent) {
     e.stopPropagation();
     addToCart({
@@ -103,7 +110,7 @@ async function handleAddToFavorites(e: React.MouseEvent) {
   return (
     <Card
       className="bg-white border-0 shadow-sm hover:shadow-md cursor-pointer p-0 group transition-all duration-300 overflow-hidden mx-auto"
-      onClick={() => navigate(`/produto/${createSlug(name)}`)}
+      onClick={handleNavigateToDetails}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -119,7 +126,7 @@ async function handleAddToFavorites(e: React.MouseEvent) {
           className="absolute top-0 left-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
         />
         {/* Botões de ação */}
-        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">
+        <div className="hidden md:flex md:flex-col gap-2 md:opacity-0 md:group-hover:opacity-100 md:pointer-events-none md:group-hover:pointer-events-auto transition-all duration-300 z-10 absolute top-3 right-3">
           <button
             onClick={handleAddToFavorites}
             className="bg-white/95 hover:bg-pink-50 p-2.5 shadow-lg hover:shadow-xl text-pink-600 hover:text-pink-700 transition-all duration-200 backdrop-blur-sm"
