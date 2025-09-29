@@ -25,7 +25,7 @@ interface ShippingContextValue {
 
 const ShippingContext = React.createContext<ShippingContextValue | undefined>(undefined);
 
-const SHIPPING_STORAGE_KEY = 'feminisse-shipping';
+const SHIPPING_STORAGE_KEY = 'femisse-shipping';
 
 const defaultState: ShippingInfo = {
   cep: "",

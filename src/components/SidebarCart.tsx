@@ -108,40 +108,103 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
   }, [calculateShippingCost, cep, setShippingContext]);
 
   const handleUseMyLocation = React.useCallback(() => {
-    if (!navigator?.geolocation) {
-      setCepError('Geolocalização não suportada neste dispositivo.');
-      return;
-    }
-    setLocatingCep(true);
-    setCepError(null);
+    const applyCep = async (rawCep: string | null | undefined, source: "manual" | "auto") => {
+      const sanitized = (rawCep || '').replace(/\D/g, '').slice(0, 8);
+      if (sanitized.length === 8) {
+        await handleCalculateShipping(sanitized, source);
+        return true;
+      }
+      return false;
+    };
 
-    const resolveCepFromCoords = async (latitude: number, longitude: number) => {
+    const resolveCepFromIP = async () => {
       try {
-        const baseParams = `format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1&accept-language=pt-BR`;
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${baseParams}`);
-        const result = await response.json();
-        let postalCode = (result?.address?.postcode || '').replace(/\D/g, '');
-
-        if (postalCode.length !== 8) {
-          const fallback = await fetch('https://ipapi.co/json/');
-          const fallbackData = await fallback.json();
-          postalCode = (fallbackData?.postal || '').replace(/\D/g, '');
-        }
-
-        if (postalCode.length !== 8) {
-          setCepError('Não foi possível identificar um CEP válido em sua localização.');
-          return;
-        }
-
-        await handleCalculateShipping(postalCode, "auto");
+        const response = await fetch('https://ipapi.co/json/');
+        if (!response.ok) return false;
+        const data = await response.json();
+        return await applyCep(data?.postal, "auto");
       } catch (error) {
-        console.error('Erro ao obter CEP por localização:', error);
-        setCepError('Não foi possível obter o CEP pela sua localização.');
+        console.error('Erro ao obter CEP via IP:', error);
+        return false;
       }
     };
 
+    const resolveCepFromCoords = async (latitude: number, longitude: number) => {
+      const providers: Array<() => Promise<string | null>> = [
+        async () => {
+          try {
+            const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=pt`; 
+            const result = await fetch(url);
+            if (!result.ok) return null;
+            const json = await result.json();
+            return (json?.postcode || null);
+          } catch (error) {
+            console.error('Erro no BigDataCloud:', error);
+            return null;
+          }
+        },
+        async () => {
+          try {
+            const url = `https://geocode.maps.co/reverse?lat=${latitude}&lon=${longitude}`;
+            const result = await fetch(url);
+            if (!result.ok) return null;
+            const json = await result.json();
+            return (json?.address?.postcode || null);
+          } catch (error) {
+            console.error('Erro no Maps.co:', error);
+            return null;
+          }
+        },
+        async () => {
+          try {
+            const params = `format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=20&addressdetails=1&accept-language=pt-BR`;
+            const result = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`);
+            if (!result.ok) return null;
+            const json = await result.json();
+            return (json?.address?.postcode || null);
+          } catch (error) {
+            console.error('Erro no Nominatim:', error);
+            return null;
+          }
+        }
+      ];
+
+      for (const provider of providers) {
+        const candidate = await provider();
+        if (candidate && await applyCep(candidate, "auto")) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    const attemptIPOnly = async () => {
+      setLocatingCep(true);
+      setCepError(null);
+      const ipSuccess = await resolveCepFromIP();
+      setLocatingCep(false);
+      if (!ipSuccess) {
+        setCepError('Não foi possível detectar seu CEP automaticamente. Por favor, informe manualmente.');
+      }
+    };
+
+    if (!navigator?.geolocation) {
+      attemptIPOnly();
+      return;
+    }
+
+    setLocatingCep(true);
+    setCepError(null);
+
     navigator.geolocation.getCurrentPosition(async ({ coords }) => {
-      await resolveCepFromCoords(coords.latitude, coords.longitude);
+      const coordSuccess = await resolveCepFromCoords(coords.latitude, coords.longitude);
+      if (!coordSuccess) {
+        const ipSuccess = await resolveCepFromIP();
+        if (!ipSuccess) {
+          setCepError('Não foi possível detectar seu CEP automaticamente. Por favor, informe manualmente.');
+        }
+      }
       setLocatingCep(false);
     }, (geoError) => {
       console.error('Permissão de localização negada ou indisponível:', geoError);

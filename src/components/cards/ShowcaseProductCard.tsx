@@ -187,7 +187,7 @@ const ShowcaseProductCard: React.FC<ShowcaseProductCardProps> = ({
                   onClick={(event) => handleSizeSelect(event, size)}
                   disabled={isOutOfStock}
                   className={cn(
-                    "border px-3 py-1 text-xs font-medium uppercase transition",
+                    "border px-3 py-1 text-xs font-medium uppercase transition hover:text-white",
                     isSelected
                       ? "bg-primary text-white border-primary"
                       : "bg-white/90 text-gray-900 border-gray-300 hover:border-primary hover:bg-primary/100",

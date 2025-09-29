@@ -187,7 +187,18 @@ const Header = () => {
                           ))}
                         </nav>
                       </div>
-
+                      <div>
+                        <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Minha conta</h3>
+                        <div className="flex flex-col gap-2 text-sm">
+                          <Link
+                            to="/perfil/favorites"
+                            className="py-2 border-b border-border/60"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            Meus favoritos
+                          </Link>
+                        </div>
+                      </div>
                       <div>
                         <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Ajuda</h3>
                         <div className="flex flex-col gap-2 text-sm">
@@ -318,31 +329,6 @@ const Header = () => {
               >
                 <Search className="h-5 w-5" />
               </Button>
-              {(() => {
-                const { isAuthenticated } = useAuth();
-                const { userData } = useUserData();
-
-                if (isAuthenticated && userData) {
-                  return (
-                    <Link to="/perfil/favorites">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="relative"
-                        aria-label="Favoritos"
-                    >
-                      <Heart className="h-5 w-5" />
-                      {favoriteIds.length > 0 && (
-                        <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs">
-                          {favoriteIds.length}
-                        </Badge>
-                      )}
-                    </Button>
-                  </Link>
-                );
-              }
-              })()}
-
               <Button
                 variant="ghost"
                 size="icon"

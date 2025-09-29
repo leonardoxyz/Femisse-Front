@@ -525,11 +525,14 @@ const ProductDetails = () => {
                     minimal
                   />
                 </div>
-
-                <h3 className="font-semibold mb-3">- DESCRIÇÃO DO PRODUTO</h3>
-                <p className="text-muted-foreground">{product.description}</p>
               </div>
             </div>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-3">- DESCRIÇÃO DO PRODUTO</h3>
+            <p className="text-muted-foreground whitespace-pre-line leading-relaxed text-sm">
+              {product.description?.replace(/\r\n/g, "\n")}
+            </p>
           </div>
         </div>
       </div>
@@ -629,11 +632,10 @@ const ProductDetails = () => {
                               </a>
 
                               <button
-                                className={`w-5/6 absolute bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10 ${
-                                  similarProduct.stock === 0
-                                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                    : 'bg-primary text-white hover:bg-primary/90'
-                                }`}
+                                className={`w-5/6 absolute bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10 ${similarProduct.stock === 0
+                                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                  : 'bg-primary text-white hover:bg-primary/90'
+                                  }`}
                                 onClick={(e) => handleAddSimilarToCart(similarProduct, e)}
                                 disabled={similarProduct.stock === 0}
                                 title={similarProduct.stock === 0 ? 'Produto esgotado' : 'Adicionar ao carrinho'}
