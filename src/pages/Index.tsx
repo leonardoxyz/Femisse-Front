@@ -6,6 +6,7 @@ import ProductShowcaseSection from "@/components/ProductShowcaseSection";
 import NewInSection from "@/components/NewInSection";
 import FeaturesCarousel from "@/components/FeaturesCarousel";
 import DeliverySection from "@/components/DeliverySection";
+import CustomerTestimonials from "@/components/CustomerTestimonials";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 
 const Index = () => {
@@ -20,6 +21,7 @@ const Index = () => {
       <FeaturesCarousel />
       <CategoryBanner />
       <DeliverySection />
+      <CustomerTestimonials />
       <Footer />
     </div>
   );

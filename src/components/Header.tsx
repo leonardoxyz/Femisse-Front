@@ -13,15 +13,14 @@ import { API_ENDPOINTS } from "@/config/api";
 import { createSlug } from '@/utils/slugs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-// Função para truncar o nome no header
-const truncateName = (name: string, maxLength: number = 8): string => {
-  if (!name) return '';
-  const firstName = name.split(' ')[0];
-  if (firstName.length > maxLength) {
-    return firstName.substring(0, maxLength) + '...';
-  }
-  return firstName;
-};
+const promotionalMessages = [
+  "★ PRIMEIRA COMPRA COM 10% DE DESCONTO",
+  "★ PARCELAMENTO EM ATÉ 5X SEM JUROS",
+  "★ ENVIAMOS PARA TODO BRASIL",
+  "★ FRETE GRÁTIS A PARTIR DE R$ 120,00",
+  "★ DEVOLUÇÃO GRÁTIS EM 30 DIAS",
+  "★ PAGAMENTO VIA PIX COM DESCONTO",
+];
 
 const Header = () => {
   const [cartOpen, setCartOpen] = React.useState(false);
@@ -115,49 +114,24 @@ const Header = () => {
   return (
     <>
       {/* Promotional banner */}
-      <div className="bg-primary text-primary-foreground text-center py-2 text-xs font-medium overflow-hidden">
-        <div
-          className="flex whitespace-nowrap"
-          style={{
-            animation: 'scroll-banner 10s linear infinite'
-          }}
-        >
-          {[
-            "★ PRIMEIRA COMPRA COM 10% DE DESCONTO",
-            "★ PARCELAMENTO EM ATÉ 5X SEM JUROS",
-            "★ ENVIAMOS PARA TODO BRASIL",
-            "★ FRETE GRÁTIS A PARTIR DE R$120,00",
-            "★ DEVOLUÇÃO GRÁTIS EM 30 DIAS",
-            "★ PAGAMENTO VIA PIX COM DESCONTO"
-          ].concat([
-            "★ PRIMEIRA COMPRA COM 10% DE DESCONTO",
-            "★ PARCELAMENTO EM ATÉ 5X SEM JUROS",
-            "★ ENVIAMOS PARA TODO BRASIL",
-            "★ FRETE GRÁTIS A PARTIR DE R$ 120,00",
-            "★ DEVOLUÇÃO GRÁTIS EM 30 DIAS",
-            "★ PAGAMENTO VIA PIX COM DESCONTO"
-          ]).map((text, index) => (
-            <span key={index} className="mx-12 flex-shrink-0">
-              {text}
-            </span>
-          ))}
+      <div className="bg-gradient-to-r from-[#58090d] via-rose-700 to-[#58090d] text-white py-2 shadow-sm">
+        <div className="marquee-wrapper">
+          <div
+            className="marquee-content"
+            style={{ "--marquee-duration": "18s" } as React.CSSProperties}
+          >
+            {promotionalMessages.concat(promotionalMessages).map((message, index) => (
+              <span key={`${message}-${index}`} className="text-xs md:text-sm font-medium flex-shrink-0 tracking-wide">
+                {message}
+              </span>
+            ))}
+          </div>
         </div>
-
-        <style>{`
-          @keyframes scroll-banner {
-            0% {
-              transform: translateX(0);
-            }
-            100% {
-              transform: translateX(-50%);
-            }
-          }
-        `}</style>
       </div>
 
       {/* Main header */}
       <header className="bg-card border-b sticky top-0 z-50 backdrop-blur-sm bg-card/95">
-        <div className="container mx-auto px-4">
+        <div className="mx-auto w-full max-w-[1590px] px-4 lg:px-6">
           {/* Main header layout */}
           <div className="flex items-center justify-between py-6 md:py-8">
 
@@ -175,24 +149,27 @@ const Header = () => {
                     <div className="space-y-4">
                       <div>
                         <nav className="flex flex-col gap-2">
-                          {categories.map((category) => (
-                            <Link
-                              key={category.id}
-                              to={`/categoria/${createSlug(category.name)}`}
-                              className="py-2 text-sm font-medium text-foreground border-b border-border/60"
-                              onClick={() => setIsMenuOpen(false)}
-                            >
-                              {category.name}
-                            </Link>
-                          ))}
+                          <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Categorias</h3>
+                          <div className="flex flex-col gap-2 text-sm">
+                            {categories.map((category) => (
+                              <Link
+                                key={`mobile-category-${category.id ?? category.name}`}
+                                to={`/categoria/${createSlug(category.name)}`}
+                                className="py-2 text-lg font-medium text-foreground border-b border-border/60"
+                              >
+                                {category.name}
+                              </Link>
+                            ))}
+                          </div>
                         </nav>
                       </div>
-                      <div>
+                      <div key="mobile-account">
                         <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Minha conta</h3>
                         <div className="flex flex-col gap-2 text-sm">
                           <Link
+                            key="mobile-favorites-link"
                             to="/perfil/favorites"
-                            className="py-2 border-b border-border/60"
+                            className="py-2 text-lg font-medium text-foreground border-b border-border/60"
                             onClick={() => setIsMenuOpen(false)}
                           >
                             Meus favoritos
@@ -203,20 +180,21 @@ const Header = () => {
                         <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Ajuda</h3>
                         <div className="flex flex-col gap-2 text-sm">
                           <Link
+                            key="mobile-orders-link"
                             to="/perfil/pedidos"
-                            className="py-2 border-b border-border/60"
+                            className="py-2 text-lg font-medium text-foreground border-b border-border/60"
                             onClick={() => setIsMenuOpen(false)}
                           >
                             Meus pedidos
                           </Link>
                           <Link
+                            key="mobile-help-link"
                             to="/perfil/ajuda"
-                            className="py-2 border-b border-border/60"
+                            className="py-2 text-lg font-medium text-foreground border-b border-border/60"
                             onClick={() => setIsMenuOpen(false)}
                           >
                             Suporte & FAQ
-                          </Link
-                          >
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -327,16 +305,15 @@ const Header = () => {
                 }}
                 aria-label="Buscar"
               >
-                <Search className="h-5 w-5" />
+                <Search className="h-7 w-7" strokeWidth={1} />
               </Button>
               <Button
-                variant="ghost"
-                size="icon"
                 className="relative"
+                variant="ghost"
                 onClick={() => setCartOpen(true)}
-                aria-label="Carrinho"
+                aria-label="Cestinha"
               >
-                <ShoppingBag className="h-5 w-5" />
+                <ShoppingBag className="h-6 w-6" strokeWidth={1} />
                 {totalItems > 0 && (
                   <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs">
                     {totalItems}
@@ -350,27 +327,23 @@ const Header = () => {
 
                 if (isAuthenticated && userData) {
                   return (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="ml-1 text-xs"
-                      onClick={() => navigate('/perfil')}
-                    >
-                      <User className="h-3 w-3 mr-1" />
-                      {truncateName(userData.name || userData.nome || '')}
+                    <Button variant="ghost" onClick={() => navigate('/perfil')}>
+                      <User className="h-7 w-7" strokeWidth={1} />
                     </Button>
                   );
                 }
 
                 return (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="ml-1 text-xs"
-                    onClick={() => navigate('/login')}
-                  >
-                    Entrar / Cadastrar
-                  </Button>
+                  <Link to="/login">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-1 text-xs"
+                      onClick={() => navigate('/login')}
+                    >
+                      <User className="h-7 w-7" strokeWidth={1} />
+                    </Button>
+                  </Link>
                 );
               })()}
             </div>
@@ -381,7 +354,7 @@ const Header = () => {
           <nav className="hidden md:flex items-center gap-6">
             {categories.map((category) => (
               <a
-                key={category.id}
+                key={`desktop-category-${category.id ?? category.name}`}
                 href={`/categoria/${createSlug(category.name)}`}
                 className="text-foreground hover:text-primary transition-colors duration-300 relative group text-sm font-medium"
               >

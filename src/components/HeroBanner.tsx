@@ -68,21 +68,14 @@ const HeroBanner = () => {
 
   // Efeito para controlar reprodução de vídeos
   useEffect(() => {
-    Object.entries(videoRefs.current).forEach(([slideId, video]) => {
-      if (video) {
-        const slideIndex = slides.findIndex(s => s.id === slideId);
-        if (slideIndex === currentSlide) {
-          video.play().catch(() => {});
-        } else {
-          video.pause();
-        }
-      }
+    Object.values(videoRefs.current).forEach((video) => {
+      video?.play().catch(() => {});
     });
   }, [currentSlide, slides]);
 
   if (loading) {
     return (
-      <section className="relative h-[70vh] md:h-[60vh] overflow-hidden bg-gradient-to-br from-pink-light to-background flex items-center justify-center">
+      <section className="relative h-[25vh] md:h-[60vh] overflow-hidden bg-gradient-to-br from-pink-light to-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Carregando banner...</p>
@@ -92,12 +85,12 @@ const HeroBanner = () => {
   }
 
   return (
-    <section className="relative h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[60vh] overflow-hidden bg-gradient-to-br from-pink-light to-background">
+    <section className="relative h-[25vh] sm:h-[60vh] md:h-[70vh] lg:h-[60vh] overflow-hidden bg-gradient-to-br from-pink-light to-background">
       <Swiper
         modules={[Navigation, Pagination, Autoplay, EffectFade]}
         spaceBetween={0}
         slidesPerView={1}
-        loop={true}
+        loop
         autoplay={{
           delay: 5000,
           disableOnInteraction: false,
@@ -128,12 +121,14 @@ const HeroBanner = () => {
             {slide.type === 'video' ? (
               <video
                 ref={(el) => {
-                  if (el) videoRefs.current[slide.id] = el;
+                  if (el) {
+                    videoRefs.current[slide.id] = el;
+                  }
                 }}
                 src={slide.url}
                 className="w-full h-full object-cover"
                 style={{
-                  filter: "brightness(1) contrast(1.1) saturate(1.1)"
+                  filter: 'brightness(1) contrast(1.1) saturate(1.1)',
                 }}
                 autoPlay
                 muted
@@ -141,13 +136,8 @@ const HeroBanner = () => {
                 playsInline
                 preload="metadata"
                 onLoadedData={() => {
-                  // Força o play em dispositivos móveis
                   const video = videoRefs.current[slide.id];
-                  if (video && index === currentSlide) {
-                    video.play().catch(() => {
-                      // Fallback silencioso se autoplay falhar
-                    });
-                  }
+                  video?.play().catch(() => {});
                 }}
                 onError={(e) => {
                   console.warn('Erro ao carregar vídeo:', slide.url, e);
@@ -156,7 +146,7 @@ const HeroBanner = () => {
             ) : (
               <img
                 src={slide.url}
-                alt={slide.alt || "Banner"}
+                alt={slide.alt || 'Banner'}
                 className="w-full h-full object-cover"
               />
             )}
@@ -166,14 +156,13 @@ const HeroBanner = () => {
 
       {/* Custom Navigation arrows */}
       <button
-        className="swiper-button-prev-custom absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm z-10"
-        aria-label="Slide anterior"
+        className="swiper-button-prev-custom absolute left-4 top-1/2 -translate-y-1/2 bg-[#58090d] hover:bg-[#58090d]/90 text-white p-3 rounded-full transition-all duration-300 hover:scale-110 shadow-lg z-10"
       >
         <ChevronLeft className="h-6 w-6" />
       </button>
 
       <button
-        className="swiper-button-next-custom absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm z-10"
+        className="swiper-button-next-custom absolute right-4 top-1/2 -translate-y-1/2 bg-[#58090d] hover:bg-[#58090d]/90 text-white p-3 rounded-full transition-all duration-300 hover:scale-110 shadow-lg z-10"
         aria-label="Próximo slide"
       >
         <ChevronRight className="h-6 w-6" />

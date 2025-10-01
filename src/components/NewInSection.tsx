@@ -104,10 +104,12 @@ const NewInSection = () => {
   return (
     <section className="pb-12 bg-background">
       <div className="container mx-auto max-w-[1590px]">
-        <div className="flex items-center justify-center mb-16">
+        <div className="flex items-center justify-center mb-16 gap-2">
+          <div className="w-8 h-0.5 bg-gradient-to-r from-transparent to-[#58090d]"></div>
           <h2 className="text-3xl md:text-4xl font-bold text-center font-display">
             NOVIDADES
           </h2>
+          <div className="w-8 h-0.5 bg-gradient-to-l from-transparent to-[#58090d]"></div>
         </div>
         {loading ? (
           <div className="text-center py-12">Carregando produtos...</div>

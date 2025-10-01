@@ -1,40 +1,37 @@
 import React from 'react';
-import deliveryImage from '../assets/delivery.jpg';
+import deliveryImage from '../assets/delivery2.jpg';
 import deliveryImageMobile from '../assets/delivery-mobile.png';
 
 const DeliverySection: React.FC = () => {
   return (
-    <section className="py-16 md:pt-12 bg-background">
-      <div className="w-full">
-        <div className="flex justify-center">
-          <picture className="w-full flex justify-center">
-            {/* Imagem para desktop/tablet (768px+) */}
-            <source 
-              media="(min-width: 768px)" 
-              srcSet={deliveryImage}
-              type="image/jpeg"
-            />
-            
-            {/* Imagem para mobile (até 767px) */}
-            <source 
-              media="(max-width: 767px)" 
-              srcSet={deliveryImageMobile}
-              type="image/png"
-            />
-            
-            {/* Fallback image */}
-            <img
-              src={deliveryImage}
-              className="w-full h-auto shadow-sm hover:shadow-md"
-              style={{
-                maxWidth: '1920px',
-                width: '70%',
-                height: 'auto',
-                objectFit: 'cover'
-              }}
-              loading="lazy"
-            />
-          </picture>
+    <section className="bg-background">
+      <div className="max-w-[1590px] mx-auto px-4">
+        <div className="relative overflow-hidden shadow-lg bg-white/60 backdrop-blur-sm">
+          <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-white/10 via-transparent to-[#58090d]/10" />
+          <div className="relative aspect-[9/16] sm:aspect-[16/9] lg:aspect-[16/6]">
+            <picture className="absolute inset-0 block h-full w-full">
+              {/* Imagem para mobile (até 767px) */}
+              <source
+                media="(max-width: 767px)"
+                srcSet={deliveryImageMobile}
+                type="image/png"
+              />
+              {/* Imagem para desktop/tablet (768px+) */}
+              <source
+                media="(min-width: 768px)"
+                srcSet={deliveryImage}
+                type="image/jpeg"
+              />
+
+              {/* Fallback image */}
+              <img
+                src={deliveryImage}
+                alt="Informações sobre entrega" 
+                className="h-full w-full object-contain md:object-cover md:object-center transition-transform duration-700 hover:scale-[1.02]"
+                loading="lazy"
+              />
+            </picture>
+          </div>
         </div>
       </div>
     </section>

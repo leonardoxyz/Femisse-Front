@@ -183,15 +183,6 @@
 }
 
 @layer utilities {
-  @keyframes marquee {
-    0% { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
-  }
-  
-  .animate-marquee {
-    animation: marquee 20s linear infinite;
-  }
-
   .writing-mode-vertical {
     writing-mode: vertical-rl;
     text-orientation: mixed;
@@ -204,19 +195,20 @@
     overflow: hidden;
   }
 }
-
 .marquee-wrapper {
   overflow: hidden;
   position: relative;
   width: 100%;
-  height: 2rem; /* ajuste conforme necessário */
 }
 
 .marquee-content {
   display: inline-flex;
+  align-items: center;
   white-space: nowrap;
+  gap: 2.5rem;
+  padding: 0 1.5rem;
   will-change: transform;
-  animation: marquee 20s linear infinite;
+  animation: marquee var(--marquee-duration, 20s) linear infinite;
 }
 
 @keyframes marquee {
