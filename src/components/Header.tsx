@@ -37,6 +37,8 @@ const Header = () => {
   const navigate = useNavigate();
   const { favoriteIds } = useFavorites();
   const { cart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const { userData } = useUserData();
 
   React.useEffect(() => {
     fetch(API_ENDPOINTS.categories)
@@ -135,8 +137,8 @@ const Header = () => {
           {/* Main header layout */}
           <div className="flex items-center justify-between py-6 md:py-8">
 
-            {/* Left: Logo + Menu mobile */}
-            <div className="flex items-center gap-4">
+            {/* Left: Mobile menu + search (desktop keeps logo here) */}
+            <div className="flex items-center gap-3 md:gap-4 flex-1 md:flex-none">
               {/* Menu mobile */}
               <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                 <SheetTrigger asChild>
@@ -202,9 +204,30 @@ const Header = () => {
                 </SheetContent>
               </Sheet>
 
-              {/* Logo */}
-              <Link to="/">
+              {/* Desktop logo */}
+              <Link to="/" className="hidden md:flex">
                 <img src={logo} alt="Femisse" className="h-10 md:h-12 lg:h-14 w-auto" />
+              </Link>
+
+              {/* Search button mobile */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                onClick={() => {
+                  setIsMobileSearchOpen(true);
+                  setSuggestions([]);
+                }}
+                aria-label="Buscar"
+              >
+                <Search className="h-7 w-7" strokeWidth={1} />
+              </Button>
+            </div>
+
+            {/* Center: Logo mobile */}
+            <div className="flex flex-1 md:hidden justify-center">
+              <Link to="/">
+                <img src={logo} alt="Femisse" className="h-10 w-auto" />
               </Link>
             </div>
 
@@ -293,20 +316,7 @@ const Header = () => {
             </div>
 
             {/* Right: Actions */}
-            <div className="flex items-center gap-2">
-              {/* Search button for mobile */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden"
-                onClick={() => {
-                  setIsMobileSearchOpen(true);
-                  setSuggestions([]);
-                }}
-                aria-label="Buscar"
-              >
-                <Search className="h-7 w-7" strokeWidth={1} />
-              </Button>
+            <div className="flex items-center gap-2 flex-1 md:flex-none justify-end">
               <Button
                 className="relative"
                 variant="ghost"
@@ -321,31 +331,22 @@ const Header = () => {
                 )}
               </Button>
 
-              {(() => {
-                const { isAuthenticated } = useAuth();
-                const { userData } = useUserData();
-
-                if (isAuthenticated && userData) {
-                  return (
-                    <Button variant="ghost" onClick={() => navigate('/perfil')}>
-                      <User className="h-7 w-7" strokeWidth={1} />
-                    </Button>
-                  );
-                }
-
-                return (
-                  <Link to="/login">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="ml-1 text-xs"
-                      onClick={() => navigate('/login')}
-                    >
-                      <User className="h-7 w-7" strokeWidth={1} />
-                    </Button>
-                  </Link>
-                );
-              })()}
+              {isAuthenticated && userData ? (
+                <Button variant="ghost" onClick={() => navigate('/perfil')}>
+                  <User className="h-7 w-7" strokeWidth={1} />
+                </Button>
+              ) : (
+                <Link to="/login">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="ml-1 text-xs"
+                    onClick={() => navigate('/login')}
+                  >
+                    <User className="h-7 w-7" strokeWidth={1} />
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

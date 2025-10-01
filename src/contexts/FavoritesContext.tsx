@@ -10,25 +10,38 @@ interface FavoritesContextType {
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
+const getStoredToken = () => (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const [token, setToken] = useState<string | null>(getStoredToken());
 
   const fetchFavorites = async () => {
-    if (!token) {
+    const currentToken = getStoredToken();
+    setToken(currentToken);
+    if (!currentToken) {
       setFavoriteIds([]);
       setLoading(false);
       return;
     }
     setLoading(true);
     const { API_ENDPOINTS } = await import('@/config/api');
-    const res = await fetch(`${API_ENDPOINTS.favorites}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const ids = await res.json();
-    setFavoriteIds(ids);
-    setLoading(false);
+    try {
+      const res = await fetch(`${API_ENDPOINTS.favorites}`, {
+        headers: { Authorization: `Bearer ${currentToken}` },
+      });
+      if (!res.ok) {
+        throw new Error(`Erro ao buscar favoritos: ${res.status}`);
+      }
+      const ids = await res.json();
+      setFavoriteIds(ids);
+    } catch (error) {
+      console.error(error);
+      setFavoriteIds([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -37,27 +50,47 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [token]);
 
   const addFavorite = async (id: string) => {
-    if (!token) return;
+    const currentToken = getStoredToken();
+    setToken(currentToken);
+    if (!currentToken) return;
     const { API_ENDPOINTS } = await import('@/config/api');
-    await fetch(`${API_ENDPOINTS.favorites}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ productId: id }),
-    });
-    setFavoriteIds((prev) => prev.includes(id) ? prev : [...prev, id]);
+    try {
+      const res = await fetch(`${API_ENDPOINTS.favorites}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${currentToken}`,
+        },
+        body: JSON.stringify({ productId: id }),
+      });
+      if (!res.ok) {
+        throw new Error(`Erro ao adicionar favorito: ${res.status}`);
+      }
+      setFavoriteIds((prev) => prev.includes(id) ? prev : [...prev, id]);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   };
 
   const removeFavorite = async (id: string) => {
-    if (!token) return;
+    const currentToken = getStoredToken();
+    setToken(currentToken);
+    if (!currentToken) return;
     const { API_ENDPOINTS } = await import('@/config/api');
-    await fetch(`${API_ENDPOINTS.favorites}/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setFavoriteIds((prev) => prev.filter((fid) => fid !== id));
+    try {
+      const res = await fetch(`${API_ENDPOINTS.favorites}/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${currentToken}` },
+      });
+      if (!res.ok) {
+        throw new Error(`Erro ao remover favorito: ${res.status}`);
+      }
+      setFavoriteIds((prev) => prev.filter((fid) => fid !== id));
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   };
 
   return (

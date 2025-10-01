@@ -30,21 +30,32 @@ const SearchResults = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <div className="flex-1">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto py-4">
           <h1 className="text-2xl font-bold mb-6 text-foreground">Resultados para: "{search}"</h1>
           {loading ? (
-            <div>Carregando...</div>
+            <div className="flex items-center justify-center py-16">
+              <div className="text-muted-foreground">Carregando...</div>
+            </div>
           ) : products.length === 0 ? (
-            <div>Nenhum produto encontrado.</div>
+            <div className="text-muted-foreground">Nenhum produto encontrado.</div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {products.map(product => (
-                <ProductCard
-                  key={product.id}
-                  {...product}
-                  originalPrice={product.original_price}
-                />
-              ))}
+            <div className="mx-auto max-w-[1400px]">
+              <div
+                className="flex flex-wrap gap-6 justify-center sm:justify-start"
+              >
+                {products.map(product => (
+                  <div
+                    key={product.id}
+                    className="flex-shrink-0"
+                    style={{ width: "320px" }}
+                  >
+                    <ProductCard
+                      {...product}
+                      originalPrice={product.original_price}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

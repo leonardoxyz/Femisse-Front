@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { API_ENDPOINTS } from "@/config/api";
@@ -21,6 +21,15 @@ const HeroBanner = () => {
   const [loading, setLoading] = useState(true);
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
   const swiperRef = useRef<SwiperType | null>(null);
+
+  const ensureVideosPlaying = useCallback(() => {
+    Object.values(videoRefs.current).forEach((video) => {
+      if (!video) return;
+      if (video.paused) {
+        video.play().catch(() => {});
+      }
+    });
+  }, []);
 
   // Função para detectar o tipo de mídia baseado na extensão
   const getMediaType = (url: string): 'image' | 'video' => {
@@ -68,10 +77,32 @@ const HeroBanner = () => {
 
   // Efeito para controlar reprodução de vídeos
   useEffect(() => {
-    Object.values(videoRefs.current).forEach((video) => {
-      video?.play().catch(() => {});
-    });
-  }, [currentSlide, slides]);
+    ensureVideosPlaying();
+  }, [currentSlide, slides, ensureVideosPlaying]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        ensureVideosPlaying();
+      }
+    };
+
+    const handleUserInteraction = () => {
+      ensureVideosPlaying();
+      document.removeEventListener('touchstart', handleUserInteraction);
+      document.removeEventListener('click', handleUserInteraction);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('touchstart', handleUserInteraction, { passive: true });
+    document.addEventListener('click', handleUserInteraction, { passive: true });
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('touchstart', handleUserInteraction);
+      document.removeEventListener('click', handleUserInteraction);
+    };
+  }, [ensureVideosPlaying]);
 
   if (loading) {
     return (
@@ -135,10 +166,8 @@ const HeroBanner = () => {
                 loop
                 playsInline
                 preload="metadata"
-                onLoadedData={() => {
-                  const video = videoRefs.current[slide.id];
-                  video?.play().catch(() => {});
-                }}
+                onLoadedData={ensureVideosPlaying}
+                onPause={ensureVideosPlaying}
                 onError={(e) => {
                   console.warn('Erro ao carregar vídeo:', slide.url, e);
                 }}

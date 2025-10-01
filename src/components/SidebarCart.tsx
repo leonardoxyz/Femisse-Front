@@ -54,6 +54,7 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
   const freeShippingProgress = Math.min((subtotal / FREE_SHIPPING_TARGET) * 100, 100);
   const remainingForFree = Math.max(FREE_SHIPPING_TARGET - subtotal, 0);
   const shippingCalculated = shippingCost !== null;
+  const productListShouldScroll = cart.length > 4;
 
   const setShippingContext = React.useCallback((nextCep: string, nextAddress: ShippingAddress | null, nextCost: number | null, source: "manual" | "auto" | null = null) => {
     updateShippingInfo({ cep: nextCep, address: nextAddress, shippingCost: nextCost, source });
@@ -133,7 +134,7 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
       const providers: Array<() => Promise<string | null>> = [
         async () => {
           try {
-            const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=pt`; 
+            const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=pt`;
             const result = await fetch(url);
             if (!result.ok) return null;
             const json = await result.json();
@@ -270,49 +271,57 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
             <p className="text-zinc-500 text-center mt-8">Seu carrinho está vazio.</p>
           ) : (
             <div className="space-y-4">
-              {cart.map((item) => (
-                <div key={item.id} className="flex gap-3">
-                  <img src={item.image} alt={item.name} className="w-14 h-14 rounded border object-cover" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div className="text-[13px] font-medium text-zinc-800 line-clamp-2 pr-2">
-                        {item.name}
-                        {item.size && (
-                          <span className="block text-[12px] text-zinc-500 mt-0.5">Tamanho: {item.size}</span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => removeFromCart(item.id, item.size)}
-                        className="text-[12px] text-zinc-500 hover:text-zinc-700"
-                      >
-                        Remover
-                      </button>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <div className="inline-flex items-center border rounded-md overflow-hidden">
+              <div
+                className={`space-y-4 ${productListShouldScroll ? 'overflow-y-auto pr-2 -mr-2 scrollbar-thin scrollbar-thumb-zinc-300 scrollbar-track-transparent' : ''}`}
+                style={productListShouldScroll ? {
+                  maxHeight: 'min(50vh, 360px)',
+                  WebkitOverflowScrolling: 'touch'
+                } : undefined}
+              >
+                {cart.map((item) => (
+                  <div key={item.id} className="flex gap-3">
+                    <img src={item.image} alt={item.name} className="w-14 h-14 rounded border object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div className="text-[13px] font-medium text-zinc-800 line-clamp-2 pr-2">
+                          {item.name}
+                          {item.size && (
+                            <span className="block text-[12px] text-zinc-500 mt-0.5">Tamanho: {item.size}</span>
+                          )}
+                        </div>
                         <button
-                          className="px-2 py-1 text-[12px] text-zinc-700 hover:bg-zinc-100"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1, item.size)}
-                          aria-label="Diminuir quantidade"
+                          onClick={() => removeFromCart(item.id, item.size)}
+                          className="text-[12px] text-zinc-500 hover:text-zinc-700"
                         >
-                          –
-                        </button>
-                        <span className="px-3 py-1 text-[12px] text-zinc-800">{item.quantity}</span>
-                        <button
-                          className="px-2 py-1 text-[12px] text-zinc-700 hover:bg-zinc-100"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1, item.size)}
-                          aria-label="Aumentar quantidade"
-                        >
-                          +
+                          Remover
                         </button>
                       </div>
-                      <div className="text-[13px] font-semibold text-zinc-900">
-                        {formatBRL(item.price * item.quantity)}
+                      <div className="mt-2 flex items-center justify-between">
+                        <div className="inline-flex items-center border rounded-md overflow-hidden">
+                          <button
+                            className="px-2 py-1 text-[12px] text-zinc-700 hover:bg-zinc-100"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1, item.size)}
+                            aria-label="Diminuir quantidade"
+                          >
+                            –
+                          </button>
+                          <span className="px-3 py-1 text-[12px] text-zinc-800">{item.quantity}</span>
+                          <button
+                            className="px-2 py-1 text-[12px] text-zinc-700 hover:bg-zinc-100"
+                            onClick={() => updateQuantity(item.id, item.quantity + 1, item.size)}
+                            aria-label="Aumentar quantidade"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div className="text-[13px] font-semibold text-zinc-900">
+                          {formatBRL(item.price * item.quantity)}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
 
               {/* Barra de frete grátis */}
               <div className="pt-2">
@@ -402,20 +411,15 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
 
         {/* Footer ações */}
         <div className="px-4 py-3 border-t flex flex-col items-center gap-3">
-          {cart.length > 0 ? (
-            <>
-              <button
-                className={`w-full py-2 rounded-md text-[14px] font-medium text-white ${shippingCalculated ? 'bg-primary' : 'bg-zinc-300 cursor-not-allowed'}`}
-                disabled={!shippingCalculated}
-                title={shippingCalculated ? 'Finalizar compra' : 'Calcule o frete para continuar'}
-              >
-                Finalizar compra
-              </button>
-              <Link to="/"><button className="text-[12px] underline text-zinc-600">Ver mais produtos</button></Link>
-            </>
-          ) : (
-            <Link to="/"><button className="text-[12px] underline text-zinc-600">Ver mais produtos</button></Link>
-          )}
+          <>
+            <button
+              className={`w-full py-2 rounded-md text-[14px] font-medium text-white ${shippingCalculated ? 'bg-primary' : 'bg-zinc-300 cursor-not-allowed'}`}
+              disabled={!shippingCalculated}
+              title={shippingCalculated ? 'Finalizar compra' : 'Calcule o frete para continuar'}
+            >
+              Finalizar compra
+            </button>
+          </>
         </div>
       </div>
     </>
