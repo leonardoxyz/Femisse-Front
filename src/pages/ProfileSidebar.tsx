@@ -6,7 +6,7 @@ import {
   MapPin,
   Heart,
   ShoppingBag,
-  CreditCard,
+  Star,
   Settings,
   LogOut,
   Menu,
@@ -20,7 +20,7 @@ const menuItems = [
   { id: "addresses", label: "Endereços", icon: MapPin, path: "/perfil/addresses" },
   { id: "favorites", label: "Favoritos", icon: Heart, path: "/perfil/favorites" },
   { id: "orders", label: "Histórico de Compras", icon: ShoppingBag, path: "/perfil/orders" },
-  { id: "cards", label: "Cartões Salvos", icon: CreditCard, path: "/perfil/cards" },
+  { id: "reviews", label: "Minhas Avaliações", icon: Star, path: "/perfil/reviews" },
 ];
 
 interface ProfileSidebarProps {

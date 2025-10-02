@@ -37,19 +37,19 @@ export const API_ENDPOINTS = {
   favorites: `${API_BASE_URL}/api/users/me/favorites`,
   
   // Address Management
-  address: `${API_BASE_URL}/api/address`, // Admin routes
   userAddresses: `${API_BASE_URL}/api/address/user/addresses`, // User addresses
   
   // Order Management
   orders: `${API_BASE_URL}/api/orders`, // Admin routes
   userOrders: `${API_BASE_URL}/api/orders/user/orders`, // User orders
-  
+  reviews: `${API_BASE_URL}/api/orders/user/reviews`,
+  reviewableProducts: `${API_BASE_URL}/api/orders/user/reviewable-products`,
+  reviewStats: `${API_BASE_URL}/api/orders/products`,
+
   // Payment Cards
   cards: `${API_BASE_URL}/api/cards`, // Admin routes
   userCards: `${API_BASE_URL}/api/cards/user/cards` // User cards
 } as const;
-
-// Helper function para construir URLs
 export const buildApiUrl = (endpoint: string, params?: Record<string, string | number>) => {
   let url = endpoint;
   

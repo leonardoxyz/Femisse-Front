@@ -18,7 +18,7 @@ const CategoryPageBanner: React.FC<CategoryPageBannerProps> = ({ category }) => 
 
   return (
     <section className="relative w-full mb-8 overflow-hidden">
-      <div className="relative w-full mx-auto h-[100px] sm:h-[300px] md:h-[420px] lg:h-[520px] xl:h-[640px]">
+      <div className="relative w-full mx-auto h-[60px] sm:h-[220px] md:h-[320px] lg:h-[400px] xl:h-[480px]">
         {/* Banner responsivo usando picture element */}
         <picture className="absolute inset-0 w-full h-full">
           {/* Imagem para desktop/tablet (768px+) */}

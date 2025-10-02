@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { PersonalData } from "@/components/profile/PersonalData";
 import { AddressList } from "@/components/profile/AddressList";
 import { OrderHistory } from "@/components/profile/OrderHistory";
-import { SavedCards } from "@/components/profile/SavedCards";
+import { PersonalReviews } from "@/components/profile/PersonalReviews";
 import { ProfileSidebar } from "./ProfileSidebar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -28,8 +28,8 @@ export default function Profile() {
                 return <FavoritesList />;
             case "orders":
                 return <OrderHistory />;
-            case "cards":
-                return <SavedCards />;
+            case "reviews":
+                return <PersonalReviews />;
             default:
                 return <PersonalData />;
         }

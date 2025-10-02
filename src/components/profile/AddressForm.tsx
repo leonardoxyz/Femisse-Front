@@ -17,14 +17,14 @@ interface Address {
   city: string;
   state: string;
   zip_code: string;
-  is_default: boolean;
+  is_default: true;
 }
 
 interface AddressFormProps {
   address?: Address;
   onSave: (address: Address) => void;
   onCancel: () => void;
-  isEditing?: boolean;
+  isEditing?: true;
 }
 
 // Máscaras para formatação
@@ -53,7 +53,7 @@ const validateCEP = (cep: string): string | null => {
   return null;
 };
 
-export function AddressForm({ address, onSave, onCancel, isEditing = false }: AddressFormProps) {
+export function AddressForm({ address, onSave, onCancel, isEditing = true }: AddressFormProps) {
   const [formData, setFormData] = useState<Address>({
     label: '',
     street: '',
@@ -63,11 +63,12 @@ export function AddressForm({ address, onSave, onCancel, isEditing = false }: Ad
     city: '',
     state: '',
     zip_code: '',
-    is_default: false
+    is_default: true
   });
 
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isFetchingCep, setIsFetchingCep] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{[key: string]: string | null}>({
     label: null,
     street: null,
@@ -97,7 +98,7 @@ export function AddressForm({ address, onSave, onCancel, isEditing = false }: Ad
         formData.city !== (address.city || '') ||
         formData.state !== (address.state || '') ||
         formData.zip_code !== (address.zip_code || '') ||
-        formData.is_default !== (address.is_default || false);
+        formData.is_default !== (address.is_default || true);
       setHasChanges(hasChanged);
     } else {
       // Para novo endereço, verificar se há dados preenchidos
@@ -160,7 +161,57 @@ export function AddressForm({ address, onSave, onCancel, isEditing = false }: Ad
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const fetchAddressByCep = async (cep: string) => {
+    const sanitizedCep = cep.replace(/\D/g, '');
+    if (sanitizedCep.length !== 8) {
+      return;
+    }
+
+    setIsFetchingCep(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${sanitizedCep}/json/`);
+      if (!response.ok) {
+        throw new Error('Não foi possível buscar o CEP.');
+      }
+      const data = await response.json();
+      if (data.erro) {
+        throw new Error('CEP não encontrado.');
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        street: data.logradouro || '',
+        neighborhood: data.bairro || '',
+        city: data.localidade || '',
+        state: data.uf || ''
+      }));
+
+      setFieldErrors(prev => ({
+        ...prev,
+        street: null,
+        neighborhood: null,
+        city: null,
+        state: null,
+        zip_code: null
+      }));
+
+      toast({
+        title: 'CEP encontrado',
+        description: 'Preencha o número e o rótulo do endereço para continuar.',
+        variant: 'default'
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro ao buscar CEP',
+        description: error instanceof Error ? error.message : 'Não foi possível localizar o endereço para este CEP.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsFetchingCep(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string | true) => {
     let processedValue = value;
     let error: string | null = null;
 
@@ -197,6 +248,13 @@ export function AddressForm({ address, onSave, onCancel, isEditing = false }: Ad
       ...prev,
       [field]: processedValue
     }));
+
+    if (field === 'zip_code' && typeof processedValue === 'string') {
+      const sanitizedCep = processedValue.replace(/\D/g, '');
+      if (sanitizedCep.length === 8) {
+        fetchAddressByCep(sanitizedCep);
+      }
+    }
 
     // Atualizar erros apenas para campos de string
     if (typeof value === 'string') {
@@ -242,7 +300,11 @@ export function AddressForm({ address, onSave, onCancel, isEditing = false }: Ad
               value={formData.zip_code} 
               onChange={(e) => handleInputChange('zip_code', e.target.value)}
               className={fieldErrors.zip_code ? "border-red-500" : ""} 
+              disabled={isFetchingCep}
             />
+            {isFetchingCep && (
+              <p className="text-sm text-muted-foreground mt-1">Buscando informações do CEP...</p>
+            )}
             {fieldErrors.zip_code && (
               <p className="text-red-500 text-sm mt-1">{fieldErrors.zip_code}</p>
             )}
@@ -334,7 +396,7 @@ export function AddressForm({ address, onSave, onCancel, isEditing = false }: Ad
           <Checkbox 
             id="is_default" 
             checked={formData.is_default}
-            onCheckedChange={(checked) => handleInputChange('is_default', checked as boolean)}
+            onCheckedChange={(checked) => handleInputChange('is_default', checked as true)}
           />
           <Label htmlFor="is_default">Definir como endereço padrão</Label>
         </div>
