@@ -10,6 +10,7 @@ import SearchResults from "./pages/SearchResults";
 import ProductsByCategory from "./pages/ProductsByCategory";
 import Profile from "./pages/Profile";
 import AuthPage from "./pages/AuthPage";
+import CheckoutPage from "./pages/Checkout";
 import PrivateRoute from "./components/PrivateRoute";
 import CookieConsentManager from "./components/CookieConsentManager";
 
@@ -37,6 +38,7 @@ const App = () => (
                   <Route path="/categoria/:slug" element={<ProductsByCategory />} />
                   <Route path="/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
                   <Route path="/perfil/:section" element={<PrivateRoute><Profile /></PrivateRoute>} />
+                  <Route path="/checkout" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
                   <Route path="/login" element={<AuthPage />} />
                   <Route path="/busca" element={<SearchResults />} />
                   <Route path="*" element={<NotFound />} />

@@ -4,6 +4,7 @@ import { Navigation } from "swiper/modules";
 
 import ShowcaseProductCard from "@/components/cards/ShowcaseProductCard";
 import { API_ENDPOINTS } from "@/config/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -101,7 +102,27 @@ const NewInSection = () => {
         </div>
 
         {loading ? (
-          <div className="text-center py-12">Carregando produtos...</div>
+          <div className={`relative ${paddingClass}`}>
+            <div className="flex gap-6 overflow-hidden">
+              {[1, 2, 3, 4].map((item) => (
+                <div
+                  key={item}
+                  className="flex w-full flex-col gap-4 rounded-xl border border-[#58090d]/20 bg-[#58090d]/5 p-4"
+                  style={{ maxWidth: `${slideWidth}px` }}
+                >
+                  <Skeleton className="h-[320px] w-full rounded-lg bg-[#58090d]/15" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-3/4 bg-[#58090d]/30" />
+                    <Skeleton className="h-3 w-2/4 bg-[#58090d]/20" />
+                  </div>
+                  <div className="mt-auto flex flex-col gap-2">
+                    <Skeleton className="h-4 w-1/3 bg-[#58090d]/20" />
+                    <Skeleton className="h-10 w-full rounded-md bg-[#58090d]/30" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
           <div className="shelf-wrapper relative">
             <div className={`relative ${paddingClass}`}>

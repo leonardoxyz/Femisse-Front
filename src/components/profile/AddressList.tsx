@@ -8,6 +8,7 @@ import { toast } from "@/components/ui/use-toast";
 import { AddressForm } from "./AddressForm";
 import { API_ENDPOINTS } from "@/config/api";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Address {
   id: string;
@@ -88,8 +89,26 @@ export function AddressList() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Erro ao salvar endereço");
+        let errorMessage = "Erro ao salvar endereço";
+        const contentType = response.headers.get("Content-Type") ?? "";
+
+        try {
+          if (contentType.includes("application/json")) {
+            const errorData = await response.json();
+            if (errorData?.error) {
+              errorMessage = errorData.error;
+            }
+          } else {
+            const text = await response.text();
+            if (text) {
+              errorMessage = text;
+            }
+          }
+        } catch (parseError) {
+          console.error("Falha ao interpretar resposta ao salvar endereço:", parseError);
+        }
+
+        throw new Error(errorMessage);
       }
       
       setEditing(null);
@@ -150,7 +169,36 @@ export function AddressList() {
         />
       )}
       {loading ? (
-        <div>Carregando...</div>
+        <div className="space-y-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48 bg-[#58090d]/30" />
+              <Skeleton className="h-4 w-64 bg-[#58090d]/20" />
+            </div>
+            <Skeleton className="h-10 w-48 rounded-sm bg-[#58090d]/30" />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {[1, 2, 3, 4].map((item) => (
+              <Card key={item} className="border border-[#58090d]/20 bg-[#58090d]/5">
+                <CardHeader className="space-y-3 pb-4">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-6 w-6 rounded-full bg-[#58090d]/30" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-1/2 bg-[#58090d]/30" />
+                      <Skeleton className="h-3 w-1/3 bg-[#58090d]/20" />
+                    </div>
+                    <Skeleton className="h-6 w-16 rounded-sm bg-[#58090d]/20" />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Skeleton className="h-3 w-full bg-[#58090d]/20" />
+                  <Skeleton className="h-3 w-3/4 bg-[#58090d]/20" />
+                  <Skeleton className="h-3 w-1/2 bg-[#58090d]/20" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       ) : error ? (
         <div className="text-red-500">{error}</div>
       ) : (

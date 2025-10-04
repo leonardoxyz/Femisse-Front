@@ -38,6 +38,7 @@ export const API_ENDPOINTS = {
   
   // Address Management
   userAddresses: `${API_BASE_URL}/api/address/user/addresses`, // User addresses
+  address: `${API_BASE_URL}/api/address`,
   
   // Order Management
   orders: `${API_BASE_URL}/api/orders`, // Admin routes

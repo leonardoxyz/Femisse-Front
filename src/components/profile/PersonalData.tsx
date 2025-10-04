@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Edit, Save, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -229,7 +230,45 @@ export function PersonalData() {
     }));
   };
 
-  if (loading) return <div>Carregando...</div>;
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="mb-2 text-2xl font-bold text-foreground">Meus Dados</h2>
+          <p className="text-muted-foreground">Gerencie suas informações pessoais e de acesso</p>
+        </div>
+        <Card className="border-[#58090d]/20 bg-[#58090d]/5">
+          <CardHeader className="flex flex-col space-y-3">
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-1/4 bg-[#58090d]/30" />
+              <Skeleton className="h-3 w-1/2 bg-[#58090d]/20" />
+            </div>
+            <div className="flex justify-end">
+              <Skeleton className="h-8 w-24 rounded-sm bg-[#58090d]/30" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {[1, 2, 3, 4].map((item) => (
+                <div key={item} className="space-y-2">
+                  <Skeleton className="h-3 w-1/3 bg-[#58090d]/30" />
+                  <Skeleton className="h-10 w-full rounded-sm bg-[#58090d]/20" />
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-3 border-t pt-4">
+              <Skeleton className="h-9 w-24 rounded-sm bg-[#58090d]/20" />
+              <Skeleton className="h-9 w-32 rounded-sm bg-[#58090d]/30" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-4 w-4 rounded bg-[#58090d]/30" />
+              <Skeleton className="h-3 w-40 bg-[#58090d]/20" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   if (!userData) return <div>Não foi possível carregar os dados.</div>;
 
   return (

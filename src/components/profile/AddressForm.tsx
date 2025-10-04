@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Edit, Save, X, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
+import type { CheckedState } from "@radix-ui/react-checkbox";
 import { toast } from "@/components/ui/use-toast";
 
 interface Address {
@@ -17,14 +18,14 @@ interface Address {
   city: string;
   state: string;
   zip_code: string;
-  is_default: true;
+  is_default: boolean;
 }
 
 interface AddressFormProps {
   address?: Address;
-  onSave: (address: Address) => void;
+  onSave: (address: Address) => Promise<void> | void;
   onCancel: () => void;
-  isEditing?: true;
+  isEditing?: boolean;
 }
 
 // Máscaras para formatação
@@ -53,31 +54,23 @@ const validateCEP = (cep: string): string | null => {
   return null;
 };
 
-export function AddressForm({ address, onSave, onCancel, isEditing = true }: AddressFormProps) {
+export function AddressForm({ address, onSave, onCancel, isEditing = false }: AddressFormProps) {
   const [formData, setFormData] = useState<Address>({
-    label: '',
-    street: '',
-    number: '',
-    complement: '',
-    neighborhood: '',
-    city: '',
-    state: '',
-    zip_code: '',
-    is_default: true
+    label: address?.label || '',
+    street: address?.street || '',
+    number: address?.number || '',
+    complement: address?.complement || '',
+    neighborhood: address?.neighborhood || '',
+    city: address?.city || '',
+    state: address?.state || '',
+    zip_code: address?.zip_code || '',
+    is_default: address?.is_default || false,
   });
 
+  const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string | null}>({
-    label: null,
-    street: null,
-    number: null,
-    neighborhood: null,
-    city: null,
-    state: null,
-    zip_code: null
-  });
 
   // Inicializar dados quando address estiver disponível
   useEffect(() => {
@@ -98,7 +91,7 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
         formData.city !== (address.city || '') ||
         formData.state !== (address.state || '') ||
         formData.zip_code !== (address.zip_code || '') ||
-        formData.is_default !== (address.is_default || true);
+        formData.is_default !== (address.is_default ?? true);
       setHasChanges(hasChanged);
     } else {
       // Para novo endereço, verificar se há dados preenchidos
@@ -117,7 +110,7 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
 
   const handleSave = async () => {
     // Validar campos obrigatórios
-    const errors: {[key: string]: string | null} = {};
+    const errors: Record<string, string | null> = {};
     errors.label = validateRequired(formData.label, 'Rótulo');
     errors.street = validateRequired(formData.street, 'Rua');
     errors.number = validateRequired(formData.number, 'Número');
@@ -126,7 +119,7 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
     errors.state = validateRequired(formData.state, 'Estado');
     errors.zip_code = validateCEP(formData.zip_code);
 
-    setFieldErrors(errors);
+    setErrors(errors);
 
     // Verificar se há erros de validação
     const hasValidationErrors = Object.values(errors).some(error => error !== null);
@@ -186,7 +179,7 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
         state: data.uf || ''
       }));
 
-      setFieldErrors(prev => ({
+      setErrors(prev => ({
         ...prev,
         street: null,
         neighborhood: null,
@@ -211,7 +204,7 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
     }
   };
 
-  const handleInputChange = (field: string, value: string | true) => {
+  const handleInputChange = (field: keyof Address, value: string | boolean) => {
     let processedValue = value;
     let error: string | null = null;
 
@@ -258,7 +251,7 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
 
     // Atualizar erros apenas para campos de string
     if (typeof value === 'string') {
-      setFieldErrors(prev => ({
+      setErrors(prev => ({
         ...prev,
         [field]: error
       }));
@@ -286,11 +279,9 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
               placeholder="Ex: Casa, Trabalho, Apartamento" 
               value={formData.label} 
               onChange={(e) => handleInputChange('label', e.target.value)}
-              className={fieldErrors.label ? "border-red-500" : ""} 
+              className={errors.label ? 'border-red-500' : ''} 
             />
-            {fieldErrors.label && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors.label}</p>
-            )}
+            {errors.label && <p className="text-sm text-red-500">{errors.label}</p>}
           </div>
           <div>
             <Label htmlFor="zip_code">CEP *</Label>
@@ -299,15 +290,13 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
               placeholder="00000-000" 
               value={formData.zip_code} 
               onChange={(e) => handleInputChange('zip_code', e.target.value)}
-              className={fieldErrors.zip_code ? "border-red-500" : ""} 
+              className={errors.zip_code ? 'border-red-500' : ''} 
               disabled={isFetchingCep}
             />
             {isFetchingCep && (
               <p className="text-sm text-muted-foreground mt-1">Buscando informações do CEP...</p>
             )}
-            {fieldErrors.zip_code && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors.zip_code}</p>
-            )}
+            {errors.zip_code && <p className="text-sm text-red-500">{errors.zip_code}</p>}
           </div>
         </div>
 
@@ -319,11 +308,9 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
               placeholder="Nome da rua" 
               value={formData.street} 
               onChange={(e) => handleInputChange('street', e.target.value)}
-              className={fieldErrors.street ? "border-red-500" : ""} 
+              className={errors.street ? 'border-red-500' : ''} 
             />
-            {fieldErrors.street && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors.street}</p>
-            )}
+            {errors.street && <p className="text-sm text-red-500">{errors.street}</p>}
           </div>
           <div>
             <Label htmlFor="number">Número *</Label>
@@ -332,11 +319,9 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
               placeholder="123" 
               value={formData.number} 
               onChange={(e) => handleInputChange('number', e.target.value)}
-              className={fieldErrors.number ? "border-red-500" : ""} 
+              className={errors.number ? 'border-red-500' : ''} 
             />
-            {fieldErrors.number && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors.number}</p>
-            )}
+            {errors.number && <p className="text-sm text-red-500">{errors.number}</p>}
           </div>
         </div>
 
@@ -344,7 +329,7 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
           <Label htmlFor="complement">Complemento</Label>
           <Input 
             id="complement" 
-            placeholder="Apartamento, bloco, etc. (opcional)" 
+            placeholder="Apto, bloco, etc. (opcional)" 
             value={formData.complement || ''} 
             onChange={(e) => handleInputChange('complement', e.target.value)}
           />
@@ -358,11 +343,9 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
               placeholder="Nome do bairro" 
               value={formData.neighborhood} 
               onChange={(e) => handleInputChange('neighborhood', e.target.value)}
-              className={fieldErrors.neighborhood ? "border-red-500" : ""} 
+              className={errors.neighborhood ? 'border-red-500' : ''} 
             />
-            {fieldErrors.neighborhood && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors.neighborhood}</p>
-            )}
+            {errors.neighborhood && <p className="text-sm text-red-500">{errors.neighborhood}</p>}
           </div>
           <div>
             <Label htmlFor="city">Cidade *</Label>
@@ -371,11 +354,9 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
               placeholder="Nome da cidade" 
               value={formData.city} 
               onChange={(e) => handleInputChange('city', e.target.value)}
-              className={fieldErrors.city ? "border-red-500" : ""} 
+              className={errors.city ? 'border-red-500' : ''} 
             />
-            {fieldErrors.city && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors.city}</p>
-            )}
+            {errors.city && <p className="text-sm text-red-500">{errors.city}</p>}
           </div>
           <div>
             <Label htmlFor="state">Estado *</Label>
@@ -384,19 +365,18 @@ export function AddressForm({ address, onSave, onCancel, isEditing = true }: Add
               placeholder="SP" 
               value={formData.state} 
               onChange={(e) => handleInputChange('state', e.target.value)}
-              className={fieldErrors.state ? "border-red-500" : ""} 
+              className={errors.state ? 'border-red-500' : ''} 
+              maxLength={2}
             />
-            {fieldErrors.state && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors.state}</p>
-            )}
+            {errors.state && <p className="text-sm text-red-500">{errors.state}</p>}
           </div>
         </div>
 
         <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="is_default" 
+          <Checkbox
+            id="is_default"
             checked={formData.is_default}
-            onCheckedChange={(checked) => handleInputChange('is_default', checked as true)}
+            onCheckedChange={(checked: CheckedState) => handleInputChange('is_default', checked === true)}
           />
           <Label htmlFor="is_default">Definir como endereço padrão</Label>
         </div>

@@ -58,18 +58,6 @@ export function ProfileSidebar({ currentSection, onSectionChange }: ProfileSideb
         isMobileOpen ? "block" : "hidden"
       )}>
         <div className="p-6">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-              <User className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">
-                Olá, {user?.nome || user?.email || "Usuário"}
-              </h3>
-              <p className="text-sm text-muted-foreground">Bem-vindo de volta!</p>
-            </div>
-          </div>
-
           <nav className="space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon;

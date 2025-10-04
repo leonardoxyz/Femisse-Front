@@ -1,17 +1,19 @@
-import { Search, Heart, ShoppingBag, Menu, User, X, LogOut, LogIn } from "lucide-react";
-import { useFavorites } from "@/contexts/FavoritesContext";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import logo from "@/assets/logo.png";
-import SidebarCart from "./SidebarCart";
-import { useCart } from "@/contexts/CartContext";
 import React from "react";
-import { useAuth } from "../hooks/useAuth";
+import { Search, ShoppingCart, User, Menu, X, Heart, ShoppingBag } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useUserData } from "../hooks/useUserData";
+import SidebarCart from "./SidebarCart";
+import SearchBar from "./SearchBar";
+import { debounce } from "@/utils/performance";
 import { API_ENDPOINTS } from "@/config/api";
 import { createSlug } from '@/utils/slugs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import logo from "@/assets/logo.png";
 
 const promotionalMessages = [
   "★ PRIMEIRA COMPRA COM 10% DE DESCONTO",
@@ -35,7 +37,6 @@ const Header = () => {
   }, []);
   const [loadingSuggestions, setLoadingSuggestions] = React.useState(false);
   const navigate = useNavigate();
-  const { favoriteIds } = useFavorites();
   const { cart } = useCart();
   const { isAuthenticated } = useAuth();
   const { userData } = useUserData();

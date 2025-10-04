@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { API_ENDPOINTS } from "@/config/api";
 import bannerVideo from "@/assets/banner-video.mp4";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Swiper imports
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -106,11 +107,9 @@ const HeroBanner = () => {
 
   if (loading) {
     return (
-      <section className="relative h-[25vh] md:h-[60vh] overflow-hidden bg-gradient-to-br from-pink-light to-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando banner...</p>
-        </div>
+      <section className="relative h-[25vh] md:h-[60vh] overflow-hidden bg-gradient-to-br from-pink-light to-background">
+        <Skeleton className="absolute inset-0 h-full w-full rounded-none bg-[#58090d]/15" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#58090d]/10 via-transparent to-black/20" />
       </section>
     );
   }

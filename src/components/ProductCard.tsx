@@ -1,12 +1,9 @@
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
-import { ShoppingBag, Heart } from "lucide-react";
-import { useFavorites } from "@/contexts/FavoritesContext";
-import { useCart } from "@/contexts/CartContext";
-import { createSlug } from "@/utils/slugs";
-import { cn } from "@/lib/utils";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCart } from '@/contexts/CartContext';
+import { createSlug } from '@/utils/slugs';
+import { toast } from '@/components/ui/use-toast';
+import { Card, CardContent } from '@/components/ui/card';
 import { storeCurrentScrollPosition } from "@/hooks/useScrollRestoration";
 
 interface ProductCardProps {
@@ -63,49 +60,57 @@ const ProductCard = ({
       image: mainImage,
     });
     toast({
-      title: "Adicionado ao carrinho",
       description: `${name} foi adicionado ao seu carrinho!`,
       variant: "default",
     });
   }
 
-  
+  const [isFavorite, setIsFavorite] = useState(false);
 
-const { favoriteIds, addFavorite, removeFavorite } = useFavorites();
-const isFavorite = favoriteIds.includes(id);
-
-async function handleAddToFavorites(e: React.MouseEvent) {
-  e.stopPropagation();
-  if (!localStorage.getItem('token')) {
-    toast({
-      title: "Login necessário",
-      description: "Faça login para favoritar produtos!",
-      variant: "destructive",
-    });
-    return;
-  }
-  if (isFavorite) {
-    await removeFavorite(id);
-    if (typeof onFavoriteChange === 'function') {
-      onFavoriteChange(id, false);
+  async function handleAddToFavorites(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!localStorage.getItem('token')) {
+      toast({
+        title: "Login necessário",
+        description: "Faça login para favoritar produtos!",
+        variant: "destructive",
+      });
+      return;
     }
-    toast({
-      title: 'Removido dos favoritos',
-      description: 'O produto foi removido dos seus favoritos.',
-      variant: 'default',
-    });
-  } else {
-    await addFavorite(id);
-    if (typeof onFavoriteChange === 'function') {
-      onFavoriteChange(id, true);
+    
+    try {
+      if (isFavorite) {
+        // Remover dos favoritos
+        setIsFavorite(false);
+        if (typeof onFavoriteChange === 'function') {
+          onFavoriteChange(id, false);
+        }
+        toast({
+          title: 'Removido dos favoritos',
+          description: 'O produto foi removido dos seus favoritos.',
+          variant: 'default',
+        });
+      } else {
+        // Adicionar aos favoritos
+        setIsFavorite(true);
+        if (typeof onFavoriteChange === 'function') {
+          onFavoriteChange(id, true);
+        }
+        toast({
+          title: 'Adicionado aos favoritos',
+          description: 'O produto foi adicionado aos seus favoritos!',
+          variant: 'default',
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao gerenciar favoritos:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao atualizar favoritos. Tente novamente.',
+        variant: 'destructive',
+      });
     }
-    toast({
-      title: 'Adicionado aos favoritos',
-      description: 'O produto foi adicionado aos seus favoritos!',
-      variant: 'default',
-    });
   }
-}
 
   return (
     <Card
@@ -125,25 +130,6 @@ async function handleAddToFavorites(e: React.MouseEvent) {
           alt={name}
           className="absolute top-0 left-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
         />
-        {/* Botões de ação */}
-        <div className="hidden md:flex md:flex-col gap-2 md:opacity-0 md:group-hover:opacity-100 md:pointer-events-none md:group-hover:pointer-events-auto transition-all duration-300 z-10 absolute top-3 right-3">
-          <button
-            onClick={handleAddToFavorites}
-            className="bg-white/95 hover:bg-pink-50 p-2.5 shadow-lg hover:shadow-xl text-pink-600 hover:text-pink-700 transition-all duration-200 backdrop-blur-sm"
-            title="Favoritar"
-          >
-            <Heart className={`w-5 h-5 ${isFavorite ? 'text-pink-500 fill-pink-500' : ''}`} />
-          </button>
-          <button
-            onClick={stock === 0 ? undefined : handleAddToCart}
-            className={`bg-white/95 p-2.5 shadow-lg hover:shadow-xl transition-all duration-200 backdrop-blur-sm ${stock === 0 ? 'text-gray-400 cursor-not-allowed opacity-60' : 'hover:bg-green-50 text-green-600 hover:text-green-700'}`}
-            title={stock === 0 ? 'Produto esgotado' : 'Adicionar ao carrinho'}
-            disabled={stock === 0}
-            tabIndex={stock === 0 ? -1 : 0}
-          >
-            <ShoppingBag className="w-5 h-5" />
-          </button>
-        </div>
       </div>
       <CardContent className="flex flex-col items-center justify-center py-4 px-4 bg-white min-h-[120px]">
         <h3 className="font-sans text-sm md:text-base text-zinc-800 font-medium text-center mb-3 line-clamp-2 leading-tight min-h-[2.5rem] flex items-center">

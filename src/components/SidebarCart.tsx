@@ -1,7 +1,7 @@
 import React from "react";
 import { useCart } from "@/contexts/CartContext";
 import { useShipping, ShippingAddress } from "@/contexts/ShippingContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 interface SidebarCartProps {
   open: boolean;
@@ -9,6 +9,7 @@ interface SidebarCartProps {
 }
 
 const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
+  const navigate = useNavigate();
   const [shouldRender, setShouldRender] = React.useState(open);
   const FREE_SHIPPING_TARGET = 120; // R$120,00
   const PIX_DISCOUNT_RATE = 0.05; // 5%
@@ -412,10 +413,15 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
         {/* Footer ações */}
         <div className="px-4 py-3 border-t flex flex-col items-center gap-3">
           <>
-            <button
+          <button
               className={`w-full py-2 rounded-md text-[14px] font-medium text-white ${shippingCalculated ? 'bg-primary' : 'bg-zinc-300 cursor-not-allowed'}`}
               disabled={!shippingCalculated}
               title={shippingCalculated ? 'Finalizar compra' : 'Calcule o frete para continuar'}
+              onClick={() => {
+                if (!shippingCalculated) return;
+                onClose();
+                navigate("/checkout");
+              }}
             >
               Finalizar compra
             </button>
