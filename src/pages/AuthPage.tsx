@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import TurnstileWidget from '@/components/TurnstileWidget';
 import { API_ENDPOINTS } from '@/config/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -25,6 +26,7 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   // Redireciona se já estiver logado
   useEffect(() => {
@@ -56,6 +58,13 @@ const AuthPage = () => {
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
+    
+    // Verifica se o Turnstile foi validado
+    if (!turnstileToken) {
+      setError('Por favor, complete a verificação de segurança.');
+      return;
+    }
+    
     setLoading(true); setError(null); setSuccess(null);
     try {
       await axios.post(`${API_ENDPOINTS.auth}/register`, {
@@ -65,11 +74,14 @@ const AuthPage = () => {
         // telefone: form.telefone,
         email: form.email,
         senha: form.senha,
+        turnstileToken: turnstileToken, // Envia o token do Turnstile
       });
       setSuccess('Cadastro realizado! Faça login.');
       setTab('login');
+      setTurnstileToken(null); // Reset do token
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao cadastrar');
+      setTurnstileToken(null); // Reset do token em caso de erro
     } finally {
       setLoading(false);
     }
@@ -327,6 +339,25 @@ const AuthPage = () => {
                       </div>
                     </div>
 
+                    {/* Turnstile Widget */}
+                    <div className="mt-4">
+                      <TurnstileWidget
+                        onVerify={(token) => {
+                          setTurnstileToken(token);
+                          setError(null); // Limpa erros quando verificado
+                        }}
+                        onError={() => {
+                          setTurnstileToken(null);
+                          setError('Erro na verificação de segurança. Tente novamente.');
+                        }}
+                        onExpire={() => {
+                          setTurnstileToken(null);
+                          setError('Verificação de segurança expirou. Complete novamente.');
+                        }}
+                        className="flex justify-center"
+                      />
+                    </div>
+
                     <div className="text-xs text-gray-600 leading-relaxed">
                       Ao criar uma conta, você concorda com nossos{' '}
                       <a href="#" style={{ color: '#58090d' }} className="hover:opacity-80 font-medium">
@@ -343,7 +374,7 @@ const AuthPage = () => {
                       type="submit"
                       className="w-full text-white font-semibold py-3 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl hover:opacity-90"
                       style={{ backgroundColor: '#58090d' }}
-                      disabled={loading}
+                      disabled={loading || !turnstileToken}
                     >
                       {loading ? 'Criando conta...' : 'Criar minha conta'}
                     </Button>
