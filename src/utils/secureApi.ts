@@ -13,6 +13,26 @@ export const secureLog = (message: string, data?: any) => {
   }
 };
 
+// Logger condicional para diferentes níveis
+export const logger = {
+  info: (message: string, data?: any) => {
+    if (!isProduction) {
+      console.log(`ℹ️ ${message}`, data || '');
+    }
+  },
+  warn: (message: string, data?: any) => {
+    console.warn(`⚠️ ${message}`, data || '');
+  },
+  error: (message: string, data?: any) => {
+    console.error(`❌ ${message}`, data || '');
+  },
+  debug: (message: string, data?: any) => {
+    if (!isProduction && import.meta.env.DEV) {
+      console.debug(`🐛 ${message}`, data || '');
+    }
+  }
+};
+
 // Função para ofuscar URLs em logs
 export const obfuscateUrl = (url: string): string => {
   if (isProduction) return '[API_REQUEST]';

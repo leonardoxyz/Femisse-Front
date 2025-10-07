@@ -21,7 +21,6 @@ import ShippingCalculator from "@/components/ShippingCalculator";
 
 // Funções utilitárias para favoritos
 async function fetchFavorites(token: string) {
-  const { API_ENDPOINTS } = await import('@/config/api');
   const res = await fetch(`${API_ENDPOINTS.favorites}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
@@ -29,7 +28,6 @@ async function fetchFavorites(token: string) {
 }
 
 async function addFavorite(productId: string, token: string) {
-  const { API_ENDPOINTS } = await import('@/config/api');
   const res = await fetch(`${API_ENDPOINTS.favorites}`, {
     method: 'POST',
     headers: {
@@ -42,7 +40,6 @@ async function addFavorite(productId: string, token: string) {
 }
 
 async function removeFavorite(productId: string, token: string) {
-  const { API_ENDPOINTS } = await import('@/config/api');
   const res = await fetch(`${API_ENDPOINTS.favorites}/${productId}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` }
