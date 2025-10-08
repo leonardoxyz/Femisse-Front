@@ -22,15 +22,16 @@ const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
   const isDevelopment = import.meta.env.DEV;
   const isProduction = import.meta.env.PROD;
 
-  // Log para debug (apenas em desenvolvimento)
-  if (isDevelopment) {
-    console.log('Turnstile Environment:', {
-      isDevelopment,
-      isProduction,
-      siteKey: siteKey ? 'Configured' : 'Missing',
-      mode: import.meta.env.MODE
-    });
-  }
+  // Log para debug (sempre ativo para diagnosticar problemas de domínio)
+  console.log('Turnstile Environment:', {
+    isDevelopment,
+    isProduction,
+    siteKey: siteKey ? 'Configured' : 'Missing',
+    mode: import.meta.env.MODE,
+    hostname: window.location.hostname,
+    origin: window.location.origin,
+    href: window.location.href
+  });
 
   if (!siteKey) {
     console.error('VITE_TURNSTILE_SITE_KEY não configurado');

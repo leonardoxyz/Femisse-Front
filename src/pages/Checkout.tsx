@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronLeft, MapPin, CreditCard, Package, Check, Plus, Truck, Shield } from "lucide-react";
+import { ChevronLeft, MapPin, CreditCard, Package, Check, Plus, Truck, Shield, AlertCircle } from "lucide-react";
 
 import { useCart } from "@/contexts/CartContext";
 import { useShipping } from "@/contexts/ShippingContext";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchUserAddresses, Address } from "@/services/address";
+import { useCheckout } from "@/hooks/useCheckout";
+import PaymentForm from "@/components/checkout/PaymentForm";
+import PaymentStatus from "@/components/checkout/PaymentStatus";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 const FREE_SHIPPING_TARGET = 120;
 
@@ -26,21 +31,31 @@ const CheckoutPage = () => {
   const { shippingInfo, updateShippingInfo } = useShipping();
   const { user, token } = useAuth();
   
-  // Estados do checkout
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>("address");
+  // Hook personalizado para checkout
+  const {
+    state: checkoutState,
+    goToStep,
+    goToNextStep,
+    goToPreviousStep,
+    selectAddress,
+    selectPaymentMethod,
+    createOrder,
+    processPayment,
+    canProceedToPayment,
+    canProceedToConfirmation,
+    canProcessPayment,
+    calculateTotals
+  } = useCheckout();
+  
+  // Estados locais
   const [addresses, setAddresses] = useState<Address[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const [paymentData, setPaymentData] = useState<any>(null);
+  const [isPaymentValid, setIsPaymentValid] = useState(false);
 
-  const subtotal = useMemo(
-    () => cart.reduce((total, item) => total + item.price * item.quantity, 0),
-    [cart]
-  );
-
-  const shippingCost = shippingInfo.shippingCost ?? 0;
-  const total = subtotal + shippingCost;
+  const totals = useMemo(() => calculateTotals(), [calculateTotals]);
+  const { subtotal, shipping: shippingCost, total } = totals;
 
   // Métodos de pagamento disponíveis
   const paymentMethods: PaymentMethod[] = [
@@ -86,8 +101,8 @@ const CheckoutPage = () => {
   };
 
   const selectedPaymentDetails = useMemo(
-    () => paymentMethods.find((method) => method.id === selectedPaymentMethod) ?? null,
-    [paymentMethods, selectedPaymentMethod]
+    () => paymentMethods.find((method) => method.id === checkoutState.selectedPaymentMethod) ?? null,
+    [paymentMethods, checkoutState.selectedPaymentMethod]
   );
 
   const formatCurrency = (value: number) =>
@@ -111,31 +126,61 @@ const CheckoutPage = () => {
       // Selecionar endereço padrão automaticamente
       const defaultAddress = userAddresses.find(addr => addr.is_default);
       if (defaultAddress) {
-        setSelectedAddressId(defaultAddress.id);
+        selectAddress(defaultAddress);
       }
     } catch (error) {
       console.error("Erro ao carregar endereços:", error);
     } finally {
       setIsLoadingAddresses(false);
     }
-  }, [token]);
+  }, [token, selectAddress]);
 
-  // Navegação entre steps
-  const goToNextStep = () => {
-    if (currentStep === "address" && selectedAddressId) {
-      setCurrentStep("payment");
-    } else if (currentStep === "payment" && selectedPaymentMethod) {
-      setCurrentStep("confirmation");
+  // Handlers para processar checkout
+  const handleCreateOrder = async () => {
+    try {
+      await createOrder();
+      goToNextStep();
+    } catch (error) {
+      console.error('Erro ao criar pedido:', error);
     }
   };
 
-  const goToPreviousStep = () => {
-    if (currentStep === "payment") {
-      setCurrentStep("address");
-    } else if (currentStep === "confirmation") {
-      setCurrentStep("payment");
-    } else {
-      navigate(-1); // Volta para o carrinho
+  // Handler para quando os dados de pagamento mudarem
+  const handlePaymentDataChange = (data: any, isValid: boolean) => {
+    setPaymentData(data);
+    setIsPaymentValid(isValid);
+    
+    // Atualizar o método de pagamento selecionado no estado do checkout
+    if (data.payment_method) {
+      selectPaymentMethod(data.payment_method);
+    }
+  };
+
+  // Handler para processar pagamento (chamado ao clicar em "Revisar pedido")
+  const handleReviewOrder = async () => {
+    if (!isPaymentValid || !paymentData) {
+      return;
+    }
+
+    try {
+      // Criar pedido
+      await createOrder();
+      
+      // Avançar para confirmação
+      goToNextStep();
+    } catch (error) {
+      console.error('Erro ao criar pedido:', error);
+    }
+  };
+
+  // Handler para finalizar pedido (na tela de confirmação)
+  const handleFinalizeOrder = async () => {
+    try {
+      // Processar o pagamento (o hook já muda o step para 'processing')
+      await processPayment(paymentData);
+    } catch (error) {
+      console.error('Erro ao processar pagamento:', error);
+      // O hook já trata o erro e muda para 'error'
     }
   };
 
@@ -213,22 +258,31 @@ const CheckoutPage = () => {
         </div>
       </div>
 
-      <button
+      <Button
         type="button"
-        onClick={currentStep === "confirmation" ? undefined : goToNextStep}
+        onClick={() => {
+          if (checkoutState.currentStep === 'address' && canProceedToPayment) {
+            goToNextStep();
+          } else if (checkoutState.currentStep === 'payment' && isPaymentValid) {
+            handleReviewOrder();
+          } else if (checkoutState.currentStep === 'confirmation') {
+            handleFinalizeOrder();
+          }
+        }}
         disabled={
-          (currentStep === "address" && !selectedAddressId) ||
-          (currentStep === "payment" && !selectedPaymentMethod) ||
-          currentStep === "confirmation"
+          (checkoutState.currentStep === "address" && !canProceedToPayment) ||
+          (checkoutState.currentStep === "payment" && !isPaymentValid) ||
+          checkoutState.isLoading
         }
-        className="w-full rounded-sm bg-[#58090d] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#58090d]/90 disabled:cursor-not-allowed disabled:bg-zinc-300"
+        className="w-full"
       >
-        {currentStep === "address" && "Continuar para pagamento"}
-        {currentStep === "payment" && "Revisar pedido"}
-        {currentStep === "confirmation" && "Finalizar compra"}
-      </button>
+        {checkoutState.currentStep === "address" && "Continuar para pagamento"}
+        {checkoutState.currentStep === "payment" && "Revisar pedido"}
+        {checkoutState.currentStep === "confirmation" && "Finalizar pedido"}
+        {checkoutState.isLoading && "Processando..."}
+      </Button>
       
-      {currentStep === "confirmation" && (
+      {checkoutState.currentStep === "confirmation" && (
         <p className="text-xs text-zinc-500 text-center">
           Ao finalizar, você concorda com os termos da Feminisse.
         </p>
@@ -244,7 +298,7 @@ const CheckoutPage = () => {
       { id: "confirmation", label: "Confirmação", icon: <Check className="h-4 w-4" /> },
     ];
 
-    const currentStepIndex = steps.findIndex(step => step.id === currentStep);
+    const currentStepIndex = steps.findIndex(step => step.id === checkoutState.currentStep);
 
     return (
       <div className="flex items-center justify-center gap-2 mb-8">
@@ -282,16 +336,19 @@ const CheckoutPage = () => {
                 className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900"
               >
                 <ChevronLeft className="h-4 w-4" />
-                {currentStep === "address" ? "Voltar ao carrinho" : "Voltar"}
+                {checkoutState.currentStep === "address" ? "Voltar ao carrinho" : "Voltar"}
               </button>
               <div className="h-6 w-px bg-zinc-300" />
               <span className="text-sm font-medium text-zinc-900">Checkout</span>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-xs text-zinc-500">
-                {currentStep === "address" && "Etapa 1 de 3"}
-                {currentStep === "payment" && "Etapa 2 de 3"}
-                {currentStep === "confirmation" && "Etapa 3 de 3"}
+                {checkoutState.currentStep === "address" && "Etapa 1 de 3"}
+                {checkoutState.currentStep === "payment" && "Etapa 2 de 3"}
+                {checkoutState.currentStep === "confirmation" && "Etapa 3 de 3"}
+                {checkoutState.currentStep === "processing" && "Processando"}
+                {checkoutState.currentStep === "success" && "Concluído"}
+                {checkoutState.currentStep === "error" && "Erro"}
               </span>
               <div className="flex gap-1">
                 <div className="h-2 w-6 rounded-sm bg-primary" />
@@ -311,7 +368,7 @@ const CheckoutPage = () => {
             {/* Main Content */}
             <div className="lg:col-span-8">
               {/* Step: Address Selection */}
-              {currentStep === "address" && (
+              {checkoutState.currentStep === "address" && (
                 <div className="space-y-6">
                   <div className="bg-white rounded-sm p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
@@ -335,9 +392,9 @@ const CheckoutPage = () => {
                         {addresses.map((address) => (
                           <div
                             key={address.id}
-                            onClick={() => setSelectedAddressId(address.id)}
+                            onClick={() => selectAddress(address)}
                             className={`p-4 rounded-sm border-2 cursor-pointer transition-colors ${
-                              selectedAddressId === address.id
+                              checkoutState.selectedAddress?.id === address.id
                                 ? 'border-[#58090d] bg-[#58090d]/5'
                                 : 'border-gray-200 hover:border-gray-300'
                             }`}
@@ -364,11 +421,11 @@ const CheckoutPage = () => {
                                 </p>
                               </div>
                               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                selectedAddressId === address.id
+                                checkoutState.selectedAddress?.id === address.id
                                   ? 'border-[#58090d] bg-[#58090d]'
                                   : 'border-gray-300'
                               }`}>
-                                {selectedAddressId === address.id && (
+                                {checkoutState.selectedAddress?.id === address.id && (
                                   <Check className="h-3 w-3 text-white" />
                                 )}
                               </div>
@@ -407,7 +464,7 @@ const CheckoutPage = () => {
               )}
 
               {/* Step: Payment Method */}
-              {currentStep === "payment" && (
+              {checkoutState.currentStep === "payment" && (
                 <div className="space-y-6">
                   <div className="rounded-2xl border border-[#58090d]/15 bg-white shadow-sm">
                     <div className="flex flex-col gap-6 p-6">
@@ -423,124 +480,21 @@ const CheckoutPage = () => {
                         </div>
                       </div>
 
+                      <PaymentForm
+                        onPaymentDataChange={handlePaymentDataChange}
+                        totalAmount={total}
+                      />
+
                       <div className="flex flex-col gap-6 lg:flex-row">
                         <div className="flex-1 space-y-6">
-                          <div className="rounded-xl border border-dashed border-[#58090d]/30 bg-[#58090d]/5 p-5">
-                            {selectedPaymentDetails ? (
-                              <div className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="flex h-11 w-11 items-center justify-center rounded-md bg-[#58090d] text-white">
-                                    {selectedPaymentDetails.icon}
-                                  </div>
-                                  <div>
-                                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#58090d]/80">
-                                      Método selecionado
-                                    </p>
-                                    <p className="text-lg font-semibold text-[#58090d]">
-                                      {selectedPaymentDetails.name}
-                                    </p>
-                                  </div>
-                                </div>
-                                <p className="text-sm leading-relaxed text-[#58090d]/90">
-                                  {selectedPaymentDetails.description}
-                                </p>
-                                <ul className="space-y-2 text-sm text-[#58090d]">
-                                  {paymentHighlights[selectedPaymentDetails.id]?.map((item) => (
-                                    <li key={item} className="flex items-start gap-2">
-                                      <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#58090d]" />
-                                      <span>{item}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-3 rounded-sm border border-[#58090d]/20 bg-white/80 px-4 py-3 text-sm text-[#58090d]">
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span>Selecione um método de pagamento para visualizar os detalhes e benefícios.</span>
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="space-y-4">
-                            <div className="flex flex-col gap-1">
-                              <p className="text-sm font-semibold text-zinc-900">Formas de pagamento</p>
-                              <p className="text-xs text-zinc-500">
-                                Todos os pagamentos são processados com segurança pelo Mercado Pago.
-                              </p>
-                            </div>
-                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                              {paymentMethods.map((method) => {
-                                const isSelected = selectedPaymentMethod === method.id;
-                                const isDisabled = !method.enabled;
-
-                                return (
-                                  <button
-                                    key={method.id}
-                                    type="button"
-                                    onClick={() => setSelectedPaymentMethod(method.id)}
-                                    disabled={isDisabled}
-                                    aria-pressed={isSelected}
-                                    className={`group relative flex flex-col gap-4 rounded-xl border-2 p-5 text-left transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#58090d] ${
-                                      isDisabled
-                                        ? 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400'
-                                        : isSelected
-                                          ? 'border-[#58090d] bg-[#58090d]/5 shadow-[0_12px_28px_rgba(88,9,13,0.12)]'
-                                          : 'border-gray-200 hover:border-[#58090d]/50 hover:bg-[#58090d]/5'
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-between gap-3">
-                                      <div
-                                        className={`flex h-11 w-11 items-center justify-center rounded-md transition-colors ${
-                                          isDisabled
-                                            ? 'bg-gray-100 text-gray-400'
-                                            : isSelected
-                                              ? 'bg-[#58090d] text-white'
-                                              : 'bg-[#58090d]/10 text-[#58090d]'
-                                        }`}
-                                      >
-                                        {method.icon}
-                                      </div>
-                                      <div
-                                        className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                                          isSelected ? 'border-[#58090d] bg-[#58090d]' : 'border-gray-300'
-                                        }`}
-                                      >
-                                        {isSelected && <Check className="h-3 w-3 text-white" />}
-                                      </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                      <p
-                                        className={`text-base font-semibold ${
-                                          isDisabled ? 'text-gray-400' : 'text-zinc-900'
-                                        }`}
-                                      >
-                                        {method.name}
-                                      </p>
-                                      <p
-                                        className={`text-sm leading-relaxed ${
-                                          isDisabled ? 'text-gray-400' : 'text-zinc-600'
-                                        }`}
-                                      >
-                                        {method.description}
-                                      </p>
-                                    </div>
-                                    {!isDisabled && (
-                                      <ul className="space-y-1 text-xs text-zinc-500">
-                                        {paymentHighlights[method.id]?.slice(0, 2).map((item) => (
-                                          <li key={item} className="flex items-start gap-2">
-                                            <span className="mt-1 h-1 w-1 flex-shrink-0 rounded-full bg-zinc-400" />
-                                            <span>{item}</span>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
+                      {checkoutState.error && (
+                        <Alert className="border-red-200 bg-red-50">
+                          <AlertCircle className="h-4 w-4 text-red-600" />
+                          <AlertDescription className="text-red-800">
+                            {checkoutState.error}
+                          </AlertDescription>
+                        </Alert>
+                      )}
                         </div>
 
                         
@@ -551,7 +505,7 @@ const CheckoutPage = () => {
               )}
 
               {/* Step: Order Confirmation */}
-              {currentStep === "confirmation" && (
+              {checkoutState.currentStep === "confirmation" && (
                 <div className="space-y-6">
                   <div className="bg-white rounded-sm p-6 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
@@ -565,42 +519,42 @@ const CheckoutPage = () => {
                     </div>
 
                     {/* Selected Address Summary */}
-                    {selectedAddressId && (
+                    {checkoutState.selectedAddress && (
                       <div className="mb-6 p-4 bg-gray-50 rounded-sm">
                         <h3 className="font-medium text-zinc-900 mb-2 flex items-center gap-2">
                           <MapPin className="h-4 w-4" />
                           Endereço de entrega
                         </h3>
-                        {(() => {
-                          const selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
-                          return selectedAddress ? (
-                            <div className="text-sm text-zinc-600">
-                              <p>{selectedAddress.street}, {selectedAddress.number}</p>
-                              {selectedAddress.complement && <p>{selectedAddress.complement}</p>}
-                              <p>{selectedAddress.neighborhood}, {selectedAddress.city} - {selectedAddress.state}</p>
-                              <p>CEP {formatCep(selectedAddress.zip_code)}</p>
-                            </div>
-                          ) : null;
-                        })()}
+                        <div className="text-sm text-zinc-600">
+                          <p>{checkoutState.selectedAddress.street}, {checkoutState.selectedAddress.number}</p>
+                          {checkoutState.selectedAddress.complement && <p>{checkoutState.selectedAddress.complement}</p>}
+                          <p>{checkoutState.selectedAddress.neighborhood}, {checkoutState.selectedAddress.city} - {checkoutState.selectedAddress.state}</p>
+                          <p>CEP {formatCep(checkoutState.selectedAddress.zip_code)}</p>
+                        </div>
                       </div>
                     )}
 
                     {/* Selected Payment Method Summary */}
-                    {selectedPaymentMethod && (
+                    {checkoutState.selectedPaymentMethod && (
                       <div className="mb-6 p-4 bg-gray-50 rounded-sm">
                         <h3 className="font-medium text-zinc-900 mb-2 flex items-center gap-2">
                           <CreditCard className="h-4 w-4" />
                           Forma de pagamento
                         </h3>
-                        {(() => {
-                          const selectedMethod = paymentMethods.find(method => method.id === selectedPaymentMethod);
-                          return selectedMethod ? (
-                            <div className="text-sm text-zinc-600">
-                              <p>{selectedMethod.name} - {selectedMethod.description}</p>
-                            </div>
-                          ) : null;
-                        })()}
+                        <div className="text-sm text-zinc-600">
+                          <p>{checkoutState.selectedPaymentMethod} - Método selecionado</p>
+                        </div>
                       </div>
+                    )}
+
+                    {!checkoutState.order && (
+                      <Button
+                        onClick={handleCreateOrder}
+                        disabled={checkoutState.isLoading || !canProcessPayment}
+                        className="w-full mb-4"
+                      >
+                        {checkoutState.isLoading ? 'Criando pedido...' : 'Criar pedido'}
+                      </Button>
                     )}
 
                     {/* Shipping Info */}
@@ -620,6 +574,88 @@ const CheckoutPage = () => {
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step: Processing Payment */}
+              {(checkoutState.currentStep === 'processing' || checkoutState.currentStep === 'success' || checkoutState.currentStep === 'error') && checkoutState.payment && (
+                <div className="space-y-6">
+                  <PaymentStatus
+                    payment={checkoutState.payment}
+                    token={token!}
+                    onStatusChange={(status) => {
+                      if (status === 'approved') {
+                        goToStep('success');
+                      } else if (status === 'rejected') {
+                        goToStep('error');
+                      }
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Error State */}
+              {checkoutState.currentStep === 'error' && (
+                <div className="space-y-6">
+                  <Alert className="border-red-200 bg-red-50">
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                    <AlertDescription className="text-red-800">
+                      {checkoutState.error || 'Ocorreu um erro durante o checkout.'}
+                    </AlertDescription>
+                  </Alert>
+                  
+                  <div className="flex gap-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => goToStep('payment')}
+                      className="flex-1"
+                    >
+                      Tentar novamente
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate('/')}
+                      className="flex-1"
+                    >
+                      Voltar ao carrinho
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Success State */}
+              {checkoutState.currentStep === 'success' && (
+                <div className="space-y-6 text-center">
+                  <div className="flex justify-center">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
+                      <Check className="h-10 w-10 text-green-600" />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h2 className="text-2xl font-semibold text-zinc-900 mb-2">
+                      Pedido realizado com sucesso!
+                    </h2>
+                    <p className="text-zinc-600">
+                      Você receberá um e-mail com os detalhes do seu pedido.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <Button
+                      onClick={() => navigate('/perfil/orders')}
+                      className="flex-1"
+                    >
+                      Ver meus pedidos
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate('/')}
+                      className="flex-1"
+                    >
+                      Continuar comprando
+                    </Button>
                   </div>
                 </div>
               )}

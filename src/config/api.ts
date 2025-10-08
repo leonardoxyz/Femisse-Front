@@ -49,7 +49,15 @@ export const API_ENDPOINTS = {
 
   // Payment Cards
   cards: `${API_BASE_URL}/api/cards`, // Admin routes
-  userCards: `${API_BASE_URL}/api/cards/user/cards` // User cards
+  userCards: `${API_BASE_URL}/api/cards/user/cards`, // User cards
+  
+  // Payment Processing
+  payments: `${API_BASE_URL}/api/payments`, // Payment routes
+  paymentPreference: `${API_BASE_URL}/api/payments/preference`, // Create MP preference
+  paymentProcess: `${API_BASE_URL}/api/payments/process`, // Process direct payment
+  paymentStatus: `${API_BASE_URL}/api/payments/status`, // Check payment status
+  paymentPublicKey: `${API_BASE_URL}/api/payments/public-key`, // Get MP public key
+  paymentWebhook: `${API_BASE_URL}/api/payments/webhook` // MP webhook
 } as const;
 export const buildApiUrl = (endpoint: string, params?: Record<string, string | number>) => {
   let url = endpoint;
