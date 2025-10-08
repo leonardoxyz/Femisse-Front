@@ -1,4 +1,5 @@
-import React from "react";
+import React from 'react';
+import { logger } from '@/utils/logger';
 
 export interface ShippingAddress {
   cep: string;
@@ -40,7 +41,7 @@ const loadShippingFromStorage = (): ShippingInfo => {
     const stored = localStorage.getItem(SHIPPING_STORAGE_KEY);
     return stored ? JSON.parse(stored) : defaultState;
   } catch (error) {
-    console.error('Erro ao carregar dados de frete do localStorage:', error);
+    logger.error('Erro ao carregar dados de frete do localStorage:', error);
     return defaultState;
   }
 };
@@ -49,7 +50,7 @@ const saveShippingToStorage = (shippingInfo: ShippingInfo) => {
   try {
     localStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify(shippingInfo));
   } catch (error) {
-    console.error('Erro ao salvar dados de frete no localStorage:', error);
+    logger.error('Erro ao salvar dados de frete no localStorage:', error);
   }
 };
 

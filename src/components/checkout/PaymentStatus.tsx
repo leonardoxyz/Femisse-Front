@@ -21,13 +21,20 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
   token
 }) => {
   const [currentStatus, setCurrentStatus] = useState<PaymentStatus | null>(null);
+  const [hasNotifiedSuccess, setHasNotifiedSuccess] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pixCopied, setPixCopied] = useState(false);
   const { toast } = useToast();
+  const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Polling para atualizar status do pagamento
   useEffect(() => {
     if (!payment.payment_id) return;
+    
+    // Parar polling se já foi aprovado
+    if (hasNotifiedSuccess) {
+      return;
+    }
 
     const checkPaymentStatus = async () => {
       try {
@@ -35,27 +42,68 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
         setCurrentStatus(status);
         onStatusChange?.(status.status);
         
-        // Se o pagamento foi aprovado, chamar callback
-        if (paymentService.isSuccessStatus(status.status)) {
+        // Se o pagamento foi aprovado, chamar callback apenas uma vez
+        if (paymentService.isSuccessStatus(status.status) && !hasNotifiedSuccess) {
           onPaymentApproved?.();
+          setHasNotifiedSuccess(true);
+          // Não fazer mais requisições após aprovação
+          return;
         }
       } catch (error) {
         console.error('Erro ao verificar status do pagamento:', error);
       }
     };
 
-    // Verificar imediatamente
+    // Verificar imediatamente apenas se ainda não notificou sucesso
     checkPaymentStatus();
 
-    // Polling a cada 10 segundos para pagamentos pendentes (reduzido de 5s)
-    const interval = setInterval(() => {
+    // Polling a cada 10 segundos APENAS para pagamentos pendentes
+    intervalRef.current = setInterval(() => {
+      // Parar polling se já notificou sucesso
+      if (hasNotifiedSuccess) {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        return;
+      }
+      
       if (currentStatus && paymentService.isPendingStatus(currentStatus.status)) {
         checkPaymentStatus();
       }
     }, 10000); // 10 segundos
 
-    return () => clearInterval(interval);
-  }, [payment.payment_id, token, onStatusChange, currentStatus]);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [payment.payment_id, token, onStatusChange, currentStatus, hasNotifiedSuccess, onPaymentApproved]);
+  
+  // Limpar intervalo quando componente desmontar ou sucesso for notificado
+  useEffect(() => {
+    if (hasNotifiedSuccess && intervalRef.current) {
+      console.log('🛑 Parando polling - pagamento aprovado');
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    
+    // Cleanup ao desmontar
+    return () => {
+      if (intervalRef.current) {
+        console.log('🛑 Limpando polling - componente desmontado');
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [hasNotifiedSuccess]);
+
+  useEffect(() => {
+    if (!paymentService.isSuccessStatus(payment.status)) {
+      setHasNotifiedSuccess(false);
+    }
+  }, [payment.status]);
 
   const refreshStatus = async () => {
     if (!payment.payment_id) return;
@@ -182,7 +230,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
       </Card>
 
       {/* PIX específico */}
-      {payment.pix && (
+      {payment.pix && !paymentService.isSuccessStatus(status) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -272,21 +320,14 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
         </Card>
       )}
 
-      {/* Instruções baseadas no status */}
-      {paymentService.isPendingStatus(status) && (
-        <Alert>
-          <Clock className="h-4 w-4" />
-          <AlertDescription>
-            Seu pagamento está sendo processado. Você receberá uma confirmação em breve.
-          </AlertDescription>
-        </Alert>
-      )}
-
       {paymentService.isSuccessStatus(status) && (
         <Alert className="border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            Pagamento confirmado! Seu pedido está sendo preparado para envio.
+            <div className="space-y-2">
+              <p className="font-semibold">Pagamento confirmado! Seu pedido está sendo preparado para envio.</p>
+              <p className="text-sm">⚠️ Este pagamento já foi processado. Não é possível pagar novamente.</p>
+            </div>
           </AlertDescription>
         </Alert>
       )}

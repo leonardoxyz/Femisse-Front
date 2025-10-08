@@ -316,7 +316,7 @@ export function useCheckout(): UseCheckoutReturn {
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao processar pagamento';
-      
+
       setState(prev => ({
         ...prev,
         isLoading: false,

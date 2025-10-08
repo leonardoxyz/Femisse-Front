@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { logger } from "@/utils/logger";
 
 interface FavoritesContextType {
   favoriteIds: string[];
@@ -37,7 +38,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const ids = await res.json();
       setFavoriteIds(ids);
     } catch (error) {
-      console.error(error);
+      logger.error('Erro ao buscar favoritos:', error);
       setFavoriteIds([]);
     } finally {
       setLoading(false);

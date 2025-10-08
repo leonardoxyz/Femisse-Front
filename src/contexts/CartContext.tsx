@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
+import { logger } from "@/utils/logger";
 
 export interface CartItem {
   id: string;
@@ -26,7 +27,7 @@ const loadCartFromStorage = (): CartItem[] => {
     const stored = localStorage.getItem(CART_STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    console.error('Erro ao carregar carrinho do localStorage:', error);
+    logger.error('Erro ao carregar carrinho do localStorage:', error);
     return [];
   }
 };
@@ -35,7 +36,7 @@ const saveCartToStorage = (cart: CartItem[]) => {
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
   } catch (error) {
-    console.error('Erro ao salvar carrinho no localStorage:', error);
+    logger.error('Erro ao salvar carrinho no localStorage:', error);
   }
 };
 

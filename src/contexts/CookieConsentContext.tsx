@@ -1,4 +1,5 @@
-import React from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { logger } from "@/utils/logger";
 
 export type OptionalCookieCategory = "preferences" | "analytics" | "marketing";
 
@@ -16,13 +17,12 @@ interface CookieConsentContextValue {
   isPreferencesOpen: boolean;
   acceptAll: () => void;
   rejectAll: () => void;
-  savePreferences: (consent: Pick<CookieConsentState, OptionalCookieCategory>) => void;
   openPreferences: () => void;
   closePreferences: () => void;
   resetConsent: () => void;
 }
 
-const CookieConsentContext = React.createContext<CookieConsentContextValue | undefined>(undefined);
+const CookieConsentContext = createContext<CookieConsentContextValue | undefined>(undefined);
 
 const STORAGE_KEY = "feminisse-cookie-consent";
 
@@ -46,7 +46,7 @@ const loadFromStorage = (): CookieConsentState | null => {
       updatedAt: parsed?.updatedAt ?? new Date().toISOString(),
     };
   } catch (error) {
-    console.error("Erro ao carregar consentimento de cookies:", error);
+    logger.error("Erro ao carregar consentimento de cookies:", error);
     return null;
   }
 };
@@ -59,7 +59,7 @@ const saveToStorage = (state: CookieConsentState | null) => {
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error("Erro ao salvar consentimento de cookies:", error);
+    logger.error("Erro ao salvar consentimento de cookies:", error);
   }
 };
 

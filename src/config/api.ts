@@ -43,9 +43,11 @@ export const API_ENDPOINTS = {
   // Order Management
   orders: `${API_BASE_URL}/api/orders`, // Admin routes
   userOrders: `${API_BASE_URL}/api/orders/user/orders`, // User orders
-  reviews: `${API_BASE_URL}/api/orders/user/reviews`,
-  reviewableProducts: `${API_BASE_URL}/api/orders/user/reviewable-products`,
-  reviewStats: `${API_BASE_URL}/api/orders/products`,
+  
+  // Reviews Management
+  reviews: `${API_BASE_URL}/api/reviews/user/reviews`,
+  reviewableProducts: `${API_BASE_URL}/api/reviews/user/reviewable-products`,
+  reviewStats: `${API_BASE_URL}/api/reviews/products`,
 
   // Payment Cards
   cards: `${API_BASE_URL}/api/cards`, // Admin routes

@@ -31,6 +31,17 @@ export interface CreateOrderData {
   };
 }
 
+export interface ShippingAddress {
+  name: string;
+  street: string;
+  number: string;
+  complement?: string | null;
+  neighborhood?: string | null;
+  city: string;
+  state: string;
+  zip_code: string;
+}
+
 export interface Order {
   id: string;
   order_number: string;
@@ -45,14 +56,15 @@ export interface Order {
   created_at: string;
   updated_at: string;
   items?: OrderItem[];
-  shipping_address?: any;
-}
-
-export interface OrderHistory {
-  orders: Order[];
-  total: number;
-  page: number;
-  limit: number;
+  shipping_address?: ShippingAddress | null;
+  shipping_name?: string | null;
+  shipping_street?: string | null;
+  shipping_number?: string | null;
+  shipping_complement?: string | null;
+  shipping_neighborhood?: string | null;
+  shipping_city?: string | null;
+  shipping_state?: string | null;
+  shipping_zip_code?: string | null;
 }
 
 class OrderService {
@@ -113,14 +125,13 @@ class OrderService {
    */
   async getUserOrders(
     token: string,
-    page: number = 1,
-    limit: number = 10
-  ): Promise<OrderHistory> {
+    limit: number = 20
+  ): Promise<Order[]> {
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-      });
+      const params = new URLSearchParams();
+      if (limit) {
+        params.set('limit', limit.toString());
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/orders/user/orders?${params}`, {
         method: 'GET',
@@ -234,32 +245,48 @@ class OrderService {
   }
 
   /**
-   * Obter status legível do pedido
+   * Obter status combinado e inteligente do pedido
    */
-  getOrderStatusLabel(status: Order['status']): string {
+  getOrderStatusLabel(order: Order): string {
+    // Se pagamento pendente, priorizar isso
+    if (order.payment_status === 'pending') {
+      return 'Aguardando pagamento';
+    }
+    
+    // Se pagamento falhou
+    if (order.payment_status === 'failed') {
+      return 'Pagamento falhou';
+    }
+    
+    // Se foi reembolsado
+    if (order.payment_status === 'refunded') {
+      return 'Reembolsado';
+    }
+    
+    // Pagamento OK, mostrar status da entrega
     const statusMap: Record<Order['status'], string> = {
-      'pending': 'Aguardando pagamento',
-      'processing': 'Processando',
+      'pending': 'Aguardando confirmação',
+      'processing': 'Preparando pedido',
       'shipped': 'Enviado',
       'delivered': 'Entregue',
       'cancelled': 'Cancelado'
     };
 
-    return statusMap[status] || 'Status desconhecido';
+    return statusMap[order.status] || 'Status desconhecido';
   }
 
   /**
-   * Obter status legível do pagamento
+   * Obter cor do badge baseado no status combinado
    */
-  getPaymentStatusLabel(status: Order['payment_status']): string {
-    const statusMap: Record<Order['payment_status'], string> = {
-      'pending': 'Aguardando pagamento',
-      'paid': 'Pago',
-      'failed': 'Falha no pagamento',
-      'refunded': 'Estornado'
-    };
-
-    return statusMap[status] || 'Status desconhecido';
+  getOrderStatusBadgeColor(order: Order): string {
+    if (order.payment_status === 'pending') return 'yellow';
+    if (order.payment_status === 'failed') return 'red';
+    if (order.payment_status === 'refunded') return 'gray';
+    if (order.status === 'cancelled') return 'red';
+    if (order.status === 'delivered') return 'green';
+    if (order.status === 'shipped') return 'purple';
+    if (order.status === 'processing') return 'blue';
+    return 'gray';
   }
 
   /**

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { PersonalData } from "@/components/profile/PersonalData";
 import { AddressList } from "@/components/profile/AddressList";
-import { OrderHistory } from "@/components/profile/OrderHistory";
+import OrderHistory from "@/components/profile/OrderHistory";
 import { PersonalReviews } from "@/components/profile/PersonalReviews";
 import { ProfileSidebar } from "./ProfileSidebar";
 import Header from "@/components/Header";

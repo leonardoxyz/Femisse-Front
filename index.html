@@ -1,14 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Femisse - Moda Feminina</title>
-    <meta name="description" content="Loja de moda feminina" />
-    <meta name="author" content="Femisse" />
-
-    <meta property="og:title" content="Femisse" />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.mercadopago.com https://secure.mlstatic.com https://challenges.cloudflare.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      img-src 'self' data: https: blob:;
+      font-src 'self' data: https://fonts.gstatic.com;
+      connect-src 'self' https://api.mercadopago.com https://api.mercadolibre.com https://www.mercadolibre.com http://localhost:4000 https://localhost:4000 https://femisse-back2.vercel.app https://challenges.cloudflare.com;
+      frame-src https://challenges.cloudflare.com https://sdk.mercadopago.com;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+    ">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    
+    <!-- SEO Meta Tags -->
+    <title>Feminisse - Moda Feminina Elegante | Roupas e Acessórios</title>
+    <meta name="description" content="Descubra a coleção Feminisse de moda feminina. Vestidos, blusas, calças e acessórios com estilo e elegância. Frete grátis acima de R$ 200." />
+    <meta name="keywords" content="moda feminina, roupas femininas, vestidos, blusas, calças, acessórios, feminisse" />
+    <meta name="author" content="Feminisse" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://feminisse.com" />
+    
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://feminisse.com" />
+    <meta property="og:title" content="Feminisse - Moda Feminina Elegante" />
+    <meta property="og:description" content="Descubra a coleção Feminisse de moda feminina. Vestidos, blusas, calças e acessórios com estilo e elegância." />
+    <meta property="og:image" content="https://feminisse.com/og-image.jpg" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Feminisse" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://feminisse.com" />
+    <meta property="twitter:title" content="Feminisse - Moda Feminina Elegante" />
+    <meta property="twitter:description" content="Descubra a coleção Feminisse de moda feminina. Vestidos, blusas, calças e acessórios com estilo e elegância." />
+    <meta property="twitter:image" content="https://feminisse.com/og-image.jpg" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#58090d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Feminisse" />
+    
+    <!-- Preconnect para performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://sdk.mercadopago.com" />
+    <link rel="dns-prefetch" href="https://api.mercadopago.com" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
   </head>
 
   <body>

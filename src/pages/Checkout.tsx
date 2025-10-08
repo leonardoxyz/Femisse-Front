@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft, MapPin, CreditCard, Package, Check, Plus, Truck, Shield, AlertCircle } from "lucide-react";
 
 import { useCart } from "@/contexts/CartContext";
@@ -29,9 +29,13 @@ interface PaymentMethod {
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
-  const { cart } = useCart();
+  const location = useLocation();
+  const { cart, clearCart } = useCart();
   const { shippingInfo, updateShippingInfo } = useShipping();
   const { user, token } = useAuth();
+  
+  // Verificar se há um pedido pendente vindo do histórico
+  const pendingOrder = location.state?.pendingOrder;
   
   // Hook personalizado para checkout
   const {
@@ -57,9 +61,28 @@ const CheckoutPage = () => {
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [paymentData, setPaymentData] = useState<any>(null);
   const [isPaymentValid, setIsPaymentValid] = useState(false);
+  const [hasCalledApproved, setHasCalledApproved] = useState(false);
 
-  const totals = useMemo(() => calculateTotals(), [calculateTotals]);
+  const totals = useMemo(() => {
+    // Se houver pedido pendente, usar os valores dele
+    if (pendingOrder) {
+      return {
+        subtotal: pendingOrder.subtotal,
+        shipping: pendingOrder.shipping_cost,
+        total: pendingOrder.total
+      };
+    }
+    return calculateTotals();
+  }, [calculateTotals, pendingOrder]);
+  
   const { subtotal, shipping: shippingCost, total } = totals;
+  
+  // Redirecionar para pagamento se houver pedido pendente
+  useEffect(() => {
+    if (pendingOrder && checkoutState.currentStep === 'address') {
+      goToStep('payment');
+    }
+  }, [pendingOrder, checkoutState.currentStep, goToStep]);
 
   // Métodos de pagamento disponíveis
   const paymentMethods: PaymentMethod[] = [
@@ -180,14 +203,36 @@ const CheckoutPage = () => {
 
   // Handler para quando o pagamento for aprovado via polling
   const handlePaymentApproved = useCallback(() => {
+    // Prevenir múltiplas chamadas
+    if (hasCalledApproved) {
+      return;
+    }
+
+    setHasCalledApproved(true);
+    clearCart();
+    goToStep('success');
     // Mostrar modal de sucesso
     showSuccessModal();
-  }, [showSuccessModal]);
+  }, [showSuccessModal, hasCalledApproved, goToStep, clearCart]);
 
   // Carregar endereços ao montar o componente
   useEffect(() => {
     loadAddresses();
   }, [loadAddresses]);
+
+  // Garantir que não ficamos presos no step processing quando já aprovado
+  useEffect(() => {
+    if (checkoutState.currentStep === 'processing' && hasCalledApproved) {
+      goToStep('success');
+    }
+  }, [checkoutState.currentStep, hasCalledApproved, goToStep]);
+
+  // Resetar flag quando sair da tela de processamento/sucesso
+  useEffect(() => {
+    if (checkoutState.currentStep !== 'processing' && checkoutState.currentStep !== 'success') {
+      setHasCalledApproved(false);
+    }
+  }, [checkoutState.currentStep]);
 
   const orderSummary = (
     <div className="space-y-6 rounded-sm border border-[#58090d]/15 bg-white/90 p-5 shadow-[0_20px_45px_rgba(88,9,13,0.08)] backdrop-blur">
@@ -279,7 +324,7 @@ const CheckoutPage = () => {
         {checkoutState.currentStep === "address" && "Continuar para pagamento"}
         {checkoutState.currentStep === "payment" && "Revisar pedido"}
         {checkoutState.currentStep === "confirmation" && "Finalizar pedido"}
-        {checkoutState.isLoading && "Processando..."}
+        {checkoutState.isLoading && "e Processando..."}
       </Button>
       
       {checkoutState.currentStep === "confirmation" && (
@@ -364,9 +409,9 @@ const CheckoutPage = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <StepIndicator />
 
-          <div className="grid gap-8 lg:grid-cols-12">
+          <div className={`grid gap-8 ${(checkoutState.currentStep === 'processing' || checkoutState.currentStep === 'success') ? 'lg:grid-cols-1' : 'lg:grid-cols-12'}`}>
             {/* Main Content */}
-            <div className="lg:col-span-8">
+            <div className={`${(checkoutState.currentStep === 'processing' || checkoutState.currentStep === 'success') ? 'max-w-4xl mx-auto w-full' : 'lg:col-span-8'}`}>
               {/* Step: Address Selection */}
               {checkoutState.currentStep === "address" && (
                 <div className="space-y-6">
@@ -579,7 +624,7 @@ const CheckoutPage = () => {
               )}
 
               {/* Step: Processing Payment */}
-              {(checkoutState.currentStep === 'processing' || checkoutState.currentStep === 'success' || checkoutState.currentStep === 'error') && checkoutState.payment && (
+              {(checkoutState.currentStep === 'processing' || checkoutState.currentStep === 'error') && checkoutState.payment && !checkoutState.showSuccessModal && (
                 <div className="space-y-6">
                   <PaymentStatus
                     payment={checkoutState.payment}
@@ -660,39 +705,41 @@ const CheckoutPage = () => {
               )}
             </div>
 
-            {/* Sidebar */}
-            <div className="lg:col-span-4">
-              <div className="sticky top-24 space-y-6">
-                {/* Mobile summary toggle */}
-                <div className="lg:hidden">
-                  <button
-                    onClick={() => setIsSummaryOpen(!isSummaryOpen)}
-                    className="flex w-full items-center justify-between rounded-sm border border-zinc-200 bg-white p-4 text-sm font-medium text-zinc-900 transition hover:border-zinc-300"
-                  >
-                    <span>Resumo do pedido</span>
-                    <ChevronLeft className={`h-4 w-4 transition-transform ${isSummaryOpen ? 'rotate-90' : '-rotate-90'}`} />
-                  </button>
-                  {isSummaryOpen && <div className="mt-4">{orderSummary}</div>}
-                </div>
+            {/* Sidebar - Esconder quando estiver processando ou aprovado */}
+            {checkoutState.currentStep !== 'processing' && checkoutState.currentStep !== 'success' && (
+              <div className="lg:col-span-4">
+                <div className="sticky top-24 space-y-6">
+                  {/* Mobile summary toggle */}
+                  <div className="lg:hidden">
+                    <button
+                      onClick={() => setIsSummaryOpen(!isSummaryOpen)}
+                      className="flex w-full items-center justify-between rounded-sm border border-zinc-200 bg-white p-4 text-sm font-medium text-zinc-900 transition hover:border-zinc-300"
+                    >
+                      <span>Resumo do pedido</span>
+                      <ChevronLeft className={`h-4 w-4 transition-transform ${isSummaryOpen ? 'rotate-90' : '-rotate-90'}`} />
+                    </button>
+                    {isSummaryOpen && <div className="mt-4">{orderSummary}</div>}
+                  </div>
 
-                {/* Desktop summary */}
-                <div className="hidden lg:block">{orderSummary}</div>
+                  {/* Desktop summary */}
+                  <div className="hidden lg:block">{orderSummary}</div>
 
-                {/* Security info */}
-                <div className="rounded-sm bg-green-50 p-4 border border-green-200">
-                  <div className="flex items-start gap-3">
-                    <Shield className="h-5 w-5 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-green-900">Compra 100% segura</p>
-                      <p className="text-xs text-green-700 mt-1">
-                        Seus dados estão protegidos com criptografia SSL de 256 bits.
-                        Processamento via Mercado Pago.
-                      </p>
+                  {/* Security info */}
+                  <div className="rounded-sm bg-green-50 p-4 border border-green-200">
+                    <div className="flex items-start gap-3">
+                      <Shield className="h-5 w-5 text-green-600 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-green-900">Compra 100% segura</p>
+                        <p className="text-xs text-green-700 mt-1">
+                          Seus dados estão protegidos com criptografia SSL de 256 bits.
+                          Processamento via Mercado Pago.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </main>
@@ -701,7 +748,11 @@ const CheckoutPage = () => {
       {/* Modal de Sucesso */}
       <SuccessModal
         isOpen={checkoutState.showSuccessModal}
-        onClose={closeSuccessModal}
+        onClose={() => {
+          closeSuccessModal();
+          // Resetar flag ao fechar para permitir novo fluxo
+          setHasCalledApproved(false);
+        }}
         orderNumber={checkoutState.order?.order_number}
         total={totals.total}
         paymentMethod={checkoutState.selectedPaymentMethod || undefined}

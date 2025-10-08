@@ -17,7 +17,7 @@ interface ProductCardProps {
   onFavoriteChange?: (productId: string, isNowFavorite: boolean) => void;
 }
 
-const ProductCard = ({
+const ProductCard = React.memo(({
   id,
   name,
   price,
@@ -149,6 +149,8 @@ const ProductCard = ({
       </CardContent>
     </Card>
   );
-};
+});
+
+ProductCard.displayName = 'ProductCard';
 
 export default ProductCard;

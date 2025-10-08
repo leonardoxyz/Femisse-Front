@@ -28,10 +28,13 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
   paymentMethod
 }) => {
   const navigate = useNavigate();
+  const [hasShownConfetti, setHasShownConfetti] = React.useState(false);
 
-  // Efeito de confete quando a modal abre
+  // Efeito de confete quando a modal abre (apenas 1x)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !hasShownConfetti) {
+      setHasShownConfetti(true);
+      
       // Confete inicial
       confetti({
         particleCount: 100,
@@ -59,16 +62,21 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
         });
       }, 400);
     }
-  }, [isOpen]);
+    
+    // Resetar flag quando modal fechar completamente
+    if (!isOpen) {
+      setHasShownConfetti(false);
+    }
+  }, [isOpen, hasShownConfetti]);
 
   const handleViewOrders = () => {
     onClose();
-    navigate('/meus-pedidos');
+    setTimeout(() => navigate('/perfil/orders'), 100);
   };
 
   const handleContinueShopping = () => {
     onClose();
-    navigate('/');
+    setTimeout(() => navigate('/'), 100);
   };
 
   return (
@@ -81,7 +89,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
           </div>
 
           {/* Título */}
-          <DialogTitle className="text-2xl font-bold text-gray-900">
+          <DialogTitle className="text-2xl font-bold text-[#58090d]">
             Pedido realizado com sucesso!
           </DialogTitle>
 
@@ -108,16 +116,7 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
           )}
 
           {/* Resumo do pagamento */}
-          <div className="space-y-2">
-            {total && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Total pago:</span>
-                <span className="text-lg font-bold text-[#58090d]">
-                  {formatCurrency(total)}
-                </span>
-              </div>
-            )}
-            
+          <div className="space-y-2">   
             {paymentMethod && (
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Método:</span>
@@ -129,14 +128,14 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
           </div>
 
           {/* Informações adicionais */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <div className="flex items-start space-x-3">
-              <Package className="w-5 h-5 text-blue-600 mt-0.5" />
+              <Package className="w-5 h-5 mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium text-blue-900">
+                <p className="font-medium">
                   Prazo de entrega: 5 a 10 dias úteis
                 </p>
-                <p className="text-blue-700 mt-1">
+                <p className="mt-1">
                   Você receberá o código de rastreamento por e-mail assim que o pedido for enviado.
                 </p>
               </div>
