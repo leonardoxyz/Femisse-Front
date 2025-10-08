@@ -18,11 +18,9 @@ interface FormState<T> {
 const sanitizeValue = (value: any): any => {
   if (typeof value === 'string') {
     return value
-      .trim()
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove scripts
       .replace(/javascript:/gi, '') // Remove javascript:
       .replace(/on\w+\s*=/gi, '') // Remove event handlers
-      .replace(/[<>]/g, '') // Remove < e >
       .slice(0, 10000); // Limita tamanho
   }
   
@@ -55,8 +53,11 @@ export function useSecureForm<T>({
 
   const validateField = useCallback((name: string, value: any) => {
     try {
-      // Validação simples sem usar schema.shape
-      schema.parse({ [name]: value });
+      // Validar o formulário completo, mas só mostrar erro do campo específico
+      const currentData = { ...state.data, [name]: value };
+      schema.parse(currentData);
+      
+      // Se passou, limpar erro deste campo
       setState(prev => ({
         ...prev,
         errors: { ...prev.errors, [name]: '' }
@@ -64,16 +65,24 @@ export function useSecureForm<T>({
       return true;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const errorMessage = error.errors[0]?.message || 'Campo inválido';
+        // Procurar erro específico deste campo
+        const fieldError = error.errors.find(err => err.path[0] === name);
+        if (fieldError) {
+          setState(prev => ({
+            ...prev,
+            errors: { ...prev.errors, [name]: fieldError.message }
+          }));
+          return false;
+        }
+        // Se não há erro específico deste campo, limpar
         setState(prev => ({
           ...prev,
-          errors: { ...prev.errors, [name]: errorMessage }
+          errors: { ...prev.errors, [name]: '' }
         }));
-        return false;
       }
     }
     return true;
-  }, [schema]);
+  }, [schema, state.data]);
 
   const setValue = useCallback((name: string, value: any) => {
     const processedValue = sanitize ? sanitizeValue(value) : value;

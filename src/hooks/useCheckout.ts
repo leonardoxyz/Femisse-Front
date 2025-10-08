@@ -17,6 +17,7 @@ export interface CheckoutState {
   payment: PaymentResponse | null;
   isLoading: boolean;
   error: string | null;
+  showSuccessModal: boolean;
 }
 
 export interface UseCheckoutReturn {
@@ -44,6 +45,10 @@ export interface UseCheckoutReturn {
   // Utilitários
   reset: () => void;
   calculateTotals: () => { subtotal: number; shipping: number; total: number };
+  
+  // Modal
+  closeSuccessModal: () => void;
+  showSuccessModal: () => void;
 }
 
 export function useCheckout(): UseCheckoutReturn {
@@ -60,6 +65,7 @@ export function useCheckout(): UseCheckoutReturn {
     payment: null,
     isLoading: false,
     error: null,
+    showSuccessModal: false,
   });
 
   // Calcular totais do carrinho
@@ -266,15 +272,17 @@ export function useCheckout(): UseCheckoutReturn {
         // Pagamento direto (PIX ou cartão com token)
         payment = await paymentService.processDirectPayment(paymentData, token);
       } else {
-        // Checkout Pro (redirecionamento)
+        // Checkout Pro (redirecionamento - fallback se não tiver token)
         payment = await paymentService.createPaymentPreference(paymentData, token);
       }
 
       // Determinar próximo step baseado no status do pagamento
       let nextStep: CheckoutStep = 'processing';
+      let showModal = false;
       
       if (payment.status === 'approved') {
-        nextStep = 'success';
+        // Para pagamentos aprovados, mostrar modal em vez de mudar step
+        showModal = true;
         clearCart(); // Só limpar carrinho se aprovado
         toast({
           title: "Pagamento aprovado!",
@@ -300,6 +308,7 @@ export function useCheckout(): UseCheckoutReturn {
         payment,
         isLoading: false,
         currentStep: nextStep,
+        showSuccessModal: showModal,
         error: null
       }));
 
@@ -335,7 +344,24 @@ export function useCheckout(): UseCheckoutReturn {
       payment: null,
       isLoading: false,
       error: null,
+      showSuccessModal: false,
     });
+  }, []);
+
+  // Fechar modal de sucesso
+  const closeSuccessModal = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      showSuccessModal: false
+    }));
+  }, []);
+
+  // Mostrar modal de sucesso
+  const showSuccessModal = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      showSuccessModal: true
+    }));
   }, []);
 
   return {
@@ -363,6 +389,10 @@ export function useCheckout(): UseCheckoutReturn {
     // Utilitários
     reset,
     calculateTotals,
+    
+    // Modal
+    closeSuccessModal,
+    showSuccessModal,
   };
 }
 

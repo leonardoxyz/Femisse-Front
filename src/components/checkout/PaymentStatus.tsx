@@ -10,12 +10,14 @@ import { useToast } from '@/hooks/use-toast';
 interface PaymentStatusProps {
   payment: PaymentResponse;
   onStatusChange?: (status: string) => void;
+  onPaymentApproved?: () => void;
   token: string;
 }
 
 const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
   payment,
   onStatusChange,
+  onPaymentApproved,
   token
 }) => {
   const [currentStatus, setCurrentStatus] = useState<PaymentStatus | null>(null);
@@ -32,6 +34,11 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
         const status = await paymentService.getPaymentStatus(payment.payment_id!, token);
         setCurrentStatus(status);
         onStatusChange?.(status.status);
+        
+        // Se o pagamento foi aprovado, chamar callback
+        if (paymentService.isSuccessStatus(status.status)) {
+          onPaymentApproved?.();
+        }
       } catch (error) {
         console.error('Erro ao verificar status do pagamento:', error);
       }

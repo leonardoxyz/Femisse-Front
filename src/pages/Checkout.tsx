@@ -10,6 +10,8 @@ import { fetchUserAddresses, Address } from "@/services/address";
 import { useCheckout } from "@/hooks/useCheckout";
 import PaymentForm from "@/components/checkout/PaymentForm";
 import PaymentStatus from "@/components/checkout/PaymentStatus";
+import SuccessModal from "@/components/checkout/SuccessModal";
+import { formatCurrency, formatCep } from "@/utils/formatters";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -44,7 +46,9 @@ const CheckoutPage = () => {
     canProceedToPayment,
     canProceedToConfirmation,
     canProcessPayment,
-    calculateTotals
+    calculateTotals,
+    closeSuccessModal,
+    showSuccessModal
   } = useCheckout();
   
   // Estados locais
@@ -99,22 +103,12 @@ const CheckoutPage = () => {
       "Ideal para compras rápidas sem limite de crédito.",
     ],
   };
-
   const selectedPaymentDetails = useMemo(
     () => paymentMethods.find((method) => method.id === checkoutState.selectedPaymentMethod) ?? null,
     [paymentMethods, checkoutState.selectedPaymentMethod]
   );
 
-  const formatCurrency = (value: number) =>
-    value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-  const formatCep = (cep: string) => {
-    const digits = cep.replace(/\D/g, "");
-    if (digits.length !== 8) return cep;
-    return digits.replace(/(\d{5})(\d{3})/, "$1-$2");
-  };
-
-  // Carregar endereços do usuário
+  // Função para carregar endereços do usuário
   const loadAddresses = useCallback(async () => {
     if (!token) return;
     
@@ -183,6 +177,12 @@ const CheckoutPage = () => {
       // O hook já trata o erro e muda para 'error'
     }
   };
+
+  // Handler para quando o pagamento for aprovado via polling
+  const handlePaymentApproved = useCallback(() => {
+    // Mostrar modal de sucesso
+    showSuccessModal();
+  }, [showSuccessModal]);
 
   // Carregar endereços ao montar o componente
   useEffect(() => {
@@ -585,12 +585,11 @@ const CheckoutPage = () => {
                     payment={checkoutState.payment}
                     token={token!}
                     onStatusChange={(status) => {
-                      if (status === 'approved') {
-                        goToStep('success');
-                      } else if (status === 'rejected') {
+                      if (status === 'rejected') {
                         goToStep('error');
                       }
                     }}
+                    onPaymentApproved={handlePaymentApproved}
                   />
                 </div>
               )}
@@ -698,6 +697,15 @@ const CheckoutPage = () => {
         </div>
       </main>
       <Footer />
+      
+      {/* Modal de Sucesso */}
+      <SuccessModal
+        isOpen={checkoutState.showSuccessModal}
+        onClose={closeSuccessModal}
+        orderNumber={checkoutState.order?.order_number}
+        total={totals.total}
+        paymentMethod={checkoutState.selectedPaymentMethod || undefined}
+      />
     </div>
   );
 };

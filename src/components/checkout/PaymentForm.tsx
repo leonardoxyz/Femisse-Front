@@ -17,7 +17,10 @@ import { validateCPF, formatCPF } from '@/utils/validators';
 const paymentSchema = z.object({
   payment_method: z.enum(['pix', 'credit_card', 'debit_card']),
   card_number: z.string().optional(),
-  card_holder_name: z.string().optional(),
+  card_holder_name: z.string()
+    .min(3, 'Nome deve ter pelo menos 3 caracteres')
+    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, 'Nome deve conter apenas letras e espaços')
+    .optional(),
   card_expiry_month: z.string().optional(),
   card_expiry_year: z.string().optional(),
   card_cvv: z.string().optional(),
@@ -56,6 +59,23 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     schema: paymentSchema,
     onSubmit: async () => {}
   });
+
+  // Gerar token automaticamente quando os dados do cartão estiverem completos
+  useEffect(() => {
+    if (selectedMethod !== 'pix' && mpInitialized && !cardToken) {
+      const cardNumber = data.card_number?.replace(/\s/g, '') || '';
+      const cardholderName = data.card_holder_name || '';
+      const expiryMonth = data.card_expiry_month || '';
+      const expiryYear = data.card_expiry_year || '';
+      const cvv = data.card_cvv || '';
+      const docNumber = data.document_number?.replace(/\D/g, '') || '';
+
+      // Se todos os campos estiverem preenchidos, gerar token automaticamente
+      if (cardNumber && cardholderName && expiryMonth && expiryYear && cvv && docNumber.length === 11) {
+        generateCardToken();
+      }
+    }
+  }, [data, selectedMethod, mpInitialized, cardToken]);
 
   // Notificar mudanças nos dados de pagamento
   useEffect(() => {
@@ -378,22 +398,21 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             )}
           </div>
 
-          {/* Botão para gerar token */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={generateCardToken}
-            disabled={isGeneratingToken}
-            className="w-full"
-          >
-            {isGeneratingToken ? 'Validando cartão...' : 'Validar dados do cartão'}
-          </Button>
+          {/* Indicador de validação automática */}
+          {isGeneratingToken && (
+            <Alert>
+              <Shield className="h-4 w-4" />
+              <AlertDescription>
+                Validando dados do cartão...
+              </AlertDescription>
+            </Alert>
+          )}
 
           {cardToken && (
             <Alert>
               <Shield className="h-4 w-4" />
               <AlertDescription>
-                Dados do cartão validados e criptografados com segurança.
+                ✅ Dados do cartão validados e criptografados com segurança.
               </AlertDescription>
             </Alert>
           )}
