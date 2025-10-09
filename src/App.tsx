@@ -42,6 +42,7 @@ import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { ShippingProvider } from "@/contexts/ShippingContext";
 import { CookieConsentProvider } from "@/contexts/CookieConsentContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const App = () => (
   <ErrorBoundary>
@@ -49,31 +50,33 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <CartProvider>
-          <FavoritesProvider>
-            <ShippingProvider>
-              <CookieConsentProvider>
-                <BrowserRouter>
-                  <CookieConsentManager />
-                  <Suspense fallback={<PageLoader />}>
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/produto/:slug" element={<ProductDetails />} />
-                      <Route path="/categoria/:slug" element={<ProductsByCategory />} />
-                      <Route path="/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
-                      <Route path="/perfil/:section" element={<PrivateRoute><Profile /></PrivateRoute>} />
-                      <Route path="/perfil/pedidos" element={<PrivateRoute><OrderHistory /></PrivateRoute>} />
-                      <Route path="/checkout" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
-                      <Route path="/login" element={<AuthPage />} />
-                      <Route path="/busca" element={<SearchResults />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                </BrowserRouter>
-              </CookieConsentProvider>
-            </ShippingProvider>
-          </FavoritesProvider>
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <FavoritesProvider>
+              <ShippingProvider>
+                <CookieConsentProvider>
+                  <BrowserRouter>
+                    <CookieConsentManager />
+                    <Suspense fallback={<PageLoader />}>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/produto/:slug" element={<ProductDetails />} />
+                        <Route path="/categoria/:slug" element={<ProductsByCategory />} />
+                        <Route path="/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
+                        <Route path="/perfil/:section" element={<PrivateRoute><Profile /></PrivateRoute>} />
+                        <Route path="/perfil/pedidos" element={<PrivateRoute><OrderHistory /></PrivateRoute>} />
+                        <Route path="/checkout" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
+                        <Route path="/login" element={<AuthPage />} />
+                        <Route path="/busca" element={<SearchResults />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Suspense>
+                  </BrowserRouter>
+                </CookieConsentProvider>
+              </ShippingProvider>
+            </FavoritesProvider>
+          </CartProvider>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>

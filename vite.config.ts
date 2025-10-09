@@ -39,37 +39,10 @@ export default defineConfig(({ mode }) => ({
     },
     rollupOptions: {
       output: {
-        // Code splitting otimizado
-        manualChunks: (id) => {
-          // Vendor chunks
-          if (id.includes('node_modules')) {
-            // React core - DEVE vir primeiro
-            if (id.includes('react/') || id.includes('react-dom/') || id.includes('scheduler/')) {
-              return 'vendor-react';
-            }
-            // React Router
-            if (id.includes('react-router')) {
-              return 'vendor-router';
-            }
-            // UI components (Radix UI)
-            if (id.includes('@radix-ui')) {
-              return 'vendor-ui';
-            }
-            // Forms
-            if (id.includes('react-hook-form') || id.includes('zod') || id.includes('@hookform')) {
-              return 'vendor-forms';
-            }
-            // Charts
-            if (id.includes('recharts')) {
-              return 'vendor-charts';
-            }
-            // React Query
-            if (id.includes('@tanstack/react-query')) {
-              return 'vendor-query';
-            }
-            // Outros vendors
-            return 'vendor-misc';
-          }
+        // Garante ordem de carregamento correta
+        manualChunks: {
+          // React SEMPRE primeiro - carregamento prioritário
+          'vendor-react': ['react', 'react-dom', 'react/jsx-runtime'],
         },
         // Configuração específica para assets de mídia
         assetFileNames: (assetInfo) => {

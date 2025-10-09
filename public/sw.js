@@ -1,67 +1,68 @@
 // Service Worker para PWA
-// Versão: 1.0.1
+// Versão: 1.0.3 (corrigida)
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `feminisse-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `feminisse-runtime-${CACHE_VERSION}`;
 
-// Assets para cache inicial
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
 ];
 
-// Instalar Service Worker
+// Instalação
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS))
   );
   self.skipWaiting();
 });
 
-// Ativar Service Worker
+// Ativação
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
+    caches.keys().then((names) =>
+      Promise.all(
+        names
           .filter((name) => name !== CACHE_NAME && name !== RUNTIME_CACHE)
           .map((name) => caches.delete(name))
-      );
-    })
+      )
+    )
   );
   self.clients.claim();
 });
 
-// Fetch - Network First, fallback para Cache
+// Interceptação de requisições
 self.addEventListener('fetch', (event) => {
-  // Ignora requisições não-GET
-  if (event.request.method !== 'GET') return;
+  const req = event.request;
 
-  // Ignora requisições de API (sempre busca da rede)
-  if (event.request.url.includes('/api/')) {
+  // Ignora requisições não-GET
+  if (req.method !== 'GET') return;
+
+  // Ignora APIs, autenticação e manifest
+  if (
+    req.url.includes('/api/') ||
+    req.url.includes('/auth/') ||
+    req.url.includes('manifest.json') ||
+    req.url.startsWith('chrome-extension://')
+  ) {
     return;
   }
 
+  // Ignora qualquer protocolo não-HTTP
+  if (!req.url.startsWith('http')) return;
+
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Clona a resposta
-        const responseClone = response.clone();
-
-        // Salva no cache runtime
-        caches.open(RUNTIME_CACHE).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
-
-        return response;
+    fetch(req)
+      .then((res) => {
+        // Só cacheia respostas válidas e completas
+        if (res.status === 200 && res.type === 'basic') {
+          const cloned = res.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => cache.put(req, cloned));
+        }
+        return res;
       })
-      .catch(() => {
-        // Se falhar, tenta buscar do cache
-        return caches.match(event.request);
-      })
+      .catch(() => caches.match(req))
   );
 });

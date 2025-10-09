@@ -14,6 +14,7 @@ import { Star, Edit, Trash2, Package, Sparkles } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import api from "@/utils/api";
 import { API_ENDPOINTS } from "@/config/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -38,7 +39,7 @@ interface PurchasedProduct {
 }
 
 export function PersonalReviews() {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [purchasedProducts, setPurchasedProducts] = useState<PurchasedProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,14 +56,10 @@ export function PersonalReviews() {
 
   // Buscar avaliações existentes
   const fetchReviews = async () => {
+    if (!isAuthenticated) return;
     try {
-      const response = await fetch(API_ENDPOINTS.reviews, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setReviews(data);
-      }
+      const response = await api.get(API_ENDPOINTS.reviews);
+      setReviews(response.data);
     } catch (error) {
       console.error('Erro ao buscar avaliações:', error);
     }
@@ -70,14 +67,10 @@ export function PersonalReviews() {
 
   // Buscar produtos comprados que podem ser avaliados
   const fetchPurchasedProducts = async () => {
+    if (!isAuthenticated) return;
     try {
-      const response = await fetch(API_ENDPOINTS.reviewableProducts, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setPurchasedProducts(data);
-      }
+      const response = await api.get(API_ENDPOINTS.reviewableProducts);
+      setPurchasedProducts(response.data);
     } catch (error) {
       console.error('Erro ao buscar produtos comprados:', error);
     }
@@ -90,10 +83,12 @@ export function PersonalReviews() {
       setLoading(false);
     };
 
-    if (token) {
+    if (isAuthenticated) {
       loadData();
+    } else {
+      setLoading(false);
     }
-  }, [token]);
+  }, [isAuthenticated]);
 
   const stats = useMemo(() => ({
     totalReviews: reviews.length,
@@ -185,29 +180,23 @@ export function PersonalReviews() {
         : { ...reviewForm, product_id: selectedProduct?.id, order_id: selectedProduct?.order_id };
 
       setIsSaving(true);
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        toast({
-          title: editingReview ? "Avaliação atualizada" : "Avaliação criada",
-          description: editingReview 
-            ? "Sua avaliação foi atualizada com sucesso!" 
-            : "Obrigado por avaliar o produto!",
-          variant: "default"
-        });
-        
-        setShowReviewForm(false);
-        await Promise.all([fetchReviews(), fetchPurchasedProducts()]);
+      
+      if (editingReview) {
+        await api.put(url, payload);
       } else {
-        throw new Error('Erro ao salvar avaliação');
+        await api.post(url, payload);
       }
+      
+      toast({
+        title: editingReview ? "Avaliação atualizada" : "Avaliação criada",
+        description: editingReview 
+          ? "Sua avaliação foi atualizada com sucesso!" 
+          : "Obrigado por avaliar o produto!",
+        variant: "default"
+      });
+      
+      setShowReviewForm(false);
+      await Promise.all([fetchReviews(), fetchPurchasedProducts()]);
     } catch (error) {
       toast({
         title: "Erro ao salvar",
@@ -221,19 +210,14 @@ export function PersonalReviews() {
 
   const deleteReview = async (reviewId: string) => {
     try {
-      const response = await fetch(`${API_ENDPOINTS.reviews}/${reviewId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
+      await api.delete(`${API_ENDPOINTS.reviews}/${reviewId}`);
+      
+      toast({
+        title: "Avaliação removida",
+        description: "Sua avaliação foi removida com sucesso.",
+        variant: "default"
       });
-
-      if (response.ok) {
-        toast({
-          title: "Avaliação removida",
-          description: "Sua avaliação foi removida com sucesso.",
-          variant: "default"
-        });
-        await Promise.all([fetchReviews(), fetchPurchasedProducts()]);
-      }
+      await Promise.all([fetchReviews(), fetchPurchasedProducts()]);
     } catch (error) {
       toast({
         title: "Erro ao remover",

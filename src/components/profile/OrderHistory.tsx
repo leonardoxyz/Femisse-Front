@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatCurrency } from '@/utils/formatters';
 
 const OrderHistory = () => {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,14 +18,14 @@ const OrderHistory = () => {
 
   useEffect(() => {
     loadOrders();
-  }, [token]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [orders.length]);
 
   const loadOrders = async () => {
-    if (!token) {
+    if (!isAuthenticated) {
       navigate('/login');
       return;
     }
@@ -33,7 +33,8 @@ const OrderHistory = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await orderService.getUserOrders(token);
+      // orderService agora usa cookies automaticamente
+      const response = await orderService.listUserOrders();
       setOrders(response || []);
     } catch (err) {
       console.error('Erro ao carregar pedidos:', err);

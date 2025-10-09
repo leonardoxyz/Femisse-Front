@@ -53,7 +53,7 @@ export interface UseCheckoutReturn {
 
 export function useCheckout(): UseCheckoutReturn {
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { cart, clearCart } = useCart();
   const { toast } = useToast();
 
@@ -160,7 +160,7 @@ export function useCheckout(): UseCheckoutReturn {
 
   // Criar pedido
   const createOrder = useCallback(async () => {
-    if (!token || !user || !state.selectedAddress || !state.selectedPaymentMethod) {
+    if (!isAuthenticated || !user || !state.selectedAddress || !state.selectedPaymentMethod) {
       throw new Error('Dados insuficientes para criar pedido');
     }
 
@@ -201,7 +201,7 @@ export function useCheckout(): UseCheckoutReturn {
         throw new Error(validationErrors.join(', '));
       }
 
-      const order = await orderService.createOrder(orderData, token);
+      const order = await orderService.createOrder(orderData);
 
       setState(prev => ({
         ...prev,
@@ -232,11 +232,11 @@ export function useCheckout(): UseCheckoutReturn {
 
       throw error;
     }
-  }, [token, user, state.selectedAddress, state.selectedPaymentMethod, calculateTotals, cart, toast]);
+  }, [isAuthenticated, user, state.selectedAddress, state.selectedPaymentMethod, calculateTotals, cart, toast]);
 
   // Processar pagamento
   const processPayment = useCallback(async (additionalData?: Partial<PaymentData>) => {
-    if (!token || !user || !state.order || !state.selectedPaymentMethod || !state.selectedAddress) {
+    if (!isAuthenticated || !user || !state.order || !state.selectedPaymentMethod || !state.selectedAddress) {
       throw new Error('Dados insuficientes para processar pagamento');
     }
 
@@ -270,10 +270,10 @@ export function useCheckout(): UseCheckoutReturn {
       // Escolher método de processamento baseado no tipo de pagamento
       if (paymentData.payment_method === 'pix' || paymentData.card_token) {
         // Pagamento direto (PIX ou cartão com token)
-        payment = await paymentService.processDirectPayment(paymentData, token);
+        payment = await paymentService.processDirectPayment(paymentData);
       } else {
         // Checkout Pro (redirecionamento - fallback se não tiver token)
-        payment = await paymentService.createPaymentPreference(paymentData, token);
+        payment = await paymentService.createPaymentPreference(paymentData);
       }
 
       // Determinar próximo step baseado no status do pagamento
@@ -332,7 +332,7 @@ export function useCheckout(): UseCheckoutReturn {
 
       throw error;
     }
-  }, [token, user, state.order, state.selectedPaymentMethod, state.selectedAddress, calculateTotals, clearCart, toast]);
+  }, [isAuthenticated, user, state.order, state.selectedPaymentMethod, state.selectedAddress, calculateTotals, clearCart, toast]);
 
   // Reset do checkout
   const reset = useCallback(() => {

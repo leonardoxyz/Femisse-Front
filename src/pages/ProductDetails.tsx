@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ShoppingBag, Heart, Share2 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -81,10 +82,10 @@ const ProductDetails = () => {
 
   // Verificar se produto está nos favoritos
   const isFavorite = product ? favoriteIds.includes(product.id) : false;
-  const token = localStorage.getItem('token');
+  const { isAuthenticated } = useAuth();
 
   const handleToggleFavorite = async () => {
-    if (!token) {
+    if (!isAuthenticated) {
       toast({
         title: "Login necessário",
         description: "Faça login para favoritar produtos!",

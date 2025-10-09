@@ -1,3 +1,4 @@
+import api from '@/utils/api';
 import { API_BASE_URL } from '@/config/api';
 
 export interface PaymentData {
@@ -56,87 +57,51 @@ export interface PaymentStatus {
 }
 
 class PaymentService {
-  private getAuthHeaders(token: string) {
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-  }
-
   /**
    * Criar preferência de pagamento (Checkout Pro)
+   * Token enviado automaticamente via cookies httpOnly
    */
   async createPaymentPreference(
-    paymentData: PaymentData,
-    token: string
+    paymentData: PaymentData
   ): Promise<PaymentResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/payments/preference`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(token),
-        body: JSON.stringify(paymentData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || error.error || 'Erro ao criar preferência de pagamento');
-      }
-
-      return await response.json();
-    } catch (error) {
+      const response = await api.post('/api/payments/preference', paymentData);
+      return response.data;
+    } catch (error: any) {
       console.error('Error creating payment preference:', error);
-      throw error;
+      throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao criar preferência de pagamento');
     }
   }
 
   /**
    * Processar pagamento direto (PIX, Cartão)
+   * Token enviado automaticamente via cookies httpOnly
    */
   async processDirectPayment(
-    paymentData: PaymentData,
-    token: string
+    paymentData: PaymentData
   ): Promise<PaymentResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/payments/process`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(token),
-        body: JSON.stringify(paymentData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || error.error || 'Erro ao processar pagamento');
-      }
-
-      return await response.json();
-    } catch (error) {
+      const response = await api.post('/api/payments/process', paymentData);
+      return response.data;
+    } catch (error: any) {
       console.error('Error processing direct payment:', error);
-      throw error;
+      throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao processar pagamento');
     }
   }
 
   /**
    * Consultar status de pagamento
+   * Token enviado automaticamente via cookies httpOnly
    */
   async getPaymentStatus(
-    paymentId: string,
-    token: string
+    paymentId: string
   ): Promise<PaymentStatus> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/payments/status/${paymentId}`, {
-        method: 'GET',
-        headers: this.getAuthHeaders(token),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || error.error || 'Erro ao consultar status do pagamento');
-      }
-
-      return await response.json();
-    } catch (error) {
+      const response = await api.get(`/api/payments/status/${paymentId}`);
+      return response.data;
+    } catch (error: any) {
       console.error('Error getting payment status:', error);
-      throw error;
+      throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao consultar status do pagamento');
     }
   }
 
@@ -145,21 +110,11 @@ class PaymentService {
    */
   async getPublicKey(): Promise<{ public_key: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/payments/public-key`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao obter chave pública');
-      }
-
-      return await response.json();
-    } catch (error) {
+      const response = await api.get('/api/payments/public-key');
+      return response.data;
+    } catch (error: any) {
       console.error('Error getting public key:', error);
-      throw error;
+      throw new Error('Erro ao obter chave pública');
     }
   }
 

@@ -1,3 +1,4 @@
+import api from '@/utils/api';
 import { API_BASE_URL } from '@/config/api';
 
 export interface OrderItem {
@@ -68,105 +69,67 @@ export interface Order {
 }
 
 class OrderService {
-  private getAuthHeaders(token: string) {
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
-  }
-
   /**
    * Criar novo pedido
+   * Token enviado automaticamente via cookies httpOnly
    */
-  async createOrder(orderData: CreateOrderData, token: string): Promise<Order> {
+  async createOrder(orderData: CreateOrderData): Promise<Order> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/orders/user/orders`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(token),
-        body: JSON.stringify(orderData),
+      const response = await api.post('/api/orders/user/orders', orderData, {
+        withCredentials: true
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || error.error || 'Erro ao criar pedido');
-      }
-
-      return await response.json();
-    } catch (error) {
+      return response.data;
+    } catch (error: any) {
       console.error('Error creating order:', error);
-      throw error;
+      throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao criar pedido');
     }
   }
 
   /**
    * Buscar pedido por ID
+   * Token enviado automaticamente via cookies httpOnly
    */
-  async getOrder(orderId: string, token: string): Promise<Order> {
+  async getOrder(orderId: string): Promise<Order> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
-        method: 'GET',
-        headers: this.getAuthHeaders(token),
+      const response = await api.get(`/api/orders/${orderId}`, {
+        withCredentials: true
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || error.error || 'Erro ao buscar pedido');
-      }
-
-      return await response.json();
-    } catch (error) {
+      return response.data;
+    } catch (error: any) {
       console.error('Error fetching order:', error);
-      throw error;
+      throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao buscar pedido');
     }
   }
 
   /**
-   * Buscar histórico de pedidos do usuário
+   * Listar pedidos do usuário
+   * Token enviado automaticamente via cookies httpOnly
    */
-  async getUserOrders(
-    token: string,
-    limit: number = 20
-  ): Promise<Order[]> {
+  async listUserOrders(page = 1, limit = 10): Promise<Order[]> {
     try {
-      const params = new URLSearchParams();
-      if (limit) {
-        params.set('limit', limit.toString());
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/orders/user/orders?${params}`, {
-        method: 'GET',
-        headers: this.getAuthHeaders(token),
+      const response = await api.get('/api/orders/user/orders', {
+        params: { page, limit },
+        withCredentials: true
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || error.error || 'Erro ao buscar pedidos');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching user orders:', error);
-      throw error;
+      return response.data;
+    } catch (error: any) {
+      console.error('Error listing orders:', error);
+      throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao listar pedidos');
     }
   }
 
   /**
    * Cancelar pedido
+   * Token enviado automaticamente via cookies httpOnly
    */
-  async cancelOrder(orderId: string, token: string): Promise<void> {
+  async cancelOrder(orderId: string): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}/cancel`, {
-        method: 'PATCH',
-        headers: this.getAuthHeaders(token),
+      await api.patch(`/api/orders/${orderId}/cancel`, null, {
+        withCredentials: true
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || error.error || 'Erro ao cancelar pedido');
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cancelling order:', error);
-      throw error;
+      throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao cancelar pedido');
     }
   }
 
@@ -310,6 +273,13 @@ class OrderService {
    */
   formatOrderNumber(orderNumber: string): string {
     return `#${orderNumber}`;
+  }
+
+  /**
+   * Alias para listUserOrders (compatibilidade)
+   */
+  async getUserOrders(page = 1, limit = 10): Promise<Order[]> {
+    return this.listUserOrders(page, limit);
   }
 }
 

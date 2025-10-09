@@ -32,7 +32,7 @@ const CheckoutPage = () => {
   const location = useLocation();
   const { cart, clearCart } = useCart();
   const { shippingInfo, updateShippingInfo } = useShipping();
-  const { user, token } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   
   // Verificar se há um pedido pendente vindo do histórico
   const pendingOrder = location.state?.pendingOrder;
@@ -133,11 +133,11 @@ const CheckoutPage = () => {
 
   // Função para carregar endereços do usuário
   const loadAddresses = useCallback(async () => {
-    if (!token) return;
+    if (!isAuthenticated) return;
     
     setIsLoadingAddresses(true);
     try {
-      const userAddresses = await fetchUserAddresses(token);
+      const userAddresses = await fetchUserAddresses();
       setAddresses(userAddresses);
       
       // Selecionar endereço padrão automaticamente
@@ -150,7 +150,7 @@ const CheckoutPage = () => {
     } finally {
       setIsLoadingAddresses(false);
     }
-  }, [token, selectAddress]);
+  }, [isAuthenticated, selectAddress]);
 
   // Handlers para processar checkout
   const handleCreateOrder = async () => {
@@ -628,7 +628,6 @@ const CheckoutPage = () => {
                 <div className="space-y-6">
                   <PaymentStatus
                     payment={checkoutState.payment}
-                    token={token!}
                     onStatusChange={(status) => {
                       if (status === 'rejected') {
                         goToStep('error');

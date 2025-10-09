@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/hooks/useAuth';
 import { createSlug } from '@/utils/slugs';
-import { toast } from '@/components/ui/use-toast';
+import { Heart, ShoppingCart } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
+import { OptimizedImage } from './OptimizedImage';
 import { storeCurrentScrollPosition } from "@/hooks/useScrollRestoration";
 
 interface ProductCardProps {
   id: string;
   name: string;
   price: number;
-  originalPrice?: number;
   images: string[];
   stock: number;
   image?: string;
@@ -67,9 +69,11 @@ const ProductCard = React.memo(({
 
   const [isFavorite, setIsFavorite] = useState(false);
 
+  const { isAuthenticated } = useAuth();
+
   async function handleAddToFavorites(e: React.MouseEvent) {
     e.stopPropagation();
-    if (!localStorage.getItem('token')) {
+    if (!isAuthenticated) {
       toast({
         title: "Login necessário",
         description: "Faça login para favoritar produtos!",

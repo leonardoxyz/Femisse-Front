@@ -1,32 +1,33 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { getUserFromToken, getToken } from "./useAuth";
+import api from "@/utils/api";
+import { useAuth } from "./useAuth";
 import { API_ENDPOINTS } from "@/config/api";
 
 export function useUserData() {
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const user = getUserFromToken();
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     async function fetchData() {
-      if (!user?.id) {
+      if (!isAuthenticated) {
         setLoading(false);
+        setUserData(null);
         return;
       }
       try {
-        const res = await axios.get(API_ENDPOINTS.userProfile, {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        });
+        // api já envia cookies automaticamente
+        const res = await api.get(API_ENDPOINTS.userProfile);
         setUserData(res.data);
-      } catch {
+      } catch (error) {
+        console.error('Erro ao buscar dados do usuário:', error);
         setUserData(null);
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [user?.id]);
+  }, [isAuthenticated]);
 
   const updateUserData = (newData: any) => {
     setUserData((prevData: any) => ({

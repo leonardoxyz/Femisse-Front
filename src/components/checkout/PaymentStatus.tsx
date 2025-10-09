@@ -11,14 +11,12 @@ interface PaymentStatusProps {
   payment: PaymentResponse;
   onStatusChange?: (status: string) => void;
   onPaymentApproved?: () => void;
-  token: string;
 }
 
 const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
   payment,
   onStatusChange,
-  onPaymentApproved,
-  token
+  onPaymentApproved
 }) => {
   const [currentStatus, setCurrentStatus] = useState<PaymentStatus | null>(null);
   const [hasNotifiedSuccess, setHasNotifiedSuccess] = useState(false);
@@ -38,7 +36,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
 
     const checkPaymentStatus = async () => {
       try {
-        const status = await paymentService.getPaymentStatus(payment.payment_id!, token);
+        const status = await paymentService.getPaymentStatus(payment.payment_id!);
         setCurrentStatus(status);
         onStatusChange?.(status.status);
         
@@ -79,7 +77,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
         intervalRef.current = null;
       }
     };
-  }, [payment.payment_id, token, onStatusChange, currentStatus, hasNotifiedSuccess, onPaymentApproved]);
+  }, [payment.payment_id, onStatusChange, currentStatus, hasNotifiedSuccess, onPaymentApproved]);
   
   // Limpar intervalo quando componente desmontar ou sucesso for notificado
   useEffect(() => {
@@ -110,7 +108,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
 
     setIsRefreshing(true);
     try {
-      const status = await paymentService.getPaymentStatus(payment.payment_id, token);
+      const status = await paymentService.getPaymentStatus(payment.payment_id);
       setCurrentStatus(status);
       onStatusChange?.(status.status);
       

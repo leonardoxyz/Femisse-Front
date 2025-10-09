@@ -43,12 +43,15 @@ const AuthPage = () => {
     e.preventDefault();
     setLoading(true); setError(null); setSuccess(null);
     try {
-      const res = await axios.post(`${API_ENDPOINTS.auth}/login`, {
+      await axios.post(`${API_ENDPOINTS.auth}/login`, {
         email: form.email,
         senha: form.senha,
+      }, {
+        withCredentials: true, // ✅ Envia e recebe cookies httpOnly
       });
-      localStorage.setItem('token', res.data.token);
-      navigate('/perfil', { replace: true });
+      // Token está nos cookies httpOnly (mais seguro que localStorage)
+      // Força reload para atualizar useAuth
+      window.location.href = '/perfil';
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao fazer login');
     } finally {
