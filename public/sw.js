@@ -1,8 +1,9 @@
 // Service Worker para PWA
-// Versão: 1.0.0
+// Versão: 1.0.1
 
-const CACHE_NAME = 'feminisse-v1';
-const RUNTIME_CACHE = 'feminisse-runtime';
+const CACHE_VERSION = 'v2';
+const CACHE_NAME = `feminisse-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `feminisse-runtime-${CACHE_VERSION}`;
 
 // Assets para cache inicial
 const PRECACHE_ASSETS = [

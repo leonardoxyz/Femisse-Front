@@ -43,9 +43,13 @@ export default defineConfig(({ mode }) => ({
         manualChunks: (id) => {
           // Vendor chunks
           if (id.includes('node_modules')) {
-            // React core
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+            // React core - DEVE vir primeiro
+            if (id.includes('react/') || id.includes('react-dom/') || id.includes('scheduler/')) {
               return 'vendor-react';
+            }
+            // React Router
+            if (id.includes('react-router')) {
+              return 'vendor-router';
             }
             // UI components (Radix UI)
             if (id.includes('@radix-ui')) {
