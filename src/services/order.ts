@@ -75,7 +75,7 @@ class OrderService {
    */
   async createOrder(orderData: CreateOrderData): Promise<Order> {
     try {
-      const response = await api.post('/api/orders/user/orders', orderData, {
+      const response = await api.post('/api/orders/my', orderData, {
         withCredentials: true
       });
       return response.data;
@@ -107,7 +107,7 @@ class OrderService {
    */
   async listUserOrders(page = 1, limit = 10): Promise<Order[]> {
     try {
-      const response = await api.get('/api/orders/user/orders', {
+      const response = await api.get('/api/orders/my', {
         params: { page, limit },
         withCredentials: true
       });

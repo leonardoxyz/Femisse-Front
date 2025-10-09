@@ -50,8 +50,9 @@ const AuthPage = () => {
         withCredentials: true, // ✅ Envia e recebe cookies httpOnly
       });
       // Token está nos cookies httpOnly (mais seguro que localStorage)
-      // Força reload para atualizar useAuth
-      window.location.href = '/perfil';
+      // Navega de forma segura
+      const { safeNavigate } = await import('@/utils/secureNavigation');
+      safeNavigate('/perfil');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao fazer login');
     } finally {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 import { logger } from "@/utils/logger";
+import { secureLocalStorage } from "@/utils/secureStorage";
 
 export interface CartItem {
   id: string;
@@ -20,23 +21,47 @@ interface CartContextProps {
 
 const CartContext = createContext<CartContextProps | undefined>(undefined);
 
-const CART_STORAGE_KEY = 'feminisse-cart';
+const CART_STORAGE_KEY = 'cart';
+
+/**
+ * Valida item do carrinho
+ */
+const isValidCartItem = (item: unknown): item is CartItem => {
+  if (!item || typeof item !== 'object') return false;
+  const i = item as CartItem;
+  return (
+    typeof i.id === 'string' &&
+    typeof i.name === 'string' &&
+    typeof i.price === 'number' &&
+    typeof i.quantity === 'number' &&
+    i.id.length > 0 &&
+    i.name.length > 0 &&
+    i.price >= 0 &&
+    i.quantity > 0 &&
+    i.quantity <= 100 // Limite razoável
+  );
+};
 
 const loadCartFromStorage = (): CartItem[] => {
   try {
-    const stored = localStorage.getItem(CART_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    const stored = secureLocalStorage.getItem<CartItem[]>(CART_STORAGE_KEY);
+    if (!stored || !Array.isArray(stored)) return [];
+    
+    // Valida cada item
+    return stored.filter(isValidCartItem);
   } catch (error) {
-    logger.error('Erro ao carregar carrinho do localStorage:', error);
+    logger.error('Erro ao carregar carrinho:', error);
     return [];
   }
 };
 
 const saveCartToStorage = (cart: CartItem[]) => {
   try {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    // Valida e filtra itens antes de salvar
+    const validCart = cart.filter(isValidCartItem);
+    secureLocalStorage.setItem(CART_STORAGE_KEY, validCart, 30 * 24 * 60 * 60 * 1000); // 30 dias
   } catch (error) {
-    logger.error('Erro ao salvar carrinho no localStorage:', error);
+    logger.error('Erro ao salvar carrinho:', error);
   }
 };
 

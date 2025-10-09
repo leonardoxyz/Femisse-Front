@@ -12,8 +12,8 @@ export const API_ENDPOINTS = {
   auth: `${API_BASE_URL}/api/auth`,
   
   // User Management
-  users: `${API_BASE_URL}/api/usuarios`, // Admin routes
-  userProfile: `${API_BASE_URL}/api/usuarios/profile`, // User profile
+  users: `${API_BASE_URL}/api/users`, // Admin routes
+  userProfile: `${API_BASE_URL}/api/users/profile`, // User profile
   
   // Products
   products: `${API_BASE_URL}/api/products`,
@@ -34,24 +34,24 @@ export const API_ENDPOINTS = {
   popular: `${API_BASE_URL}/api/popular`,
   
   // User Favorites
-  favorites: `${API_BASE_URL}/api/users/me/favorites`,
+  favorites: `${API_BASE_URL}/api/favorites`,
   
   // Address Management
-  userAddresses: `${API_BASE_URL}/api/address/user/addresses`, // User addresses
+  userAddresses: `${API_BASE_URL}/api/address/my`, // User addresses
   address: `${API_BASE_URL}/api/address`,
   
   // Order Management
   orders: `${API_BASE_URL}/api/orders`, // Admin routes
-  userOrders: `${API_BASE_URL}/api/orders/user/orders`, // User orders
+  userOrders: `${API_BASE_URL}/api/orders/my`, // User orders
   
   // Reviews Management
-  reviews: `${API_BASE_URL}/api/reviews/user/reviews`,
-  reviewableProducts: `${API_BASE_URL}/api/reviews/user/reviewable-products`,
+  reviews: `${API_BASE_URL}/api/reviews/my`,
+  reviewableProducts: `${API_BASE_URL}/api/reviews/my/reviewable-products`,
   reviewStats: `${API_BASE_URL}/api/reviews/products`,
 
   // Payment Cards
   cards: `${API_BASE_URL}/api/cards`, // Admin routes
-  userCards: `${API_BASE_URL}/api/cards/user/cards`, // User cards
+  userCards: `${API_BASE_URL}/api/cards/my`, // User cards
   
   // Payment Processing
   payments: `${API_BASE_URL}/api/payments`, // Payment routes

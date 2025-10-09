@@ -23,8 +23,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const isLoggingOutRef = React.useRef(false); // ✅ Flag para prevenir re-autenticação
 
   const refreshUser = useCallback(async () => {
+    // ✅ Não atualiza se estiver fazendo logout
+    if (isLoggingOutRef.current) return;
+    
     try {
       const response = await api.get(`${API_ENDPOINTS.users}/profile`);
       if (response.data) {
@@ -40,6 +44,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Verifica autenticação apenas uma vez ao montar
   useEffect(() => {
     const checkAuth = async () => {
+      // ✅ Não verifica se estiver fazendo logout
+      if (isLoggingOutRef.current) return;
+      
       try {
         const response = await api.get(`${API_ENDPOINTS.users}/profile`);
         if (response.data) {
@@ -58,13 +65,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []); // ✅ Executa apenas uma vez
 
   const logout = useCallback(async () => {
+    // ✅ Marca que está fazendo logout
+    isLoggingOutRef.current = true;
+    
     try {
       await api.post(`${API_ENDPOINTS.auth}/logout`);
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     } finally {
+      // ✅ Limpa estado imediatamente
       setUser(null);
       setIsAuthenticated(false);
+      
+      // ✅ Redireciona de forma síncrona
       window.location.href = '/login';
     }
   }, []);

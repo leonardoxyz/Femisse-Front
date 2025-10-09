@@ -12,7 +12,7 @@ export function useFavorites() {
       return;
     }
     setLoading(true);
-    fetch("/api/users/me/favorites", {
+    fetch("/api/favorites", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())

@@ -324,7 +324,6 @@ const CheckoutPage = () => {
         {checkoutState.currentStep === "address" && "Continuar para pagamento"}
         {checkoutState.currentStep === "payment" && "Revisar pedido"}
         {checkoutState.currentStep === "confirmation" && "Finalizar pedido"}
-        {checkoutState.isLoading && "e Processando..."}
       </Button>
       
       {checkoutState.currentStep === "confirmation" && (
