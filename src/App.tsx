@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import PrivateRoute from "./components/PrivateRoute";
 import CookieConsentManager from "./components/CookieConsentManager";
+import { setupApiInterceptor } from "./utils/apiInterceptor";
 
 // Lazy loading de páginas para melhor performance
 const Index = lazy(() => import("./pages/Index"));
@@ -18,6 +19,12 @@ const Profile = lazy(() => import("./pages/Profile"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const CheckoutPage = lazy(() => import("./pages/Checkout"));
 const OrderHistory = lazy(() => import("./components/profile/OrderHistory"));
+// Páginas de políticas
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const PaymentPolicy = lazy(() => import("./pages/PaymentPolicy"));
+const ShippingPolicy = lazy(() => import("./pages/ShippingPolicy"));
+const ReturnPolicy = lazy(() => import("./pages/ReturnPolicy"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -44,20 +51,26 @@ import { ShippingProvider } from "@/contexts/ShippingContext";
 import { CookieConsentProvider } from "@/contexts/CookieConsentContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AuthProvider>
-          <CartProvider>
-            <FavoritesProvider>
-              <ShippingProvider>
-                <CookieConsentProvider>
-                  <BrowserRouter>
-                    <CookieConsentManager />
-                    <Suspense fallback={<PageLoader />}>
+const App = () => {
+  // ✅ Configura interceptor de API ao montar
+  useEffect(() => {
+    setupApiInterceptor();
+  }, []);
+
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AuthProvider>
+            <CartProvider>
+              <FavoritesProvider>
+                <ShippingProvider>
+                  <CookieConsentProvider>
+                    <BrowserRouter>
+                      <CookieConsentManager />
+                      <Suspense fallback={<PageLoader />}>
                       <Routes>
                         <Route path="/" element={<Index />} />
                         <Route path="/produto/:slug" element={<ProductDetails />} />
@@ -68,6 +81,12 @@ const App = () => (
                         <Route path="/checkout" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
                         <Route path="/login" element={<AuthPage />} />
                         <Route path="/busca" element={<SearchResults />} />
+                        {/* Páginas de políticas */}
+                        <Route path="/termos-de-uso" element={<TermsOfService />} />
+                        <Route path="/privacidade" element={<PrivacyPolicy />} />
+                        <Route path="/pagamento" element={<PaymentPolicy />} />
+                        <Route path="/entregas-frete" element={<ShippingPolicy />} />
+                        <Route path="/trocas-devolucoes" element={<ReturnPolicy />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
@@ -80,5 +99,7 @@ const App = () => (
       </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>
-);
+  );
+};
+
 export default App;

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft, MapPin, CreditCard, Package, Check, Plus, Truck, Shield, AlertCircle } from "lucide-react";
+import { useSecureCPFVerification } from "@/hooks/useSecureCPFVerification";
+import { checkoutStateManager } from "@/utils/checkoutStateManager";
 
 import { useCart } from "@/contexts/CartContext";
 import { useShipping } from "@/contexts/ShippingContext";
@@ -11,6 +13,7 @@ import { useCheckout } from "@/hooks/useCheckout";
 import PaymentForm from "@/components/checkout/PaymentForm";
 import PaymentStatus from "@/components/checkout/PaymentStatus";
 import SuccessModal from "@/components/checkout/SuccessModal";
+import CouponInput from "@/components/checkout/CouponInput";
 import { formatCurrency, formatCep } from "@/utils/formatters";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -34,6 +37,12 @@ const CheckoutPage = () => {
   const { shippingInfo, updateShippingInfo } = useShipping();
   const { user, isAuthenticated } = useAuth();
   
+  // Hook seguro para verificação de CPF
+  const { cpf: userCPF, isChecking: isCheckingCPF, revalidate: revalidateCPF } = useSecureCPFVerification(
+    user?.id,
+    isAuthenticated
+  );
+  
   // Verificar se há um pedido pendente vindo do histórico
   const pendingOrder = location.state?.pendingOrder;
   
@@ -45,6 +54,8 @@ const CheckoutPage = () => {
     goToPreviousStep,
     selectAddress,
     selectPaymentMethod,
+    applyCoupon,
+    removeCoupon,
     createOrder,
     processPayment,
     canProceedToPayment,
@@ -69,14 +80,39 @@ const CheckoutPage = () => {
       return {
         subtotal: pendingOrder.subtotal,
         shipping: pendingOrder.shipping_cost,
+        discount: pendingOrder.coupon_discount || 0,
         total: pendingOrder.total
       };
     }
     return calculateTotals();
   }, [calculateTotals, pendingOrder]);
   
-  const { subtotal, shipping: shippingCost, total } = totals;
+  const { subtotal, shipping: shippingCost, discount, total } = totals;
   
+  // Restaurar step e dados do location.state se houver (vindo do perfil após preencher CPF)
+  useEffect(() => {
+    if (location.state?.returnStep) {
+      goToStep(location.state.returnStep);
+      
+      // Restaurar cupom aplicado se houver
+      const checkoutData = location.state?.checkoutData;
+      if (checkoutData?.appliedCouponCode && !checkoutState.appliedCoupon) {
+        applyCoupon(checkoutData.appliedCouponCode);
+      }
+      
+      // Restaurar endereço selecionado se houver e ainda não foi selecionado
+      if (checkoutData?.selectedAddressId && !checkoutState.selectedAddress && addresses.length > 0) {
+        const savedAddress = addresses.find(addr => addr.id === checkoutData.selectedAddressId);
+        if (savedAddress) {
+          selectAddress(savedAddress);
+        }
+      }
+      
+      // Limpar o state para não ficar reaplicando
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, goToStep, location.pathname, applyCoupon, checkoutState.appliedCoupon, checkoutState.selectedAddress, addresses, selectAddress]);
+
   // Redirecionar para pagamento se houver pedido pendente
   useEffect(() => {
     if (pendingOrder && checkoutState.currentStep === 'address') {
@@ -215,6 +251,31 @@ const CheckoutPage = () => {
     showSuccessModal();
   }, [showSuccessModal, hasCalledApproved, goToStep, clearCart]);
 
+  // Verificar CPF e redirecionar se necessário
+  useEffect(() => {
+    // Só verifica se estiver autenticado e não estiver no step de endereço
+    if (!isAuthenticated || !user || checkoutState.currentStep === 'address' || isCheckingCPF) {
+      return;
+    }
+
+    // Se não tiver CPF e não estiver verificando, redirecionar
+    if (!userCPF) {
+      navigate('/perfil', { 
+        state: { 
+          message: 'Por favor, preencha seu CPF para continuar com a compra. O CPF é obrigatório para emissão de nota fiscal.',
+          returnTo: '/checkout',
+          returnStep: checkoutState.currentStep,
+          highlightCPF: true,
+          // Preservar dados do checkout
+          checkoutData: {
+            selectedAddressId: checkoutState.selectedAddress?.id,
+            appliedCouponCode: checkoutState.appliedCoupon?.coupon?.code
+          }
+        } 
+      });
+    }
+  }, [isAuthenticated, user, userCPF, isCheckingCPF, navigate, checkoutState.currentStep, checkoutState.selectedAddress, checkoutState.appliedCoupon]);
+
   // Carregar endereços ao montar o componente
   useEffect(() => {
     loadAddresses();
@@ -282,11 +343,32 @@ const CheckoutPage = () => {
         ))}
       </div>
 
+      {/* Cupom de desconto - apenas nos steps de endereço e pagamento */}
+      {(checkoutState.currentStep === 'address' || checkoutState.currentStep === 'payment') && (
+        <div className="pb-4 border-b border-zinc-200">
+          <CouponInput
+            onApplyCoupon={applyCoupon}
+            onRemoveCoupon={removeCoupon}
+            appliedCoupon={checkoutState.appliedCoupon}
+            isLoading={checkoutState.isCouponLoading}
+            disabled={checkoutState.isLoading}
+          />
+        </div>
+      )}
+
       <div className="space-y-2 text-sm text-zinc-600">
         <div className="flex items-center justify-between">
           <span>Subtotal</span>
           <span className="font-medium text-zinc-900">{formatCurrency(subtotal)}</span>
         </div>
+        
+        {discount > 0 && (
+          <div className="flex items-center justify-between text-green-600">
+            <span>Desconto (Cupom)</span>
+            <span className="font-medium">-{formatCurrency(discount)}</span>
+          </div>
+        )}
+        
         <div className="flex items-center justify-between">
           <span>Frete</span>
           <span className="font-medium text-zinc-900">
@@ -307,6 +389,23 @@ const CheckoutPage = () => {
         type="button"
         onClick={() => {
           if (checkoutState.currentStep === 'address' && canProceedToPayment) {
+            // Verificar se tem CPF antes de avançar para pagamento
+            if (!userCPF) {
+              navigate('/perfil', { 
+                state: { 
+                  message: 'Por favor, preencha seu CPF para continuar com a compra. O CPF é obrigatório para emissão de nota fiscal.',
+                  returnTo: '/checkout',
+                  returnStep: 'payment',
+                  highlightCPF: true,
+                  // Preservar dados do checkout
+                  checkoutData: {
+                    selectedAddressId: checkoutState.selectedAddress?.id,
+                    appliedCouponCode: checkoutState.appliedCoupon?.coupon?.code
+                  }
+                } 
+              });
+              return;
+            }
             goToNextStep();
           } else if (checkoutState.currentStep === 'payment' && isPaymentValid) {
             handleReviewOrder();
@@ -317,11 +416,12 @@ const CheckoutPage = () => {
         disabled={
           (checkoutState.currentStep === "address" && !canProceedToPayment) ||
           (checkoutState.currentStep === "payment" && !isPaymentValid) ||
-          checkoutState.isLoading
+          checkoutState.isLoading ||
+          isCheckingCPF
         }
         className="w-full"
       >
-        {checkoutState.currentStep === "address" && "Continuar para pagamento"}
+        {checkoutState.currentStep === "address" && (isCheckingCPF ? "Verificando..." : "Continuar para pagamento")}
         {checkoutState.currentStep === "payment" && "Revisar pedido"}
         {checkoutState.currentStep === "confirmation" && "Finalizar pedido"}
       </Button>
@@ -527,6 +627,7 @@ const CheckoutPage = () => {
                       <PaymentForm
                         onPaymentDataChange={handlePaymentDataChange}
                         totalAmount={total}
+                        initialCPF={userCPF || undefined}
                       />
 
                       <div className="flex flex-col gap-6 lg:flex-row">

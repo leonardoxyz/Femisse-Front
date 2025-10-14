@@ -37,11 +37,13 @@ type PaymentFormData = z.infer<typeof paymentSchema>;
 interface PaymentFormProps {
   onPaymentDataChange?: (data: PaymentFormData & { card_token?: string }, isValid: boolean) => void;
   totalAmount: number;
+  initialCPF?: string;
 }
 
 const PaymentForm: React.FC<PaymentFormProps> = ({
   onPaymentDataChange,
-  totalAmount
+  totalAmount,
+  initialCPF
 }) => {
   const [selectedMethod, setSelectedMethod] = useState<string>('pix');
   const [cardToken, setCardToken] = useState<string | null>(null);
@@ -59,6 +61,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     schema: paymentSchema,
     onSubmit: async () => {}
   });
+
+  // Auto-preencher CPF do perfil se fornecido
+  useEffect(() => {
+    if (initialCPF && !data.document_number) {
+      // Remove formatação do CPF se houver
+      const cleanCPF = initialCPF.replace(/\D/g, '');
+      setValue('document_number', cleanCPF);
+    }
+  }, [initialCPF, data.document_number, setValue]);
 
   // Gerar token automaticamente quando os dados do cartão estiverem completos
   useEffect(() => {

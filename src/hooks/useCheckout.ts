@@ -6,6 +6,7 @@ import { orderService, CreateOrderData, Order } from '@/services/order';
 import { paymentService, PaymentData, PaymentResponse } from '@/services/payment';
 import { Address } from '@/services/address';
 import { useToast } from './use-toast';
+import { couponService, ValidateCouponResponse } from '@/services/coupon';
 
 export type CheckoutStep = 'address' | 'payment' | 'confirmation' | 'processing' | 'success' | 'error';
 
@@ -18,6 +19,8 @@ export interface CheckoutState {
   isLoading: boolean;
   error: string | null;
   showSuccessModal: boolean;
+  appliedCoupon: ValidateCouponResponse | null;
+  isCouponLoading: boolean;
 }
 
 export interface UseCheckoutReturn {
@@ -33,6 +36,10 @@ export interface UseCheckoutReturn {
   selectAddress: (address: Address) => void;
   selectPaymentMethod: (method: string) => void;
   
+  // Cupons
+  applyCoupon: (code: string) => Promise<void>;
+  removeCoupon: () => void;
+  
   // Processamento
   createOrder: () => Promise<void>;
   processPayment: (paymentData?: Partial<PaymentData>) => Promise<PaymentResponse>;
@@ -44,7 +51,7 @@ export interface UseCheckoutReturn {
   
   // Utilitários
   reset: () => void;
-  calculateTotals: () => { subtotal: number; shipping: number; total: number };
+  calculateTotals: () => { subtotal: number; shipping: number; discount: number; total: number };
   
   // Modal
   closeSuccessModal: () => void;
@@ -66,6 +73,8 @@ export function useCheckout(): UseCheckoutReturn {
     isLoading: false,
     error: null,
     showSuccessModal: false,
+    appliedCoupon: null,
+    isCouponLoading: false,
   });
 
   // Calcular totais do carrinho
@@ -73,14 +82,16 @@ export function useCheckout(): UseCheckoutReturn {
     const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     // const shipping = state.selectedAddress ? 15.90 : 0; // Valor fixo por enquanto (temporariamente desativado)
     const shipping = 0;
-    const total = subtotal + shipping;
+    const discount = state.appliedCoupon?.valid ? (state.appliedCoupon.discount_amount || 0) : 0;
+    const total = subtotal + shipping - discount;
 
     return {
       subtotal: Number(subtotal.toFixed(2)),
       shipping: Number(shipping.toFixed(2)),
+      discount: Number(discount.toFixed(2)),
       total: Number(total.toFixed(2))
     };
-  }, [cart, state.selectedAddress]);
+  }, [cart, state.selectedAddress, state.appliedCoupon]);
 
   // Validações para navegação
   const canProceedToPayment = useMemo(() => {
@@ -158,6 +169,84 @@ export function useCheckout(): UseCheckoutReturn {
     setState(prev => ({ ...prev, selectedPaymentMethod: method, error: null }));
   }, []);
 
+  // Aplicar cupom
+  const applyCoupon = useCallback(async (code: string) => {
+    if (!cart || cart.length === 0) {
+      throw new Error('Carrinho vazio');
+    }
+
+    setState(prev => ({ ...prev, isCouponLoading: true, error: null }));
+
+    try {
+      const totals = calculateTotals();
+      
+      // Preparar itens do carrinho para validação
+      const cartItems = cart.map(item => ({
+        product_id: item.id,
+        product_name: item.name,
+        quantity: item.quantity,
+        price: item.price
+      }));
+
+      const response = await couponService.validateCoupon({
+        code,
+        cart_items: cartItems,
+        subtotal: totals.subtotal
+      });
+
+      if (response.valid) {
+        setState(prev => ({
+          ...prev,
+          appliedCoupon: response,
+          isCouponLoading: false,
+          error: null
+        }));
+
+        toast({
+          title: "Cupom aplicado!",
+          description: response.message,
+        });
+      } else {
+        setState(prev => ({
+          ...prev,
+          appliedCoupon: null,
+          isCouponLoading: false,
+          error: response.message || response.error
+        }));
+
+        toast({
+          title: "Cupom inválido",
+          description: response.message || response.error || 'Cupom não pode ser aplicado',
+          variant: "destructive",
+        });
+
+        throw new Error(response.message || response.error || 'Cupom inválido');
+      }
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        appliedCoupon: null,
+        isCouponLoading: false
+      }));
+
+      throw error;
+    }
+  }, [cart, calculateTotals, toast]);
+
+  // Remover cupom
+  const removeCoupon = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      appliedCoupon: null,
+      error: null
+    }));
+
+    toast({
+      title: "Cupom removido",
+      description: "O desconto foi removido do pedido",
+    });
+  }, [toast]);
+
   // Criar pedido
   const createOrder = useCallback(async () => {
     if (!isAuthenticated || !user || !state.selectedAddress || !state.selectedPaymentMethod) {
@@ -182,17 +271,28 @@ export function useCheckout(): UseCheckoutReturn {
         zip_code: state.selectedAddress.zip_code
       };
 
+      const hasCoupon = !!state.appliedCoupon?.valid;
+      const rawCouponDiscount = hasCoupon ? state.appliedCoupon?.discount_amount ?? 0 : 0;
+      const couponDiscountValue = Number(rawCouponDiscount.toFixed(2));
+      const discountValue = hasCoupon ? 0 : Number(totals.discount.toFixed(2));
+      const subtotalValue = Number(totals.subtotal.toFixed(2));
+      const totalValue = Number(totals.total.toFixed(2));
+
       const orderData: CreateOrderData = {
         payment_method: state.selectedPaymentMethod,
         payment_status: 'pending',
         // shipping_cost: totals.shipping,
         shipping_cost: 0,
-        discount: 0,
-        subtotal: totals.subtotal,
-        total: totals.total,
+        discount: discountValue,
+        subtotal: subtotalValue,
+        total: totalValue,
         items: orderItems,
         notes: undefined,
-        shipping: shippingData
+        shipping: shippingData,
+        // Dados do cupom se aplicado
+        coupon_id: state.appliedCoupon?.coupon?.id,
+        coupon_code: state.appliedCoupon?.coupon?.code,
+        coupon_discount: hasCoupon ? couponDiscountValue : 0
       };
 
       // Validar dados do pedido
@@ -232,7 +332,16 @@ export function useCheckout(): UseCheckoutReturn {
 
       throw error;
     }
-  }, [isAuthenticated, user, state.selectedAddress, state.selectedPaymentMethod, calculateTotals, cart, toast]);
+  }, [
+    isAuthenticated,
+    user,
+    state.selectedAddress,
+    state.selectedPaymentMethod,
+    state.appliedCoupon,
+    calculateTotals,
+    cart,
+    toast
+  ]);
 
   // Processar pagamento
   const processPayment = useCallback(async (additionalData?: Partial<PaymentData>) => {
@@ -243,12 +352,14 @@ export function useCheckout(): UseCheckoutReturn {
     setState(prev => ({ ...prev, isLoading: true, error: null, currentStep: 'processing' }));
 
     try {
-      const totals = calculateTotals();
+      // IMPORTANTE: Usar o total do pedido já criado, não recalcular
+      // O pedido já foi validado e salvo no banco com o total correto
+      const orderTotal = state.order.total;
 
       const paymentData: PaymentData = {
         order_id: state.order.id,
         payment_method: state.selectedPaymentMethod as 'pix' | 'credit_card' | 'debit_card',
-        total_amount: totals.total,
+        total_amount: orderTotal,
         payer: paymentService.formatPayerData(user),
         shipping_address: paymentService.formatShippingAddress(state.selectedAddress),
         metadata: {
@@ -345,6 +456,8 @@ export function useCheckout(): UseCheckoutReturn {
       isLoading: false,
       error: null,
       showSuccessModal: false,
+      appliedCoupon: null,
+      isCouponLoading: false,
     });
   }, []);
 
@@ -376,6 +489,10 @@ export function useCheckout(): UseCheckoutReturn {
     // Seleções
     selectAddress,
     selectPaymentMethod,
+    
+    // Cupons
+    applyCoupon,
+    removeCoupon,
     
     // Processamento
     createOrder,

@@ -26,7 +26,7 @@ interface Address {
 
 
 export function AddressList() {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth(); // ✅ Removido token, usando apenas isAuthenticated
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +39,6 @@ export function AddressList() {
     try {
       const response = await fetch(API_ENDPOINTS.userAddresses, {
         credentials: "include",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       
       if (!response.ok) throw new Error("Erro ao buscar endereços");
@@ -56,8 +55,10 @@ export function AddressList() {
   };
 
   useEffect(() => {
-    fetchAddresses();
-  }, [token]);
+    if (isAuthenticated) {
+      fetchAddresses();
+    }
+  }, [isAuthenticated]); // ✅ Atualizado para usar isAuthenticated
 
   const startCreate = () => {
     setEditing(null);
@@ -81,9 +82,9 @@ export function AddressList() {
       
       const response = await fetch(url, {
         method,
+        credentials: "include", // ✅ Cookie httpOnly é enviado automaticamente
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(addressData),
       });
@@ -125,7 +126,7 @@ export function AddressList() {
     try {
       const res = await fetch(`${API_ENDPOINTS.address}/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include", // ✅ Cookie httpOnly é enviado automaticamente
       });
       if (!res.ok) throw new Error();
       

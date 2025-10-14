@@ -133,7 +133,7 @@ class PaymentService {
     }
 
     if (!paymentData.total_amount || paymentData.total_amount <= 0) {
-      errors.push('Valor total deve ser maior que zero');
+      errors.push('Valor total deve ser maior que R$00,00. Se houve algum problema com sua compra, entre em contato conosco!');
     }
 
     if (!paymentData.payer) {

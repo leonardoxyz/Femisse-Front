@@ -4,7 +4,7 @@ const Footer = () => {
   return (
     <footer className="bg-foreground text-background">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="space-y-4">
             <h3 className="text-2xl font-bold">
@@ -39,16 +39,25 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Customer service */}
+          {/* Minha Conta */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-lg">Atendimento</h4>
+            <h4 className="font-semibold text-lg">Minha Conta</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">Minha Conta</a></li>
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">Meus Pedidos</a></li>
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">Trocas e Devoluções</a></li>
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">Política de Privacidade</a></li>
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">Termos de Uso</a></li>
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">FAQ</a></li>
+              <li><a href="/perfil" className="text-background/80 hover:text-primary transition-colors duration-300">Meu Perfil</a></li>
+              <li><a href="/perfil/orders" className="text-background/80 hover:text-primary transition-colors duration-300">Minhas compras</a></li>
+              <li><a href="/perfil/favorites" className="text-background/80 hover:text-primary transition-colors duration-300">Meus Favoritos</a></li>
+            </ul>
+          </div>
+
+          {/* Políticas */}
+          <div className="space-y-4">
+            <h4 className="font-semibold text-lg">Políticas</h4>
+            <ul className="space-y-2 text-sm">
+              <li><a href="/trocas-devolucoes" className="text-background/80 hover:text-primary transition-colors duration-300">Trocas e Devoluções</a></li>
+              <li><a href="/privacidade" className="text-background/80 hover:text-primary transition-colors duration-300">Política de Privacidade</a></li>
+              <li><a href="/termos-de-uso" className="text-background/80 hover:text-primary transition-colors duration-300">Termos de Uso</a></li>
+              <li><a href="/entregas-frete" className="text-background/80 hover:text-primary transition-colors duration-300">Entregas e Frete</a></li>
+              <li><a href="/pagamento" className="text-background/80 hover:text-primary transition-colors duration-300">Pagamento</a></li>
             </ul>
           </div>
 

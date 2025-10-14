@@ -30,6 +30,10 @@ export interface CreateOrderData {
     state: string;
     zip_code: string;
   };
+  // Dados do cupom de desconto
+  coupon_id?: string;
+  coupon_code?: string;
+  coupon_discount?: number;
 }
 
 export interface ShippingAddress {
@@ -66,6 +70,10 @@ export interface Order {
   shipping_city?: string | null;
   shipping_state?: string | null;
   shipping_zip_code?: string | null;
+  // Dados do cupom de desconto
+  coupon_id?: string | null;
+  coupon_code?: string | null;
+  coupon_discount?: number;
 }
 
 class OrderService {

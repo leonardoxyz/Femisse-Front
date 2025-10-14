@@ -90,7 +90,12 @@ const validatePhone = (phone: string): string | null => {
   return null;
 };
 
-export function PersonalData() {
+interface PersonalDataProps {
+  highlightCPF?: boolean;
+  onCPFUpdated?: (cpf: string | null) => void;
+}
+
+export function PersonalData({ highlightCPF = false, onCPFUpdated }: PersonalDataProps) {
   const { userData, loading, updateUserData } = useUserData();
   const [isEditing, setIsEditing] = useState(false);
   const [editedData, setEditedData] = useState({
@@ -120,6 +125,13 @@ export function PersonalData() {
       });
     }
   }, [userData]);
+
+  // Auto-habilitar edição se highlightCPF for true e CPF estiver vazio
+  useEffect(() => {
+    if (highlightCPF && userData && !userData.cpf) {
+      setIsEditing(true);
+    }
+  }, [highlightCPF, userData]);
 
   // Verificar se há mudanças
   useEffect(() => {
@@ -187,6 +199,10 @@ export function PersonalData() {
       
       // Atualizar o contexto global do usuário (para atualizar header)
       updateUserData(response.user);
+
+      if (onCPFUpdated) {
+        onCPFUpdated(updatedData.cpf || null);
+      }
       
       // Limpar mensagem de sucesso após 3 segundos
       setTimeout(() => setSaveSuccess(null), 3000);
@@ -335,19 +351,29 @@ export function PersonalData() {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="cpf">CPF</Label>
-              <Input 
-                id="cpf" 
-                placeholder="Insira seu CPF" 
-                value={editedData.cpf} 
-                onChange={(e) => handleInputChange('cpf', e.target.value)}
-                disabled={!isEditing} 
-                className={`${!isEditing ? "bg-muted" : ""} ${fieldErrors.cpf && isEditing ? "border-red-500" : ""}`} 
-              />
-              {fieldErrors.cpf && isEditing && (
-                <p className="text-red-500 text-sm mt-1">{fieldErrors.cpf}</p>
+            <div className={`${highlightCPF && !editedData.cpf ? 'relative' : ''}`}>
+              {highlightCPF && !editedData.cpf && (
+                <div className="absolute -inset-2 bg-amber-200/30 rounded-lg animate-pulse border-2 border-amber-400" />
               )}
+              <div className="relative">
+                <Label htmlFor="cpf" className={highlightCPF && !editedData.cpf ? 'text-amber-700 font-semibold' : ''}>
+                  CPF {highlightCPF && !editedData.cpf && <span className="text-amber-600">*</span>}
+                </Label>
+                <Input 
+                  id="cpf" 
+                  placeholder="Insira seu CPF" 
+                  value={editedData.cpf} 
+                  onChange={(e) => handleInputChange('cpf', e.target.value)}
+                  disabled={!isEditing} 
+                  className={`${!isEditing ? "bg-muted" : ""} ${fieldErrors.cpf && isEditing ? "border-red-500" : ""} ${highlightCPF && !editedData.cpf ? "border-amber-500 border-2" : ""}`} 
+                />
+                {fieldErrors.cpf && isEditing && (
+                  <p className="text-red-500 text-sm mt-1">{fieldErrors.cpf}</p>
+                )}
+                {highlightCPF && !editedData.cpf && (
+                  <p className="text-amber-700 text-sm mt-1 font-medium">⚠ CPF obrigatório para finalizar compra</p>
+                )}
+              </div>
             </div>
             <div>
               <Label htmlFor="phone">Telefone</Label>

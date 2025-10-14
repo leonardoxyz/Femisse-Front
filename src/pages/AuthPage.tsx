@@ -43,16 +43,18 @@ const AuthPage = () => {
     e.preventDefault();
     setLoading(true); setError(null); setSuccess(null);
     try {
-      await axios.post(`${API_ENDPOINTS.auth}/login`, {
+      const response = await axios.post(`${API_ENDPOINTS.auth}/login`, {
         email: form.email,
         senha: form.senha,
       }, {
         withCredentials: true, // ✅ Envia e recebe cookies httpOnly
       });
-      // Token está nos cookies httpOnly (mais seguro que localStorage)
-      // Navega de forma segura
-      const { safeNavigate } = await import('@/utils/secureNavigation');
-      safeNavigate('/perfil');
+      
+      // ✅ Login bem-sucedido - aguarda um momento para cookies serem definidos
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // ✅ Usa navigate do React Router (SPA - sem reload)
+      navigate('/perfil', { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao fazer login');
     } finally {
