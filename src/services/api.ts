@@ -49,7 +49,6 @@ async function request<T>(
     'Content-Type': 'application/json',
     ...headers,
   };
-
   // Adiciona token se necessário
   if (requiresAuth) {
     const token = getToken();
@@ -154,6 +153,8 @@ export const api = {
     return request<T>(url, { ...options, method: 'DELETE' });
   },
 };
+
+export default api;
 
 /**
  * Helper para construir URLs com query params

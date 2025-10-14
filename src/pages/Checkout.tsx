@@ -14,6 +14,7 @@ import PaymentForm from "@/components/checkout/PaymentForm";
 import PaymentStatus from "@/components/checkout/PaymentStatus";
 import SuccessModal from "@/components/checkout/SuccessModal";
 import CouponInput from "@/components/checkout/CouponInput";
+import ShippingCalculator from "@/components/checkout/ShippingCalculator";
 import { formatCurrency, formatCep } from "@/utils/formatters";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,8 @@ const CheckoutPage = () => {
   const [paymentData, setPaymentData] = useState<any>(null);
   const [isPaymentValid, setIsPaymentValid] = useState(false);
   const [hasCalledApproved, setHasCalledApproved] = useState(false);
+  const [selectedShippingQuote, setSelectedShippingQuote] = useState<any>(null);
+  const [calculatedShippingCost, setCalculatedShippingCost] = useState<number>(0);
 
   const totals = useMemo(() => {
     // Se houver pedido pendente, usar os valores dele
@@ -196,6 +199,20 @@ const CheckoutPage = () => {
     } catch (error) {
       console.error('Erro ao criar pedido:', error);
     }
+  };
+
+  // Handler para quando uma cotação de frete for selecionada
+  const handleSelectShippingQuote = (quote: any, cost: number) => {
+    setSelectedShippingQuote(quote);
+    setCalculatedShippingCost(cost);
+    
+    // Atualizar contexto de shipping
+    updateShippingInfo({
+      cep: checkoutState.selectedAddress?.zip_code || '',
+      address: null,
+      shippingCost: cost,
+      source: 'manual'
+    });
   };
 
   // Handler para quando os dados de pagamento mudarem
@@ -604,6 +621,27 @@ const CheckoutPage = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Calculadora de Frete - MelhorEnvio */}
+                  {checkoutState.selectedAddress && (
+                    <div className="bg-white rounded-sm p-6 shadow-sm">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-[#58090d]/10">
+                          <Truck className="h-5 w-5 text-[#58090d]" />
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-semibold text-zinc-900">Calcular Frete</h2>
+                          <p className="text-sm text-zinc-600">Escolha a melhor opção de entrega</p>
+                        </div>
+                      </div>
+
+                      <ShippingCalculator
+                        products={cart}
+                        selectedAddress={checkoutState.selectedAddress}
+                        onSelectQuote={handleSelectShippingQuote}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 

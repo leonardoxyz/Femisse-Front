@@ -59,7 +59,14 @@ export const API_ENDPOINTS = {
   paymentProcess: `${API_BASE_URL}/api/payments/process`, // Process direct payment
   paymentStatus: `${API_BASE_URL}/api/payments/status`, // Check payment status
   paymentPublicKey: `${API_BASE_URL}/api/payments/public-key`, // Get MP public key
-  paymentWebhook: `${API_BASE_URL}/api/payments/webhook` // MP webhook
+  paymentWebhook: `${API_BASE_URL}/api/payments/webhook`, // MP webhook
+  
+  // Shipping - MelhorEnvio
+  shipping: `${API_BASE_URL}/api/shipping`,
+  shippingCalculate: `${API_BASE_URL}/api/shipping/calculate`,
+  shippingLabels: `${API_BASE_URL}/api/shipping/labels`,
+  shippingTrack: `${API_BASE_URL}/api/shipping/track`,
+  shippingAuth: `${API_BASE_URL}/api/shipping/auth`
 } as const;
 export const buildApiUrl = (endpoint: string, params?: Record<string, string | number>) => {
   let url = endpoint;
