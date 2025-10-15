@@ -10,10 +10,21 @@ import { couponService, ValidateCouponResponse } from '@/services/coupon';
 
 export type CheckoutStep = 'address' | 'payment' | 'confirmation' | 'processing' | 'success' | 'error';
 
+export interface SelectedShipping {
+  service_id: number;
+  service_name: string;
+  company_id: number;
+  company_name: string;
+  delivery_time: number;
+  price: number;
+  quote_id?: string;
+}
+
 export interface CheckoutState {
   currentStep: CheckoutStep;
   selectedAddress: Address | null;
   selectedPaymentMethod: string | null;
+  selectedShipping: SelectedShipping | null;
   order: Order | null;
   payment: PaymentResponse | null;
   isLoading: boolean;
@@ -35,6 +46,7 @@ export interface UseCheckoutReturn {
   // Seleções
   selectAddress: (address: Address) => void;
   selectPaymentMethod: (method: string) => void;
+  selectShipping: (shipping: SelectedShipping) => void;
   
   // Cupons
   applyCoupon: (code: string) => Promise<void>;
@@ -68,6 +80,7 @@ export function useCheckout(): UseCheckoutReturn {
     currentStep: 'address',
     selectedAddress: null,
     selectedPaymentMethod: null,
+    selectedShipping: null,
     order: null,
     payment: null,
     isLoading: false,
@@ -80,8 +93,7 @@ export function useCheckout(): UseCheckoutReturn {
   // Calcular totais do carrinho
   const calculateTotals = useCallback(() => {
     const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-    // const shipping = state.selectedAddress ? 15.90 : 0; // Valor fixo por enquanto (temporariamente desativado)
-    const shipping = 0;
+    const shipping = state.selectedShipping?.price || 0;
     const discount = state.appliedCoupon?.valid ? (state.appliedCoupon.discount_amount || 0) : 0;
     const total = subtotal + shipping - discount;
 
@@ -91,7 +103,7 @@ export function useCheckout(): UseCheckoutReturn {
       discount: Number(discount.toFixed(2)),
       total: Number(total.toFixed(2))
     };
-  }, [cart, state.selectedAddress, state.appliedCoupon]);
+  }, [cart, state.selectedShipping, state.appliedCoupon]);
 
   // Validações para navegação
   const canProceedToPayment = useMemo(() => {
@@ -167,6 +179,10 @@ export function useCheckout(): UseCheckoutReturn {
 
   const selectPaymentMethod = useCallback((method: string) => {
     setState(prev => ({ ...prev, selectedPaymentMethod: method, error: null }));
+  }, []);
+
+  const selectShipping = useCallback((shipping: SelectedShipping) => {
+    setState(prev => ({ ...prev, selectedShipping: shipping, error: null }));
   }, []);
 
   // Aplicar cupom
@@ -281,8 +297,7 @@ export function useCheckout(): UseCheckoutReturn {
       const orderData: CreateOrderData = {
         payment_method: state.selectedPaymentMethod,
         payment_status: 'pending',
-        // shipping_cost: totals.shipping,
-        shipping_cost: 0,
+        shipping_cost: totals.shipping,
         discount: discountValue,
         subtotal: subtotalValue,
         total: totalValue,
@@ -292,7 +307,14 @@ export function useCheckout(): UseCheckoutReturn {
         // Dados do cupom se aplicado
         coupon_id: state.appliedCoupon?.coupon?.id,
         coupon_code: state.appliedCoupon?.coupon?.code,
-        coupon_discount: hasCoupon ? couponDiscountValue : 0
+        coupon_discount: hasCoupon ? couponDiscountValue : 0,
+        // Dados do frete selecionado
+        shipping_service_id: state.selectedShipping?.service_id,
+        shipping_service_name: state.selectedShipping?.service_name,
+        shipping_company_id: state.selectedShipping?.company_id,
+        shipping_company_name: state.selectedShipping?.company_name,
+        shipping_delivery_time: state.selectedShipping?.delivery_time,
+        shipping_quote_id: state.selectedShipping?.quote_id
       };
 
       // Validar dados do pedido
@@ -451,6 +473,7 @@ export function useCheckout(): UseCheckoutReturn {
       currentStep: 'address',
       selectedAddress: null,
       selectedPaymentMethod: null,
+      selectedShipping: null,
       order: null,
       payment: null,
       isLoading: false,
@@ -489,6 +512,7 @@ export function useCheckout(): UseCheckoutReturn {
     // Seleções
     selectAddress,
     selectPaymentMethod,
+    selectShipping,
     
     // Cupons
     applyCoupon,

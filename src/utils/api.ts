@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from '@/config/api';
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4000',
   withCredentials: true, // ✅ Sempre envia cookies httpOnly
+  timeout: 15000, // ✅ Timeout de 15 segundos para evitar requisições travadas
   headers: {
     'Content-Type': 'application/json',
   },

@@ -55,6 +55,7 @@ const CheckoutPage = () => {
     goToPreviousStep,
     selectAddress,
     selectPaymentMethod,
+    selectShipping,
     applyCoupon,
     removeCoupon,
     createOrder,
@@ -212,6 +213,17 @@ const CheckoutPage = () => {
       address: null,
       shippingCost: cost,
       source: 'manual'
+    });
+
+    // Atualizar dados de frete no checkout
+    selectShipping({
+      service_id: quote.id,
+      service_name: quote.name,
+      company_id: quote.company.id,
+      company_name: quote.company.name,
+      delivery_time: quote.custom_delivery_time || quote.delivery_time,
+      price: cost,
+      quote_id: quote.quote_id // Se houver ID da cotação salva no banco
     });
   };
 

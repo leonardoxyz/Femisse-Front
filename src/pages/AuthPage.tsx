@@ -9,9 +9,10 @@ import TurnstileWidget from '@/components/TurnstileWidget';
 import { API_ENDPOINTS } from '@/config/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import api from '@/utils/api';
 
 const AuthPage = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<'login' | 'register'>('login');
   const [showPassword, setShowPassword] = useState(false);
@@ -41,22 +42,39 @@ const AuthPage = () => {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true); setError(null); setSuccess(null);
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    
     try {
+      // Faz o login
       const response = await axios.post(`${API_ENDPOINTS.auth}/login`, {
         email: form.email,
         senha: form.senha,
       }, {
-        withCredentials: true, // ✅ Envia e recebe cookies httpOnly
+        withCredentials: true,
       });
       
-      // ✅ Login bem-sucedido - aguarda um momento para cookies serem definidos
-      await new Promise(resolve => setTimeout(resolve, 100));
+      console.log('✅ Login bem-sucedido:', response.data);
       
-      // ✅ Usa navigate do React Router (SPA - sem reload)
+      // Aguarda um pouco para cookies serem processados
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Tenta atualizar o contexto (não bloqueia se falhar)
+      if (refreshUser) {
+        try {
+          await refreshUser();
+        } catch (refreshError) {
+          console.warn('Aviso ao atualizar contexto:', refreshError);
+        }
+      }
+      
+      // Navega para o perfil
       navigate('/perfil', { replace: true });
+      
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Erro ao fazer login');
+      console.error('❌ Erro no login:', err);
+      setError(err.response?.data?.error || err.response?.data?.message || 'Erro ao fazer login');
     } finally {
       setLoading(false);
     }

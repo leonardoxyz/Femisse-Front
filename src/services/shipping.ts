@@ -5,6 +5,7 @@
  */
 
 import api from './api';
+import { API_ENDPOINTS, API_BASE_URL } from '@/config/api';
 
 // =====================================================
 // TIPOS E INTERFACES
@@ -139,9 +140,26 @@ export interface CreateLabelRequest {
 /**
  * Inicia processo de autorização OAuth2
  */
+const normalizeBase = (url: string) => {
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url.replace(/\/$/, '');
+  }
+
+  const base = API_BASE_URL.replace(/\/$/, '');
+  if (url.startsWith('/')) {
+    return `${base}${url}`.replace(/\/$/, '');
+  }
+
+  return `${base}/${url}`.replace(/\/$/, '');
+};
+
+const SHIPPING_BASE = normalizeBase(API_ENDPOINTS.shipping);
+const SHIPPING_AUTH_BASE = normalizeBase(API_ENDPOINTS.shippingAuth);
+const SHIPPING_TRACK_BASE = normalizeBase(API_ENDPOINTS.shippingTrack);
+
 export async function initiateAuthorization(): Promise<{ authorizationUrl: string }> {
-  const response = await api.get('/shipping/auth/authorize');
-  return response.data;
+  const response = await api.get(`${SHIPPING_AUTH_BASE}/authorize`, { requiresAuth: true });
+  return response;
 }
 
 /**
@@ -152,8 +170,8 @@ export async function checkAuthStatus(): Promise<{
   expiresAt?: string;
   authorizedSince?: string;
 }> {
-  const response = await api.get('/shipping/auth/status');
-  return response.data;
+  const response = await api.get(`${SHIPPING_AUTH_BASE}/status`, { requiresAuth: true });
+  return response;
 }
 
 // =====================================================
@@ -166,8 +184,8 @@ export async function checkAuthStatus(): Promise<{
 export async function calculateShipping(
   data: CalculateShippingRequest
 ): Promise<{ quotes: ShippingQuote[]; savedQuotes: any[] }> {
-  const response = await api.post('/shipping/calculate', data);
-  return response.data;
+  const response = await api.post(`${SHIPPING_BASE}/calculate`, data, { requiresAuth: true });
+  return response;
 }
 
 /**
@@ -175,8 +193,8 @@ export async function calculateShipping(
  */
 export async function listQuotes(orderId?: string): Promise<any[]> {
   const params = orderId ? { order_id: orderId } : {};
-  const response = await api.get('/shipping/quotes', { params });
-  return response.data;
+  const response = await api.get(`${SHIPPING_BASE}/quotes`, { params, requiresAuth: true });
+  return response;
 }
 
 // =====================================================
@@ -189,8 +207,8 @@ export async function listQuotes(orderId?: string): Promise<any[]> {
 export async function createLabel(
   data: CreateLabelRequest
 ): Promise<{ label: ShippingLabel }> {
-  const response = await api.post('/shipping/labels', data);
-  return response.data;
+  const response = await api.post(`${SHIPPING_BASE}/labels`, data, { requiresAuth: true });
+  return response;
 }
 
 /**
@@ -200,12 +218,15 @@ export async function listLabels(filters?: {
   orderId?: string;
   status?: string;
 }): Promise<ShippingLabel[]> {
-  const params: any = {};
+  const params: Record<string, string> = {};
   if (filters?.orderId) params.order_id = filters.orderId;
   if (filters?.status) params.status = filters.status;
-  
-  const response = await api.get('/shipping/labels', { params });
-  return response.data;
+
+  const response = await api.get(`${SHIPPING_BASE}/labels`, {
+    params,
+    requiresAuth: true,
+  });
+  return response;
 }
 
 /**
@@ -214,24 +235,28 @@ export async function listLabels(filters?: {
 export async function getLabelById(
   labelId: string
 ): Promise<ShippingLabel & { events: ShippingEvent[] }> {
-  const response = await api.get(`/shipping/labels/${labelId}`);
-  return response.data;
+  const response = await api.get(`${SHIPPING_BASE}/labels/${labelId}`, { requiresAuth: true });
+  return response;
 }
 
 /**
  * Gera etiqueta (após pagamento)
  */
 export async function generateLabel(labelId: string): Promise<{ success: boolean }> {
-  const response = await api.post(`/shipping/labels/${labelId}/generate`);
-  return response.data;
+  const response = await api.post(`${SHIPPING_BASE}/labels/${labelId}/generate`, undefined, {
+    requiresAuth: true,
+  });
+  return response;
 }
 
 /**
  * Imprime etiqueta (retorna URL do PDF)
  */
 export async function printLabel(labelId: string): Promise<{ url: string }> {
-  const response = await api.post(`/shipping/labels/${labelId}/print`);
-  return response.data;
+  const response = await api.post(`${SHIPPING_BASE}/labels/${labelId}/print`, undefined, {
+    requiresAuth: true,
+  });
+  return response;
 }
 
 /**
@@ -241,8 +266,10 @@ export async function cancelLabel(
   labelId: string,
   reason?: string
 ): Promise<{ success: boolean }> {
-  const response = await api.post(`/shipping/labels/${labelId}/cancel`, { reason });
-  return response.data;
+  const response = await api.post(`${SHIPPING_BASE}/labels/${labelId}/cancel`, { reason }, {
+    requiresAuth: true,
+  });
+  return response;
 }
 
 // =====================================================
@@ -252,17 +279,17 @@ export async function cancelLabel(
 /**
  * Rastreia envio
  */
-export async function trackShipment(labelId: string): Promise<any> {
-  const response = await api.get(`/shipping/track/${labelId}`);
-  return response.data;
+export async function trackShipment(labelId: string): Promise<{ events: ShippingEvent[] }> {
+  const response = await api.get(`${SHIPPING_TRACK_BASE}/${labelId}`, { requiresAuth: true });
+  return response;
 }
 
 /**
  * Lista eventos de rastreamento
  */
 export async function listLabelEvents(labelId: string): Promise<ShippingEvent[]> {
-  const response = await api.get(`/shipping/labels/${labelId}/events`);
-  return response.data;
+  const response = await api.get(`${SHIPPING_BASE}/labels/${labelId}/events`, { requiresAuth: true });
+  return response;
 }
 
 // =====================================================

@@ -31,29 +31,28 @@ export function ShippingCalculator({
   onSelectQuote,
   className = ''
 }: ShippingCalculatorProps) {
+  const parseAmount = (value: number | string | undefined | null): number => {
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    return 0;
+  };
+
   const [selectedQuoteId, setSelectedQuoteId] = useState<number | null>(null);
   const { loading, quotes, calculateShipping, authorized, checkAuthorization } = useMelhorEnvio();
 
   useEffect(() => {
-    console.log('🔍 ShippingCalculator: Verificando autorização...');
-    checkAuthorization().then(status => {
-      console.log('✅ Status de autorização:', status);
-    });
+    checkAuthorization();
   }, [checkAuthorization]);
-
-  // Log do estado de autorização
-  useEffect(() => {
-    console.log('🔐 Estado authorized:', authorized);
-  }, [authorized]);
 
   // Calcula automaticamente quando endereço é selecionado
   useEffect(() => {
-    console.log('📦 Verificando condições para cálculo:', {
-      hasAddress: !!selectedAddress?.zip_code,
-      authorized,
-      hasProducts: products.length > 0
-    });
-    
     if (selectedAddress?.zip_code && authorized && products.length > 0) {
       handleCalculate();
     }
@@ -91,7 +90,8 @@ export function ShippingCalculator({
 
   const handleSelectQuote = (quote: ShippingQuote) => {
     setSelectedQuoteId(quote.id);
-    onSelectQuote?.(quote, quote.custom_price || quote.price);
+    const price = parseAmount(quote.custom_price ?? quote.price);
+    onSelectQuote?.(quote, price);
   };
 
   // Se não autorizado, mostra mensagem informativa
@@ -212,12 +212,12 @@ export function ShippingCalculator({
                 {/* Preço */}
                 <div className="text-right flex-shrink-0">
                   <div className="text-lg font-bold text-gray-900">
-                    {formatCurrency(quote.custom_price || quote.price)}
+                    {formatCurrency(parseAmount(quote.custom_price ?? quote.price))}
                   </div>
                   
                   {quote.discount > 0 && (
                     <div className="text-xs text-green-600 font-medium">
-                      Economia: {formatCurrency(quote.discount)}
+                      Economia: {formatCurrency(parseAmount(quote.discount))}
                     </div>
                   )}
                   

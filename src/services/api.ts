@@ -9,6 +9,7 @@ import { getToken } from '@/hooks/useAuth';
 interface ApiOptions extends RequestInit {
   requiresAuth?: boolean;
   timeout?: number;
+  params?: Record<string, string | number | boolean | undefined | null>;
 }
 
 class ApiError extends Error {
@@ -42,6 +43,7 @@ async function request<T>(
     requiresAuth = false,
     timeout = 30000,
     headers = {},
+    params,
     ...fetchOptions
   } = options;
 
@@ -60,13 +62,31 @@ async function request<T>(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+  let requestUrl = url;
+
+  if (params && Object.keys(params).length > 0) {
+    const urlObj = new URL(url, window.location.origin);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        urlObj.searchParams.append(key, String(value));
+      }
+    });
+    requestUrl = urlObj.toString();
+  }
+
+  const fetchConfig: RequestInit = {
+    ...fetchOptions,
+    headers: requestHeaders,
+    signal: controller.signal,
+  };
+
+  if (!fetchConfig.credentials) {
+    fetchConfig.credentials = 'include';
+  }
+
   try {
     const response = await Promise.race([
-      fetch(url, {
-        ...fetchOptions,
-        headers: requestHeaders,
-        signal: controller.signal,
-      }),
+      fetch(requestUrl, fetchConfig),
       createTimeout(timeout),
     ]);
 

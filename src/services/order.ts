@@ -34,6 +34,13 @@ export interface CreateOrderData {
   coupon_id?: string;
   coupon_code?: string;
   coupon_discount?: number;
+  // Dados do frete selecionado (MelhorEnvio)
+  shipping_service_id?: number;
+  shipping_service_name?: string;
+  shipping_company_id?: number;
+  shipping_company_name?: string;
+  shipping_delivery_time?: number;
+  shipping_quote_id?: string;
 }
 
 export interface ShippingAddress {

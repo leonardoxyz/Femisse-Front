@@ -27,18 +27,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUser = useCallback(async () => {
     // ✅ Não atualiza se estiver fazendo logout
-    if (isLoggingOutRef.current) return;
+    if (isLoggingOutRef.current) {
+      return false;
+    }
     
     try {
       const response = await api.get(`${API_ENDPOINTS.users}/profile`);
       if (response.data) {
         setUser(response.data);
         setIsAuthenticated(true);
+        setIsLoading(false); // ✅ Garante que loading seja false após sucesso
         return true;
+      } else {
+        // ✅ Se não tem dados, considera como não autenticado
+        setUser(null);
+        setIsAuthenticated(false);
+        setIsLoading(false);
+        return false;
       }
     } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
       setUser(null);
       setIsAuthenticated(false);
+      setIsLoading(false); // ✅ Garante que loading seja false após erro
       return false;
     }
   }, []);
@@ -47,18 +58,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkAuth = async () => {
       // ✅ Não verifica se estiver fazendo logout
-      if (isLoggingOutRef.current) return;
+      if (isLoggingOutRef.current) {
+        setIsLoading(false);
+        return;
+      }
       
       try {
         const response = await api.get(`${API_ENDPOINTS.users}/profile`);
         if (response.data) {
           setUser(response.data);
           setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
         }
       } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
         setUser(null);
         setIsAuthenticated(false);
       } finally {
+        // ✅ SEMPRE seta loading como false, independente do resultado
         setIsLoading(false);
       }
     };
