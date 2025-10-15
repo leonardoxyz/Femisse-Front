@@ -51,9 +51,16 @@ async function request<T>(
     'Content-Type': 'application/json',
     ...headers,
   };
-  // Adiciona token se necessário
+  // ✅ MOBILE FIX: Adiciona token se necessário (localStorage fallback)
   if (requiresAuth) {
-    const token = getToken();
+    // Tenta obter do localStorage primeiro (fallback mobile)
+    let token = localStorage.getItem('accessToken');
+    
+    // Fallback para getToken() se não tiver no localStorage
+    if (!token) {
+      token = getToken();
+    }
+    
     if (token) {
       requestHeaders['Authorization'] = `Bearer ${token}`;
     }

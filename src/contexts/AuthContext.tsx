@@ -98,6 +98,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setIsAuthenticated(false);
       
+      // ✅ MOBILE FIX: Limpa tokens do localStorage também
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      
       // ✅ Redireciona de forma síncrona
       window.location.href = '/login';
     }
