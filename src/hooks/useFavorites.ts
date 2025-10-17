@@ -1,24 +1,45 @@
 import { useEffect, useState } from "react";
+import { api } from '@/services/api';
+import { API_ENDPOINTS } from '@/config/api';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 export function useFavorites() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
   useEffect(() => {
+    const token = tokenStorage.getAccessToken();
+
     if (!token) {
       setFavoriteIds([]);
       setLoading(false);
       return;
     }
+
+    let cancelled = false;
     setLoading(true);
-    fetch("/api/favorites", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((ids) => setFavoriteIds(ids))
-      .finally(() => setLoading(false));
-  }, [token]);
+
+    api.get<string[]>(API_ENDPOINTS.favorites, { requiresAuth: true })
+      .then((ids) => {
+        if (!cancelled && Array.isArray(ids)) {
+          setFavoriteIds(ids);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFavoriteIds([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return { favoriteIds, loading };
 }

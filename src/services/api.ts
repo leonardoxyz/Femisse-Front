@@ -1,5 +1,5 @@
 import { logger } from '@/utils/logger';
-import { getToken } from '@/hooks/useAuth';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 /**
  * Serviço API centralizado
@@ -51,16 +51,9 @@ async function request<T>(
     'Content-Type': 'application/json',
     ...headers,
   };
-  // ✅ MOBILE FIX: Adiciona token se necessário (localStorage fallback)
+  // ✅ MOBILE FIX: Adiciona token se necessário (fallback seguro)
   if (requiresAuth) {
-    // Tenta obter do localStorage primeiro (fallback mobile)
-    let token = localStorage.getItem('accessToken');
-    
-    // Fallback para getToken() se não tiver no localStorage
-    if (!token) {
-      token = getToken();
-    }
-    
+    const token = tokenStorage.getAccessToken();
     if (token) {
       requestHeaders['Authorization'] = `Bearer ${token}`;
     }

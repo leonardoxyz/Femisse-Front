@@ -1,5 +1,5 @@
-// ⚠️ IMPORTANTE: Não usamos localStorage por segurança
-// O token está armazenado em cookies httpOnly (backend)
+// ⚠️ IMPORTANTE: Tokens sensíveis não ficam em localStorage
+// Cookies httpOnly são a fonte primária; fallback usa armazenamento seguro em memória/session
 
-// Re-exporta do AuthContext para manter compatibilidade
 export { useAuth, getToken, getUserFromToken } from '@/contexts/AuthContext';
+export { tokenStorage } from '@/utils/tokenStorage';

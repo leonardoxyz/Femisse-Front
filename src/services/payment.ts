@@ -1,5 +1,5 @@
-import api from '@/utils/api';
-import { API_BASE_URL } from '@/config/api';
+import { api as http } from '@/services/api';
+import { API_BASE_URL, API_ENDPOINTS } from '@/config/api';
 
 export interface PaymentData {
   order_id: string;
@@ -65,11 +65,15 @@ class PaymentService {
     paymentData: PaymentData
   ): Promise<PaymentResponse> {
     try {
-      const response = await api.post('/api/payments/preference', paymentData);
-      return response.data;
+      const data = await http.post<PaymentResponse>(
+        API_ENDPOINTS.paymentPreference,
+        paymentData,
+        { requiresAuth: true }
+      );
+      return data;
     } catch (error: any) {
       console.error('Error creating payment preference:', error);
-      throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao criar preferência de pagamento');
+      throw new Error(error?.details || error?.message || 'Erro ao criar preferência de pagamento');
     }
   }
 
@@ -81,11 +85,15 @@ class PaymentService {
     paymentData: PaymentData
   ): Promise<PaymentResponse> {
     try {
-      const response = await api.post('/api/payments/process', paymentData);
-      return response.data;
+      const data = await http.post<PaymentResponse>(
+        API_ENDPOINTS.paymentProcess,
+        paymentData,
+        { requiresAuth: true }
+      );
+      return data;
     } catch (error: any) {
       console.error('Error processing direct payment:', error);
-      throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao processar pagamento');
+      throw new Error(error?.details || error?.message || 'Erro ao processar pagamento');
     }
   }
 
@@ -97,11 +105,14 @@ class PaymentService {
     paymentId: string
   ): Promise<PaymentStatus> {
     try {
-      const response = await api.get(`/api/payments/status/${paymentId}`);
-      return response.data;
+      const data = await http.get<PaymentStatus>(
+        `${API_ENDPOINTS.paymentStatus}/${paymentId}`,
+        { requiresAuth: true }
+      );
+      return data;
     } catch (error: any) {
       console.error('Error getting payment status:', error);
-      throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao consultar status do pagamento');
+      throw new Error(error?.details || error?.message || 'Erro ao consultar status do pagamento');
     }
   }
 
@@ -110,8 +121,10 @@ class PaymentService {
    */
   async getPublicKey(): Promise<{ public_key: string }> {
     try {
-      const response = await api.get('/api/payments/public-key');
-      return response.data;
+      const data = await http.get<{ public_key: string }>(
+        API_ENDPOINTS.paymentPublicKey
+      );
+      return data;
     } catch (error: any) {
       console.error('Error getting public key:', error);
       throw new Error('Erro ao obter chave pública');

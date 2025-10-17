@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '@/utils/api';
 import { API_ENDPOINTS } from '@/config/api';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 interface User {
   id: string;
@@ -98,9 +99,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setIsAuthenticated(false);
       
-      // ✅ MOBILE FIX: Limpa tokens do localStorage também
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      // ✅ Limpa fallback de tokens com TTL curto
+      tokenStorage.clearTokens();
       
       // ✅ Redireciona de forma síncrona
       window.location.href = '/login';
@@ -131,7 +131,7 @@ export const useAuth = () => {
 
 // Funções legadas para compatibilidade
 export function getToken() {
-  return null;
+  return tokenStorage.getAccessToken();
 }
 
 export function getUserFromToken() {

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_ENDPOINTS } from '@/config/api';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 /**
  * Cliente axios configurado para usar cookies httpOnly
@@ -15,12 +16,12 @@ export const api = axios.create({
 });
 
 /**
- * ✅ MOBILE FIX: Interceptor para adicionar token do localStorage quando cookies não funcionam
+ * ✅ MOBILE FIX: Interceptor para adicionar token do armazenamento seguro quando cookies não funcionam
  */
 api.interceptors.request.use(
   (config) => {
-    // Tenta obter token do localStorage (fallback para mobile)
-    const token = localStorage.getItem('accessToken');
+    // Tenta obter token do armazenamento seguro (fallback mobile)
+    const token = tokenStorage.getAccessToken();
     if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -41,7 +42,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = tokenStorage.getRefreshToken();
       if (refreshToken) {
         try {
           const response = await axios.post(
@@ -54,14 +55,13 @@ api.interceptors.response.use(
           );
           
           if (response.data.accessToken) {
-            localStorage.setItem('accessToken', response.data.accessToken);
+            tokenStorage.setTokens({ accessToken: response.data.accessToken });
             originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
             return api(originalRequest);
           }
         } catch (refreshError) {
           // Se falhar, limpa tokens e deixa o erro propagar
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
+          tokenStorage.clearTokens();
         }
       }
     }

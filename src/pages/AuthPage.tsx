@@ -10,6 +10,7 @@ import { API_ENDPOINTS } from '@/config/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import api from '@/utils/api';
+import { tokenStorage } from '@/utils/tokenStorage';
 
 const AuthPage = () => {
   const { isAuthenticated, refreshUser } = useAuth();
@@ -57,11 +58,12 @@ const AuthPage = () => {
       
       console.log('✅ Login bem-sucedido:', response.data);
       
-      // ✅ MOBILE FIX: Salva tokens no localStorage como fallback
-      if (response.data.accessToken) {
-        localStorage.setItem('accessToken', response.data.accessToken);
-        localStorage.setItem('refreshToken', response.data.refreshToken);
-        console.log('✅ Tokens salvos no localStorage (fallback mobile)');
+      // ✅ MOBILE FIX: Salva tokens em armazenamento seguro como fallback
+      if (response.data.accessToken || response.data.refreshToken) {
+        tokenStorage.setTokens({
+          accessToken: response.data.accessToken ?? null,
+          refreshToken: response.data.refreshToken ?? null,
+        });
       }
       
       // Aguarda um pouco para cookies serem processados
