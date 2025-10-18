@@ -19,6 +19,9 @@ import { API_ENDPOINTS } from '@/config/api';
 import { extractIdFromSlug, slugToText, removeAccents, createSlug } from '@/utils/slugs';
 import { secureLog, obfuscateUrl } from '@/utils/secureApi';
 import ShippingCalculator from "@/components/ShippingCalculator";
+import { SEOHead } from '@/components/SEO/SEOHead';
+import { ProductSchema } from '@/components/SEO/ProductSchema';
+import { BreadcrumbSchema } from '@/components/SEO/BreadcrumbSchema';
 
 // Funções utilitárias para favoritos
 async function fetchFavorites(token: string) {
@@ -319,20 +322,57 @@ const ProductDetails = () => {
   }
   const discount = Math.round(((product.original_price - product.price) / product.original_price) * 100);
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
+  // SEO data
+  const siteUrl = 'https://femisse-front.vercel.app';
+  const productUrl = `${siteUrl}/produto/${slug}`;
+  const productImage = product?.images?.[0] || product?.image || '';
+  const productDescription = product?.description || `${product?.name} - Moda feminina de qualidade na Feminisse`;
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Back button */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-6 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
-        </Button>
+  return (
+    <>
+      {product && (
+        <>
+          <SEOHead
+            title={product.name}
+            description={productDescription}
+            canonical={productUrl}
+            ogImage={productImage}
+            ogType="product"
+            keywords={`${product.name}, moda feminina, roupas femininas, ${product.category || 'vestuário'}`}
+          />
+          <ProductSchema
+            name={product.name}
+            description={productDescription}
+            image={productImage}
+            price={product.price}
+            currency="BRL"
+            availability={product.stock > 0 ? 'InStock' : 'OutOfStock'}
+            brand="Feminisse"
+            sku={product.id}
+            url={productUrl}
+          />
+          <BreadcrumbSchema
+            items={[
+              { name: 'Início', url: siteUrl },
+              { name: 'Produtos', url: `${siteUrl}/produtos` },
+              { name: product.name, url: productUrl },
+            ]}
+          />
+        </>
+      )}
+      <div className="min-h-screen bg-background">
+        <Header />
+
+        <div className="container mx-auto px-4 py-8">
+          {/* Back button */}
+          <Button
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            className="mb-6 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
 
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Product Images */}
@@ -729,8 +769,9 @@ const ProductDetails = () => {
         }
       `}</style>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </>
   );
 };
 

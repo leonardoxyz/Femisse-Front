@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Página inicial -->
+  <url>
+    <loc>https://femisse-front.vercel.app</loc>
+    <lastmod>2025-10-18T02:04:32.013Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Páginas estáticas -->
+  <url>
+    <loc>https://femisse-front.vercel.app/termos-de-uso</loc>
+    <lastmod>2025-10-18T02:04:32.014Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://femisse-front.vercel.app/privacidade</loc>
+    <lastmod>2025-10-18T02:04:32.014Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://femisse-front.vercel.app/pagamento</loc>
+    <lastmod>2025-10-18T02:04:32.014Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://femisse-front.vercel.app/entregas-frete</loc>
+    <lastmod>2025-10-18T02:04:32.014Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://femisse-front.vercel.app/trocas-devolucoes</loc>
+    <lastmod>2025-10-18T02:04:32.014Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <!-- Produtos -->
+  <url>
+    <loc>https://femisse-front.vercel.app/produto/body-tule</loc>
+    <lastmod>2025-09-24T23:51:05.736531+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://femisse-front.vercel.app/produto/vestido-feminino-colado</loc>
+    <lastmod>2025-07-21T18:42:42.170747+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://femisse-front.vercel.app/produto/cropped-branco</loc>
+    <lastmod>2025-07-21T14:43:12.609541+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://femisse-front.vercel.app/produto/calca-bege</loc>
+    <lastmod>2025-09-23T15:55:40.727575+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://femisse-front.vercel.app/produto/calca-preta</loc>
+    <lastmod>2025-09-23T16:10:57.20864+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Categorias -->
+  <url>
+    <loc>https://femisse-front.vercel.app/categoria/body</loc>
+    <lastmod>2025-09-24T23:50:02.63333+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://femisse-front.vercel.app/categoria/croppeds</loc>
+    <lastmod>2025-07-21T14:39:01.887974+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://femisse-front.vercel.app/categoria/calcas</loc>
+    <lastmod>2025-07-21T14:57:58.763005+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://femisse-front.vercel.app/categoria/vestidos</loc>
+    <lastmod>2025-07-21T14:58:07.01808+00:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+</urlset>

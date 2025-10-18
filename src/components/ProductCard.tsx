@@ -3,10 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/hooks/useAuth';
 import { createSlug } from '@/utils/slugs';
-import { Heart, ShoppingCart } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
-import { OptimizedImage } from './OptimizedImage';
 import { storeCurrentScrollPosition } from "@/hooks/useScrollRestoration";
 
 interface ProductCardProps {
@@ -23,7 +21,6 @@ const ProductCard = React.memo(({
   id,
   name,
   price,
-  originalPrice,
   images,
   stock,
   image,
