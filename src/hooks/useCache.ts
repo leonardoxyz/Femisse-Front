@@ -13,7 +13,8 @@ interface CacheConfig {
 
 class CacheManager {
   private cache = new Map<string, CacheItem<any>>();
-  private defaultTTL = 5 * 60 * 1000; // 5 minutos
+
+  private defaultTTL = import.meta.env.DEV ? 30 * 1000 : 2 * 60 * 1000;
   private maxSize = 100;
 
   set<T>(key: string, data: T, ttl?: number): void {
@@ -107,7 +108,7 @@ export function useCache<T>(
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const { ttl = 5 * 60 * 1000 } = config;
+  const { ttl = import.meta.env.DEV ? 30 * 1000 : 2 * 60 * 1000 } = config;
 
   const fetchData = useCallback(async (force = false) => {
     // Verificar cache primeiro (se não for forçado)

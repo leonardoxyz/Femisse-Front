@@ -212,27 +212,7 @@ const ProductDetails = () => {
     };
 
     const processProductData = async (data: any) => {
-      let images = data.images || [];
-      if (!data.images && data.image_ids && data.image_ids.length > 0) {
-        try {
-          const imagePromises = data.image_ids.map(async (imageId: string) => {
-            if (!imageId) return null;
-            const response = await fetch(`${API_ENDPOINTS.images}/${imageId}`);
-            if (response.ok) {
-              const imageData = await response.json();
-              return imageData.image_url;
-            }
-            return null;
-          });
-
-          const imageUrls = await Promise.all(imagePromises);
-          images = imageUrls.filter(url => url !== null);
-        } catch (error) {
-          console.error("Erro ao buscar URLs das imagens:", error);
-        }
-      }
-
-      setProduct({ ...data, images });
+      setProduct(data);
     };
 
     const fetchSimilarProducts = (currentProduct: any, allProducts: any[]) => {

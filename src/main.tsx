@@ -4,7 +4,7 @@ import App from './App.tsx'
 import './index.css'
 import { registerServiceWorker } from './utils/registerSW'
 
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js');
   });
@@ -15,5 +15,7 @@ axios.defaults.withCredentials = true;
 
 createRoot(document.getElementById("root")!).render(<App />);
 
-// Registra Service Worker (PWA)
-registerServiceWorker();
+// Registra Service Worker (PWA) apenas em produção
+if (import.meta.env.PROD) {
+  registerServiceWorker();
+}

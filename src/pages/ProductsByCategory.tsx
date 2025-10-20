@@ -16,7 +16,7 @@ import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 const ProductsByCategory = () => {
   useScrollRestoration();
 
-  const { slug } = useParams(); // Mudança: usar slug em vez de id
+  const { slug } = useParams();
   const [categoryName, setCategoryName] = React.useState('');
   const [categoryId, setCategoryId] = React.useState<string | null>(null);
   const [categoryData, setCategoryData] = React.useState<any>(null);
@@ -31,60 +31,100 @@ const ProductsByCategory = () => {
     getFilterStats,
   } = useProductFilters();
 
+  // Effect para buscar categoria e produtos quando slug mudar
   useEffect(() => {
     const fetchCategoryAndProducts = async () => {
-      if (!slug) return;
+      if (!slug) {
+        console.warn('Slug não fornecido');
+        return;
+      }
 
       try {
-        // Buscar todas as categorias e encontrar a correspondente pelo nome
+        console.log('🔍 Buscando categoria para slug:', slug);
+        
+        // Buscar todas as categorias
         const response = await fetch(`${API_ENDPOINTS.categories}`);
-
-        if (response.ok) {
-          const categories = await response.json();
-
-          // Converter slug de volta para nome e procurar categoria correspondente
-          const searchName = slugToText(slug).toLowerCase();
-          const foundCategory = categories.find((category: any) => {
-            const categoryName = category.name.toLowerCase();
-            const categorySlug = createSlug(category.name);
-
-            return (
-              categoryName === searchName ||
-              categoryName.includes(searchName) ||
-              searchName.includes(categoryName) ||
-              categorySlug === slug ||
-              // Busca mais flexível removendo acentos para comparação
-              removeAccents(categoryName) === removeAccents(searchName) ||
-              removeAccents(categoryName).includes(removeAccents(searchName))
-            );
-          });
-
-          if (foundCategory) {
-            setCategoryName(foundCategory.name);
-            setCategoryId(foundCategory.id);
-            setCategoryData(foundCategory);
-            fetchProducts(foundCategory.id);
-            return;
-          }
+        if (!response.ok) {
+          throw new Error('Erro ao buscar categorias');
         }
 
-        // Fallback: usar nome formatado do slug
-        const displayName = slugToText(slug);
-        setCategoryName(displayName);
+        const result = await response.json();
+        const categories = result.data || result;
 
-        // Tentar buscar produtos usando o slug como filtro
-        fetchProducts(slug);
+        if (!Array.isArray(categories)) {
+          throw new Error('Formato de resposta inválido');
+        }
+
+        console.log('📦 Categorias disponíveis:', categories.map(c => ({ name: c.name, id: c.id })));
+
+        // Buscar categoria correspondente ao slug
+        const decodedSlug = decodeURIComponent(slug);
+        const searchName = slugToText(decodedSlug).toLowerCase();
+        
+        console.log('🔍 Buscando categoria:', { 
+          slugOriginal: slug, 
+          decodedSlug, 
+          searchName 
+        });
+        
+        const foundCategory = categories.find((category: any) => {
+          const categoryName = category.name.toLowerCase();
+          const categorySlug = createSlug(category.name);
+          const categorySlugDecoded = createSlug(decodedSlug);
+
+          const match = (
+            categorySlug === slug ||
+            categorySlug === decodedSlug ||
+            categorySlug === categorySlugDecoded ||
+            removeAccents(categoryName) === removeAccents(searchName) ||
+            categoryName === searchName ||
+            categoryName === decodedSlug.toLowerCase()
+          );
+          
+          if (match) {
+            console.log('✅ Match encontrado:', { 
+              categoryName: category.name, 
+              categoryId: category.id,
+              matchType: categorySlug === slug ? 'slug-exato' : 
+                        categorySlug === decodedSlug ? 'slug-decodificado' :
+                        'nome-comparacao'
+            });
+          }
+          
+          return match;
+        });
+
+        if (foundCategory) {
+          console.log('✅ Categoria encontrada:', { name: foundCategory.name, id: foundCategory.id });
+          
+          // Atualizar estados
+          setCategoryName(foundCategory.name);
+          setCategoryId(foundCategory.id);
+          setCategoryData(foundCategory);
+          
+          // Buscar produtos DESTA categoria específica
+          console.log('🔍 Buscando produtos da categoria:', foundCategory.id);
+          await fetchProducts(foundCategory.id);
+        } else {
+          console.warn('⚠️ Categoria não encontrada para slug:', slug);
+          setCategoryName(slugToText(slug));
+          setCategoryId(null);
+          setCategoryData(null);
+          await fetchProducts();
+        }
 
       } catch (error) {
-        console.error('Erro ao buscar categoria:', error);
-        // Fallback final
+        console.error('❌ Erro ao buscar categoria:', error);
         setCategoryName(slugToText(slug));
-        fetchProducts(slug);
+        setCategoryId(null);
+        setCategoryData(null);
+        await fetchProducts();
       }
     };
 
     fetchCategoryAndProducts();
-  }, [slug]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]); // ✅ Apenas slug - fetchProducts é estável via useCallback
 
   const handleFiltersChange = (filters: FilterState) => {
     applyFilters(filters);

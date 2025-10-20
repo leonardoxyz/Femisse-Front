@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_ENDPOINTS } from '@/config/api';
 
 export interface FilterState {
@@ -24,7 +24,7 @@ export interface Product {
   colors?: string[];
   in_stock?: boolean | number | string; // Pode vir em diferentes formatos do backend
   stock?: number; // Campo alternativo para estoque
-  categoria_id?: string;
+  categoriaId?: string; // ✅ Agora vem do DTO em camelCase
 }
 
 // Helper function para verificar se produto está em estoque
@@ -65,8 +65,8 @@ export function useProductFilters() {
     priceRange: { min: 0, max: 10000 },
   });
 
-  // Buscar todos os produtos
-  const fetchProducts = async (categoryId?: string, search?: string) => {
+  // Buscar produtos (com ou sem filtro de categoria)
+  const fetchProducts = useCallback(async (categoryId?: string, search?: string) => {
     setLoading(true);
     setError(null);
     
@@ -74,18 +74,26 @@ export function useProductFilters() {
       let url = API_ENDPOINTS.products;
       const params = new URLSearchParams();
       
-      if (categoryId) {
-        params.append('categoria_id', categoryId);
+      // Validação robusta do categoryId
+      if (categoryId && categoryId.trim() !== '') {
+        const trimmedCategoryId = categoryId.trim();
+        console.log('🎯 Filtrando por categoria_id:', trimmedCategoryId);
+        params.append('categoria_id', trimmedCategoryId);
+      } else {
+        console.warn('⚠️ Buscando TODOS os produtos (categoryId não fornecido ou inválido)');
       }
       
-      if (search) {
-        params.append('search', search);
+      if (search && search.trim() !== '') {
+        const trimmedSearch = search.trim();
+        console.log('🔍 Filtrando por busca:', trimmedSearch);
+        params.append('search', trimmedSearch);
       }
       
       if (params.toString()) {
         url += `?${params.toString()}`;
       }
 
+      console.log('🌐 Requisição completa:', url);
       const response = await fetch(url);
       
       if (!response.ok) {
@@ -94,8 +102,37 @@ export function useProductFilters() {
       
       const payload = await response.json();
       const data = Array.isArray(payload?.data) ? payload.data : payload;
-      setProducts(Array.isArray(data) ? data : []);
-      setFilteredProducts(Array.isArray(data) ? data : []);
+      const productsArray = Array.isArray(data) ? data : [];
+      
+      console.log(`✅ ${productsArray.length} produtos retornados da API`);
+      
+      if (categoryId && categoryId.trim() !== '') {
+        // Verificar se todos os produtos pertencem à categoria solicitada
+        const productsWithCategory = productsArray.filter(p => p.categoriaId === categoryId.trim());
+        const productsWithoutCategory = productsArray.filter(p => p.categoriaId !== categoryId.trim());
+        
+        console.log('📊 Análise dos produtos:', {
+          total: productsArray.length,
+          comCategoriaCorreta: productsWithCategory.length,
+          comCategoriaErrada: productsWithoutCategory.length,
+          categoriaEsperada: categoryId.trim()
+        });
+        
+        if (productsArray.length > 0) {
+          console.log('📦 Primeiros 3 produtos:', productsArray.slice(0, 3).map(p => ({ 
+            name: p.name, 
+            categoriaId: p.categoriaId,
+            match: p.categoriaId === categoryId.trim() ? '✅' : '❌'
+          })));
+        }
+        
+        if (productsWithoutCategory.length > 0) {
+          console.warn('⚠️ ATENÇÃO: API retornou produtos de outras categorias!');
+        }
+      }
+      
+      setProducts(productsArray);
+      setFilteredProducts(productsArray);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
       setProducts([]);
@@ -103,7 +140,7 @@ export function useProductFilters() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // ✅ useCallback sem dependências pois usa apenas setState
 
   // Aplicar filtros aos produtos
   const applyFilters = (newFilters: FilterState) => {
@@ -121,7 +158,7 @@ export function useProductFilters() {
     // Filtrar por categorias
     if (newFilters.categories.length > 0) {
       filtered = filtered.filter(product => 
-        newFilters.categories.includes(product.categoria_id || '')
+        newFilters.categories.includes(product.categoriaId || '')
       );
     }
 
@@ -183,8 +220,8 @@ export function useProductFilters() {
     // Calcular estatísticas
     products.forEach(product => {
       // Categorias
-      if (product.categoria_id) {
-        stats.categories[product.categoria_id] = (stats.categories[product.categoria_id] || 0) + 1;
+      if (product.categoriaId) {
+        stats.categories[product.categoriaId] = (stats.categories[product.categoriaId] || 0) + 1;
       }
 
       // Cores

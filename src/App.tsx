@@ -38,9 +38,10 @@ const PageLoader = () => (
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutos
+      // Dev: 30s, Prod: 2min
+      staleTime: import.meta.env.DEV ? 30 * 1000 : 2 * 60 * 1000,
       gcTime: 10 * 60 * 1000, // 10 minutos (antes era cacheTime)
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: import.meta.env.DEV, // Revalidar em dev ao focar janela
       retry: 1,
     },
   },

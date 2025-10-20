@@ -63,8 +63,6 @@ const AuthPage = () => {
         withCredentials: true,
       });
       
-      console.log('✅ Login bem-sucedido:', response.data);
-      
       // ✅ MOBILE FIX: Salva tokens em armazenamento seguro como fallback
       if (response.data.accessToken || response.data.refreshToken) {
         tokenStorage.setTokens({

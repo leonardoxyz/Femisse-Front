@@ -161,11 +161,12 @@ const ShowcaseProductCard: React.FC<ShowcaseProductCardProps> = ({
           ) : (
             <div className="absolute inset-0 bg-gray-200" aria-hidden />
           )}
-          {hoverImage && (
+          {hoverImage && hoverImage !== mainImage && (
             <img
               src={hoverImage}
               alt={product.name}
               title={product.name}
+              className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300"
               style={{ height: "100%" }}
             />
           )}
