@@ -61,8 +61,9 @@ const NewInSection = () => {
   useEffect(() => {
     fetch(API_ENDPOINTS.products)
       .then((res) => res.json())
-      .then((data) => {
-        setProducts(data || []);
+      .then((payload) => {
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
+        setProducts(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch((err) => {

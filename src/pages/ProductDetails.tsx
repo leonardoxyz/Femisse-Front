@@ -138,7 +138,8 @@ const ProductDetails = () => {
       try {
         secureLog('Buscando produtos:', obfuscateUrl(API_ENDPOINTS.products));
         const response = await fetch(API_ENDPOINTS.products);
-        const products = await response.json();
+        const payload = await response.json();
+        const products = Array.isArray(payload?.data) ? payload.data : payload;
 
         // Converter slug de volta para nome e procurar produto correspondente
         const searchName = slug.replace(/-/g, ' ').toLowerCase();

@@ -19,23 +19,22 @@ import { API_ENDPOINTS } from "@/config/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ProductReview {
-  id: string;
-  product_id: string;
-  product_name: string;
-  product_image: string;
+  reviewId: string;
+  productName: string;
+  productImage: string | null;
   rating: number;
   comment: string;
-  created_at: string;
-  can_edit: boolean;
+  createdAt: string;
+  updatedAt?: string | null;
 }
 
 interface PurchasedProduct {
-  id: string;
+  productId: string;
+  orderId: string | null;
   name: string;
-  image: string;
-  order_id: string;
-  order_date: string;
-  has_review: boolean;
+  image: string | null;
+  orderDate: string | null;
+  hasReview: boolean;
 }
 
 export function PersonalReviews() {
@@ -59,7 +58,9 @@ export function PersonalReviews() {
     if (!isAuthenticated) return;
     try {
       const response = await api.get(API_ENDPOINTS.reviews);
-      setReviews(response.data);
+      const payload = response.data;
+      const data = Array.isArray(payload?.data) ? payload.data : payload;
+      setReviews(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Erro ao buscar avaliações:', error);
     }
@@ -70,7 +71,9 @@ export function PersonalReviews() {
     if (!isAuthenticated) return;
     try {
       const response = await api.get(API_ENDPOINTS.reviewableProducts);
-      setPurchasedProducts(response.data);
+      const payload = response.data;
+      const data = Array.isArray(payload?.data) ? payload.data : payload;
+      setPurchasedProducts(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Erro ao buscar produtos comprados:', error);
     }
@@ -159,7 +162,7 @@ export function PersonalReviews() {
       return;
     }
 
-    if (!editingReview && (!selectedProduct?.id || !selectedProduct.order_id)) {
+    if (!editingReview && (!selectedProduct?.productId || !selectedProduct.orderId)) {
       toast({
         title: "Produto não selecionado",
         description: "Selecione um produto para avaliar antes de continuar.",
@@ -170,14 +173,14 @@ export function PersonalReviews() {
 
     try {
       const url = editingReview 
-        ? `${API_ENDPOINTS.reviews}/${editingReview.id}`
+        ? `${API_ENDPOINTS.reviews}/${editingReview.reviewId}`
         : API_ENDPOINTS.reviews;
       
       const method = editingReview ? 'PUT' : 'POST';
       
       const payload = editingReview 
         ? reviewForm
-        : { ...reviewForm, product_id: selectedProduct?.id, order_id: selectedProduct?.order_id };
+        : { ...reviewForm, product_id: selectedProduct?.productId, order_id: selectedProduct?.orderId };
 
       setIsSaving(true);
       
@@ -334,16 +337,22 @@ export function PersonalReviews() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {purchasedProducts.map((product) => (
                 <Card
-                  key={product.id}
+                  key={`${product.productId}-${product.orderId ?? 'pending'}`}
                   className="flex h-full flex-col justify-between rounded-sm border border-pink-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                 >
                   <CardContent className="flex flex-col gap-4 p-5">
                     <div className="flex items-center gap-4">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="h-16 w-16 rounded-sm object-cover"
-                      />
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-16 w-16 rounded-sm object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-16 w-16 items-center justify-center rounded-sm bg-muted text-muted-foreground">
+                          <Package className="h-6 w-6" />
+                        </div>
+                      )}
                       <div className="flex-1">
                         <CardTitle
                           className="truncate text-base font-semibold text-foreground"
@@ -352,7 +361,7 @@ export function PersonalReviews() {
                           {product.name}
                         </CardTitle>
                         <p className="text-xs text-muted-foreground">
-                          Comprado em {formatDate(product.order_date)}
+                          {product.orderDate ? `Comprado em ${formatDate(product.orderDate)}` : 'Compra recente'}
                         </p>
                       </div>
                     </div>
@@ -390,27 +399,33 @@ export function PersonalReviews() {
             <div className="space-y-4">
               {reviews.map((review) => (
                 <Card
-                  key={review.id}
+                  key={review.reviewId}
                   className="rounded-sm border border-border/60 bg-white shadow-sm"
                 >
                   <CardContent className="flex flex-col gap-4 p-5">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex items-start gap-4">
-                        <img
-                          src={review.product_image}
-                          alt={review.product_name}
-                          className="h-16 w-16 shrink-0 rounded-sm object-cover"
-                        />
+                        {review.productImage ? (
+                          <img
+                            src={review.productImage}
+                            alt={review.productName}
+                            className="h-16 w-16 shrink-0 rounded-sm object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-16 w-16 items-center justify-center rounded-sm bg-muted text-muted-foreground">
+                            <Package className="h-6 w-6" />
+                          </div>
+                        )}
                         <div className="space-y-2">
                           <div>
                             <CardTitle
                               className="truncate text-lg font-semibold text-foreground"
-                              title={review.product_name}
+                              title={review.productName}
                             >
-                              {review.product_name}
+                              {review.productName}
                             </CardTitle>
                             <p className="text-xs uppercase text-muted-foreground">
-                              Avaliado em {formatDate(review.created_at)}
+                              Avaliado em {formatDate(review.createdAt)}
                             </p>
                           </div>
                           <div className="flex items-center gap-3">
@@ -421,23 +436,21 @@ export function PersonalReviews() {
                           </div>
                         </div>
                       </div>
-                      {review.can_edit && (
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" className="rounded-sm" onClick={() => startEdit(review)}>
-                            <Edit className="mr-1 h-4 w-4" />
-                            Editar
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="rounded-sm"
-                            onClick={() => setReviewToDelete(review)}
-                          >
-                            <Trash2 className="mr-1 h-4 w-4" />
-                            Excluir
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => startEdit(review)}>
+                          <Edit className="mr-1 h-4 w-4" />
+                          Editar
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="rounded-sm"
+                          onClick={() => setReviewToDelete(review)}
+                        >
+                          <Trash2 className="mr-1 h-4 w-4" />
+                          Excluir
+                        </Button>
+                      </div>
                     </div>
                     <div className="rounded-sm bg-muted/60 p-4 text-sm text-muted-foreground">
                       {review.comment}
@@ -450,46 +463,27 @@ export function PersonalReviews() {
         </section>
       )}
 
-      <Dialog
-        open={showReviewForm}
-        onOpenChange={(open) => {
-          if (!open) {
-            setShowReviewForm(false);
-            setEditingReview(null);
-            setSelectedProduct(null);
-            setReviewForm({ rating: 0, comment: '' });
-          }
-        }}
-      >
-        <DialogContent className="max-w-lg space-y-6 rounded-2xl border border-pink-100 bg-white p-6 shadow-xl">
-          <DialogHeader className="space-y-2 text-left">
-            <div className="flex items-center gap-2 text-xs uppercase text-muted-foreground">
-              <Sparkles className="h-4 w-4" />
-              {editingReview ? 'Editar avaliação' : 'Nova avaliação'}
-            </div>
-            <DialogTitle
-              className="truncate text-xl font-semibold text-foreground"
-              title={editingReview ? editingReview.product_name : selectedProduct?.name || undefined}
-            >
-              {editingReview ? editingReview.product_name : selectedProduct?.name}
+      <Dialog open={showReviewForm} onOpenChange={setShowReviewForm}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingReview ? 'Editar avaliação' : 'Avaliar produto'}
             </DialogTitle>
-            {!editingReview && selectedProduct && (
-              <DialogDescription className="text-xs text-muted-foreground">
-                Pedido {selectedProduct.order_id.slice(0, 8)} • {formatDate(selectedProduct.order_date)}
-              </DialogDescription>
-            )}
+            <DialogDescription>
+              {editingReview 
+                ? `Atualize sua avaliação do produto ${editingReview.productName}`
+                : selectedProduct 
+                  ? `Conte sua experiência com ${selectedProduct.name}`
+                  : 'Compartilhe sua opinião'}
+            </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
-              <p className="text-sm font-medium text-foreground">Sua nota</p>
-              <p className="text-xs text-muted-foreground">Clique nas estrelas para avaliar</p>
-              <div className="mt-3">
-                {renderStars(reviewForm.rating, true, (star) => setReviewForm((prev) => ({ ...prev, rating: star })))}
-              </div>
+              <label className="text-sm font-medium">Nota</label>
+              {renderStars(reviewForm.rating, true, (star) => setReviewForm(prev => ({ ...prev, rating: star })))}
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Seu comentário</label>
+            <div>
+              <label className="text-sm font-medium">Comentário</label>
               <Textarea
                 placeholder="Conte como o produto chegou, o caimento, a qualidade..."
                 value={reviewForm.comment}
@@ -499,7 +493,6 @@ export function PersonalReviews() {
               />
             </div>
           </div>
-
           <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="outline"
@@ -543,7 +536,7 @@ export function PersonalReviews() {
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
               Essa ação não pode ser desfeita e removerá permanentemente a avaliação do produto
-              {reviewToDelete ? ` "${reviewToDelete.product_name}"` : ''}.
+              {reviewToDelete ? ` "${reviewToDelete.productName}"` : ''}.
             </DialogDescription>
           </DialogHeader>
 
@@ -557,7 +550,7 @@ export function PersonalReviews() {
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   Nota: {reviewToDelete.rating}
                   <span className="text-muted-foreground/70">•</span>
-                  Criada em {formatDate(reviewToDelete.created_at)}
+                  Criada em {formatDate(reviewToDelete.createdAt)}
                 </div>
               </>
             )}
@@ -575,7 +568,7 @@ export function PersonalReviews() {
               className="rounded-sm bg-destructive hover:bg-destructive/90"
               onClick={async () => {
                 if (!reviewToDelete) return;
-                await deleteReview(reviewToDelete.id);
+                await deleteReview(reviewToDelete.reviewId);
                 setReviewToDelete(null);
               }}
             >
@@ -584,18 +577,6 @@ export function PersonalReviews() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {reviews.length === 0 && purchasedProducts.length === 0 && !showReviewForm && (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <Package className="h-12 w-12 text-muted-foreground" />
-            <h3 className="text-lg font-semibold">Nenhuma avaliação por aqui ainda</h3>
-            <p className="text-sm text-muted-foreground">
-              Assim que você receber seus pedidos, volte para contar sua experiência.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

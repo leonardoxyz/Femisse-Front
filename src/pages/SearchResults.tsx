@@ -19,8 +19,9 @@ const SearchResults = () => {
     setLoading(true);
     fetch(`${API_ENDPOINTS.products}?search=${encodeURIComponent(search)}`)
       .then(res => res.json())
-      .then(data => {
-        setProducts(data);
+      .then(payload => {
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
+        setProducts(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));

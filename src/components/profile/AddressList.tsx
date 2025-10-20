@@ -43,8 +43,9 @@ export function AddressList() {
       
       if (!response.ok) throw new Error("Erro ao buscar endereços");
       
-      const data = await response.json();
-      setAddresses(data);
+      const payload = await response.json();
+      const data = Array.isArray(payload?.data) ? payload.data : payload;
+      setAddresses(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError("Erro ao buscar endereços");

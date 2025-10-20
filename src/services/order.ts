@@ -126,7 +126,10 @@ class OrderService {
         params: { page, limit },
         withCredentials: true
       });
-      return response.data;
+      // Handle { success, data } structure
+      const payload = response.data;
+      const data = Array.isArray(payload?.data) ? payload.data : payload;
+      return Array.isArray(data) ? data : [];
     } catch (error: any) {
       console.error('Error listing orders:', error);
       throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao listar pedidos');

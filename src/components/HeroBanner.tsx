@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { API_ENDPOINTS } from "@/config/api";
-import bannerVideo from "@/assets/banner-video.mp4";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Swiper imports
@@ -40,30 +38,29 @@ const HeroBanner = () => {
   };
 
   useEffect(() => {
-    // Vídeo local da pasta assets
-    const localVideo = {
-      id: 'local-video',
-      url: bannerVideo,
-      alt: 'Vídeo promocional',
-      type: 'video' as const
-    };
-
     fetch(API_ENDPOINTS.bannerImages)
-      .then(res => res.json())
-      .then(data => {
-        const apiSlides = Array.isArray(data) ? data.map(slide => ({
-          ...slide,
-          type: getMediaType(slide.url)
-        })) : [];
-        
-        // Combina o vídeo local com os slides da API
-        const allSlides = [localVideo, ...apiSlides];
-        setSlides(allSlides);
+      .then(async (res) => {
+        const payload = await res.json();
+        if (!payload?.success) {
+          throw new Error('Falha ao carregar banners');
+        }
+        const apiSlidesSource = Array.isArray(payload.data) ? payload.data : [];
+        const apiSlides = apiSlidesSource.map((slide, index) => {
+          const detectedType = getMediaType(slide.url);
+          return {
+            id: slide.id ?? `banner-${index}`,
+            url: slide.url,
+            alt: slide.title || 'Banner',
+            type: detectedType, // Força detecção por extensão
+          };
+        });
+
+        setSlides(apiSlides);
         setLoading(false);
       })
-      .catch(() => {
-        // Se a API falhar, pelo menos mostra o vídeo local
-        setSlides([localVideo]);
+      .catch((error) => {
+        console.error('Erro ao carregar banners:', error);
+        setSlides([]);
         setLoading(false);
       });
   }, []);

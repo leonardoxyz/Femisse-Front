@@ -28,14 +28,10 @@ const Footer = () => {
 
           {/* Navigation */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-lg">Navegação</h4>
+            <h4 className="font-semibold text-lg">SOBRE</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">Toda Loja</a></li>
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">Croppeds</a></li>
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">Vestidos</a></li>
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">Bodies</a></li>
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">Saias</a></li>
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">Calças</a></li>
+              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">Quem Somos</a></li>
+              <li><a href="#" className="text-background/80 hover:text-primary transition-colors duration-300">Perguntas Frequentes</a></li>
             </ul>
           </div>
 

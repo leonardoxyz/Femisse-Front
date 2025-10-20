@@ -6,6 +6,7 @@ import { createSlug } from '@/utils/slugs';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { storeCurrentScrollPosition } from "@/hooks/useScrollRestoration";
+import { convertToCloudinary } from '@/utils/cloudinary';
 
 interface ProductCardProps {
   id: string;
@@ -40,8 +41,13 @@ const ProductCard = React.memo(({
   } else if (typeof image === 'string' && image.length > 0) {
     safeImages = [image];
   }
-  const mainImage = safeImages[0] || '';
-  const hoverImage = safeImages[1] || safeImages[0] || '';
+  
+  const mainImage = safeImages[0] 
+    ? convertToCloudinary(safeImages[0], { width: 320, height: 480, quality: 80, format: 'auto' })
+    : '';
+  const hoverImage = safeImages[1]
+    ? convertToCloudinary(safeImages[1], { width: 320, height: 480, quality: 80, format: 'auto' })
+    : mainImage;
 
   const { addToCart } = useCart();
 
@@ -129,6 +135,10 @@ const ProductCard = React.memo(({
         <img
           src={hovered && safeImages.length > 1 ? hoverImage : mainImage}
           alt={name}
+          loading="lazy"
+          decoding="async"
+          width="320"
+          height="480"
           className="absolute top-0 left-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
         />
       </div>
@@ -140,11 +150,6 @@ const ProductCard = React.memo(({
           <span className="text-lg md:text-xl font-bold text-zinc-900 text-center">
             {formatPrice(price)}
           </span>
-          {originalPrice && (
-            <span className="text-lg line-through text-muted-foreground">
-              {formatPrice(originalPrice)}
-            </span>
-          )}
         </div>
 
       </CardContent>

@@ -16,7 +16,10 @@ export default function FavoritesList() {
     }
     fetch(`${API_ENDPOINTS.products}?ids=${favoriteIds.join(",")}`)
       .then((res) => res.json())
-      .then((data) => setProducts(data));
+      .then((payload) => {
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
+        setProducts(Array.isArray(data) ? data : []);
+      });
   }, [favoriteIds]);
 
 

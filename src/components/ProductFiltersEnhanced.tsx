@@ -83,8 +83,9 @@ export function ProductFiltersEnhanced({
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const data = await response.json();
-        setCategories(data);
+        const payload = await response.json();
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
+        setCategories(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error('Erro ao buscar categorias:', error);
         setCategories([]);

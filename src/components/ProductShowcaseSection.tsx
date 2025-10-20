@@ -3,14 +3,30 @@ import ProductShowcase from "./ProductShowcase";
 import { API_ENDPOINTS } from "@/config/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
+type MomentProduct = {
+  id?: number;
+  title?: string;
+  subtitle?: string | null;
+  description?: string | null;
+  highlight?: string | null;
+  imageUrl?: string | null;
+  image_url?: string | null;
+  linkUrl?: string | null;
+  link_url?: string | null;
+  ctaLabel?: string | null;
+  cta_label?: string | null;
+  position?: number | null;
+};
+
 const ProductShowcaseSection = () => {
-  const [momentProducts, setMomentProducts] = React.useState<{ id: number; image_url: string }[]>([]);
+  const [momentProducts, setMomentProducts] = React.useState<MomentProduct[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     fetch(API_ENDPOINTS.momentProducts)
       .then(res => res.json())
-      .then(data => {
+      .then((payload) => {
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
         setMomentProducts(Array.isArray(data) ? data : []);
         setLoading(false);
       })
@@ -39,12 +55,12 @@ const ProductShowcaseSection = () => {
           <div className="flex flex-col lg:flex-row lg:justify-center lg:items-start gap-12 md:gap-8">
             {momentProducts.map((product, index) => (
               <div
-                key={product.id}
+                key={product.id ?? product.title ?? index}
                 className="animate-fade-in flex justify-center w-full lg:w-auto"
                 style={{ animationDelay: `${index * 0.2}s` }}
               >
                 <div className="w-full max-w-sm md:max-w-md lg:max-w-none">
-                  <ProductShowcase image={product.image_url} />
+                  <ProductShowcase image={product.imageUrl ?? product.image_url ?? ''} />
                 </div>
               </div>
             ))}

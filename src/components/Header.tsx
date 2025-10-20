@@ -1,13 +1,10 @@
 import React from "react";
 import { Search, ShoppingCart, User, Menu, X, Heart, ShoppingBag } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserData } from "../hooks/useUserData";
 import SidebarCart from "./SidebarCart";
-import SearchBar from "./SearchBar";
-import { debounce } from "@/utils/performance";
 import { API_ENDPOINTS } from "@/config/api";
 import { createSlug } from '@/utils/slugs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -44,7 +41,10 @@ const Header = () => {
   React.useEffect(() => {
     fetch(API_ENDPOINTS.categories)
       .then(res => res.json())
-      .then(data => setCategories(Array.isArray(data) ? data : []))
+      .then((payload) => {
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
+        setCategories(Array.isArray(data) ? data : []);
+      })
       .catch(() => setCategories([]));
   }, []);
 

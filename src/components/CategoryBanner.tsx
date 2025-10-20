@@ -9,8 +9,9 @@ const CategoryBanner = () => {
   React.useEffect(() => {
     fetch(API_ENDPOINTS.popular)
       .then(res => res.json())
-      .then(data => {
-        setPopularies(data);
+      .then(payload => {
+        const data = Array.isArray(payload?.data) ? payload.data : payload;
+        setPopularies(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));

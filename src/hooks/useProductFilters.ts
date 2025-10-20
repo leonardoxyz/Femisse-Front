@@ -92,9 +92,10 @@ export function useProductFilters() {
         throw new Error('Erro ao buscar produtos');
       }
       
-      const data = await response.json();
-      setProducts(data);
-      setFilteredProducts(data);
+      const payload = await response.json();
+      const data = Array.isArray(payload?.data) ? payload.data : payload;
+      setProducts(Array.isArray(data) ? data : []);
+      setFilteredProducts(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
       setProducts([]);

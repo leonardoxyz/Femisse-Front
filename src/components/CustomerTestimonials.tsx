@@ -3,59 +3,32 @@ import { Quote } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Autoplay } from "swiper/modules";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getTestimonials, type Testimonial } from "@/services/testimonials";
 
 import "swiper/css";
 import "swiper/css/pagination";
 
-type Testimonial = {
-  name: string;
-  comment: string;
-  rating: string;
-  avatar: string;
-  city: string;
+const getRatingStars = (rating: number): string => {
+  return '★'.repeat(rating);
 };
-
-const testimonials: Testimonial[] = [
-  {
-    name: "Mariana Alves",
-    city: "São Paulo - SP",
-    comment:
-      "A Feminisse sempre entrega peças com acabamento impecável. Já fiz três compras e todas chegaram rapidinho!",
-    rating: "★★★★★",
-    avatar: "https://i.pravatar.cc/160?img=47",
-  },
-  {
-    name: "Camila Teixeira",
-    city: "Belo Horizonte - MG",
-    comment:
-      "Adorei a curadoria da loja. As sugestões do time combinam demais com meu estilo. Serviço maravilhoso!",
-    rating: "★★★★★",
-    avatar: "https://i.pravatar.cc/160?img=12",
-  },
-  {
-    name: "Fernanda Rocha",
-    city: "Curitiba - PR",
-    comment:
-      "Recebi meu pedido antes do prazo e com um cheirinho incrível. Dá para sentir o carinho em cada detalhe.",
-    rating: "★★★★★",
-    avatar: "https://i.pravatar.cc/160?img=32",
-  },
-  {
-    name: "Juliana Martins",
-    city: "Rio de Janeiro - RJ",
-    comment:
-      "As peças vestem muito bem e a tabela de medidas é super precisa. Já me tornei cliente fiel!",
-    rating: "★★★★★",
-    avatar: "https://i.pravatar.cc/160?img=5",
-  },
-];
 
 const CustomerTestimonials = () => {
   const [loading, setLoading] = useState(true);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
 
   useEffect(() => {
-    const timeout = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timeout);
+    const fetchTestimonials = async () => {
+      try {
+        const data = await getTestimonials();
+        setTestimonials(data);
+      } catch (error) {
+        console.error('Erro ao carregar depoimentos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTestimonials();
   }, []);
 
   return (
@@ -131,7 +104,7 @@ const CustomerTestimonials = () => {
                         {testimonial.name}
                       </p>
                       <p className="text-xs uppercase tracking-[0.2em] text-[#58090d] font-semibold">
-                        {testimonial.rating}
+                        {getRatingStars(testimonial.rating)}
                       </p>
                       <p className="text-sm text-gray-500">{testimonial.city}</p>
                     </div>

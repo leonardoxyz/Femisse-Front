@@ -8,13 +8,21 @@ interface TurnstileWidgetProps {
   className?: string;
 }
 
-const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
+const TurnstileWidget = React.forwardRef<TurnstileInstance, TurnstileWidgetProps>(({
   onVerify,
   onError,
   onExpire,
   className = ''
-}) => {
+}, ref) => {
   const turnstileRef = useRef<TurnstileInstance>(null);
+  
+  React.useImperativeHandle(ref, () => ({
+    reset: () => turnstileRef.current?.reset(),
+    remove: () => turnstileRef.current?.remove(),
+    render: () => turnstileRef.current?.render(),
+    execute: () => turnstileRef.current?.execute(),
+    isExpired: () => turnstileRef.current?.isExpired() ?? false,
+  } as TurnstileInstance));
 
   const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
   
@@ -86,7 +94,9 @@ const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
       />
     </div>
   );
-};
+});
+
+TurnstileWidget.displayName = 'TurnstileWidget';
 
 // Exporta também uma função para resetar externamente
 export const resetTurnstile = (ref: React.RefObject<TurnstileInstance>) => {
