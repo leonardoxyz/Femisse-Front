@@ -285,7 +285,10 @@ export function PersonalData({ highlightCPF = false, onCPFUpdated }: PersonalDat
       </div>
     );
   }
-  if (!userData) return <div>Não foi possível carregar os dados.</div>;
+  if (!userData) {
+    console.warn('⚠️ PersonalData - userData é null/undefined');
+    return <div>Não foi possível carregar os dados.</div>;
+  }
 
   return (
     <div className="space-y-6">

@@ -34,13 +34,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       const response = await api.get(`${API_ENDPOINTS.users}/profile`);
-      if (response.data) {
-        setUser(response.data);
+      const userData = response.data?.data || response.data;
+      
+      if (userData && userData.id) {
+        setUser(userData);
         setIsAuthenticated(true);
-        setIsLoading(false); // ✅ Garante que loading seja false após sucesso
+        setIsLoading(false);
         return true;
       } else {
-        // ✅ Se não tem dados, considera como não autenticado
         setUser(null);
         setIsAuthenticated(false);
         setIsLoading(false);
@@ -50,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Erro ao atualizar usuário:', error);
       setUser(null);
       setIsAuthenticated(false);
-      setIsLoading(false); // ✅ Garante que loading seja false após erro
+      setIsLoading(false);
       return false;
     }
   }, []);
@@ -66,8 +67,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       try {
         const response = await api.get(`${API_ENDPOINTS.users}/profile`);
-        if (response.data) {
-          setUser(response.data);
+        const userData = response.data?.data || response.data;
+        
+        if (userData && userData.id) {
+          setUser(userData);
           setIsAuthenticated(true);
         } else {
           setUser(null);
@@ -78,7 +81,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         setIsAuthenticated(false);
       } finally {
-        // ✅ SEMPRE seta loading como false, independente do resultado
         setIsLoading(false);
       }
     };

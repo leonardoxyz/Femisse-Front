@@ -6,13 +6,12 @@ import { MapPin, Edit, Trash2, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/components/ui/use-toast";
 import { AddressForm } from "./AddressForm";
-import { API_ENDPOINTS } from "@/config/api";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fetchUserAddresses, createAddress, updateAddress, deleteAddress } from "@/services/address";
 
 interface Address {
   id: string;
-  usuario_id: string;
   label: string;
   street: string;
   number: string;
@@ -37,15 +36,8 @@ export function AddressList() {
   const fetchAddresses = async () => {
     setLoading(true);
     try {
-      const response = await fetch(API_ENDPOINTS.userAddresses, {
-        credentials: "include",
-      });
-      
-      if (!response.ok) throw new Error("Erro ao buscar endereços");
-      
-      const payload = await response.json();
-      const data = Array.isArray(payload?.data) ? payload.data : payload;
-      setAddresses(Array.isArray(data) ? data : []);
+      const data = await fetchUserAddresses();
+      setAddresses(data);
       setError(null);
     } catch (err) {
       setError("Erro ao buscar endereços");
@@ -78,39 +70,20 @@ export function AddressList() {
 
   const saveAddress = async (addressData: any) => {
     try {
-      const method = editing?.id ? "PUT" : "POST";
-      const url = editing?.id ? `${API_ENDPOINTS.address}/${editing.id}` : API_ENDPOINTS.userAddresses;
-      
-      const response = await fetch(url, {
-        method,
-        credentials: "include", // ✅ Cookie httpOnly é enviado automaticamente
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(addressData),
-      });
-      
-      if (!response.ok) {
-        let errorMessage = "Erro ao salvar endereço";
-        const contentType = response.headers.get("Content-Type") ?? "";
-
-        try {
-          if (contentType.includes("application/json")) {
-            const errorData = await response.json();
-            if (errorData?.error) {
-              errorMessage = errorData.error;
-            }
-          } else {
-            const text = await response.text();
-            if (text) {
-              errorMessage = text;
-            }
-          }
-        } catch (parseError) {
-          console.error("Falha ao interpretar resposta ao salvar endereço:", parseError);
-        }
-
-        throw new Error(errorMessage);
+      if (editing?.id) {
+        await updateAddress(editing.id, addressData);
+        toast({
+          title: "Endereço atualizado",
+          description: "O endereço foi atualizado com sucesso!",
+          variant: "default",
+        });
+      } else {
+        await createAddress(addressData);
+        toast({
+          title: "Endereço criado",
+          description: "O endereço foi adicionado com sucesso!",
+          variant: "default",
+        });
       }
       
       setEditing(null);
@@ -125,11 +98,7 @@ export function AddressList() {
   const confirmDeleteAddress = async (id: string) => {
     setDeletingId(id);
     try {
-      const res = await fetch(`${API_ENDPOINTS.address}/${id}`, {
-        method: "DELETE",
-        credentials: "include", // ✅ Cookie httpOnly é enviado automaticamente
-      });
-      if (!res.ok) throw new Error();
+      await deleteAddress(id);
       
       toast({
         title: "Endereço excluído",
@@ -138,10 +107,10 @@ export function AddressList() {
       });
       
       fetchAddresses();
-    } catch {
+    } catch (error) {
       toast({
         title: "Erro ao excluir endereço",
-        description: "Não foi possível excluir o endereço. Tente novamente.",
+        description: error instanceof Error ? error.message : "Não foi possível excluir o endereço. Tente novamente.",
         variant: "destructive",
       });
     } finally {

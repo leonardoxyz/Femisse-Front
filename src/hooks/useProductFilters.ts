@@ -66,7 +66,7 @@ export function useProductFilters() {
   });
 
   // Buscar produtos (com ou sem filtro de categoria)
-  const fetchProducts = useCallback(async (categoryId?: string, search?: string) => {
+  const fetchProducts = useCallback(async (categorySlug?: string, search?: string) => {
     setLoading(true);
     setError(null);
     
@@ -74,13 +74,13 @@ export function useProductFilters() {
       let url = API_ENDPOINTS.products;
       const params = new URLSearchParams();
       
-      // Validação robusta do categoryId
-      if (categoryId && categoryId.trim() !== '') {
-        const trimmedCategoryId = categoryId.trim();
-        console.log('🎯 Filtrando por categoria_id:', trimmedCategoryId);
-        params.append('categoria_id', trimmedCategoryId);
+      // Validação robusta do categorySlug
+      if (categorySlug && categorySlug.trim() !== '') {
+        const trimmedCategorySlug = categorySlug.trim();
+        console.log('🎯 Filtrando por categoria_slug:', trimmedCategorySlug);
+        params.append('categoria_slug', trimmedCategorySlug);
       } else {
-        console.warn('⚠️ Buscando TODOS os produtos (categoryId não fornecido ou inválido)');
+        console.warn('⚠️ Buscando TODOS os produtos (categorySlug não fornecido ou inválido)');
       }
       
       if (search && search.trim() !== '') {
@@ -106,28 +106,18 @@ export function useProductFilters() {
       
       console.log(`✅ ${productsArray.length} produtos retornados da API`);
       
-      if (categoryId && categoryId.trim() !== '') {
-        // Verificar se todos os produtos pertencem à categoria solicitada
-        const productsWithCategory = productsArray.filter(p => p.categoriaId === categoryId.trim());
-        const productsWithoutCategory = productsArray.filter(p => p.categoriaId !== categoryId.trim());
-        
-        console.log('📊 Análise dos produtos:', {
+      // Validação: se filtrou por categoria, TODOS devem ter essa categoria
+      if (categorySlug && categorySlug.trim() !== '' && productsArray.length > 0) {
+        console.log('📊 Análise dos produtos retornados:', {
           total: productsArray.length,
-          comCategoriaCorreta: productsWithCategory.length,
-          comCategoriaErrada: productsWithoutCategory.length,
-          categoriaEsperada: categoryId.trim()
+          categoriaEsperada: categorySlug.trim()
         });
         
         if (productsArray.length > 0) {
           console.log('📦 Primeiros 3 produtos:', productsArray.slice(0, 3).map(p => ({ 
             name: p.name, 
-            categoriaId: p.categoriaId,
-            match: p.categoriaId === categoryId.trim() ? '✅' : '❌'
+            categoriaId: p.categoriaId
           })));
-        }
-        
-        if (productsWithoutCategory.length > 0) {
-          console.warn('⚠️ ATENÇÃO: API retornou produtos de outras categorias!');
         }
       }
       

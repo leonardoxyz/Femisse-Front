@@ -44,6 +44,13 @@ const CheckoutPage = () => {
     isAuthenticated
   );
   
+  // Forçar revalidação do CPF quando user.id estiver disponível
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      revalidateCPF();
+    }
+  }, [user?.id, isAuthenticated, revalidateCPF]);
+  
   // Verificar se há um pedido pendente vindo do histórico
   const pendingOrder = location.state?.pendingOrder;
   

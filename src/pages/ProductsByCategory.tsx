@@ -95,16 +95,16 @@ const ProductsByCategory = () => {
         });
 
         if (foundCategory) {
-          console.log('✅ Categoria encontrada:', { name: foundCategory.name, id: foundCategory.id });
+          console.log('✅ Categoria encontrada:', { name: foundCategory.name, slug: foundCategory.slug });
           
           // Atualizar estados
           setCategoryName(foundCategory.name);
-          setCategoryId(foundCategory.id);
+          setCategoryId(foundCategory.slug);
           setCategoryData(foundCategory);
           
-          // Buscar produtos DESTA categoria específica
-          console.log('🔍 Buscando produtos da categoria:', foundCategory.id);
-          await fetchProducts(foundCategory.id);
+          // Buscar produtos DESTA categoria específica (usando slug)
+          console.log('🔍 Buscando produtos da categoria:', foundCategory.slug);
+          await fetchProducts(foundCategory.slug);
         } else {
           console.warn('⚠️ Categoria não encontrada para slug:', slug);
           setCategoryName(slugToText(slug));

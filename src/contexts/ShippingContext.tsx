@@ -1,5 +1,6 @@
 import React from 'react';
 import { logger } from '@/utils/logger';
+import { secureLocalStorage } from '@/utils/secureStorage';
 
 export interface ShippingAddress {
   cep: string;
@@ -38,26 +39,26 @@ const defaultState: ShippingInfo = {
 
 const loadShippingFromStorage = (): ShippingInfo => {
   try {
-    const stored = localStorage.getItem(SHIPPING_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : defaultState;
+    const stored = secureLocalStorage.getItem<ShippingInfo>(SHIPPING_STORAGE_KEY);
+    return stored || defaultState;
   } catch (error) {
-    logger.error('Erro ao carregar dados de frete do localStorage:', error);
+    logger.error('Erro ao carregar dados de frete do armazenamento seguro:', error);
     return defaultState;
   }
 };
 
 const saveShippingToStorage = (shippingInfo: ShippingInfo) => {
   try {
-    localStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify(shippingInfo));
+    secureLocalStorage.setItem<ShippingInfo>(SHIPPING_STORAGE_KEY, shippingInfo, 30 * 24 * 60 * 60 * 1000); // 30 dias
   } catch (error) {
-    logger.error('Erro ao salvar dados de frete no localStorage:', error);
+    logger.error('Erro ao salvar dados de frete no armazenamento seguro:', error);
   }
 };
 
 export const ShippingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [shippingInfo, setShippingInfo] = React.useState<ShippingInfo>(loadShippingFromStorage);
 
-  // Salva no localStorage sempre que os dados de frete mudam
+  // Salva no armazenamento seguro sempre que os dados de frete mudam
   React.useEffect(() => {
     saveShippingToStorage(shippingInfo);
   }, [shippingInfo]);

@@ -13,9 +13,9 @@ import { logger } from './logger';
 // Domínios permitidos para redirecionamento
 const ALLOWED_DOMAINS = [
   'localhost',
-  'femisse-front.vercel.app',
-  'femisse-back2.vercel.app',
-];
+  import.meta.env.VITE_FRONTEND_URL?.replace(/^https?:\/\//, '') || 'femisse-front.vercel.app',
+  import.meta.env.VITE_BACKEND_URL?.replace(/^https?:\/\//, '') || 'femisse-back2.vercel.app',
+].filter(Boolean);
 
 // Protocolos permitidos
 const ALLOWED_PROTOCOLS = ['http:', 'https:'];

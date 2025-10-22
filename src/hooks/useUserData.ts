@@ -16,11 +16,10 @@ export function useUserData() {
         return;
       }
       try {
-        // api já envia cookies automaticamente
         const res = await api.get(API_ENDPOINTS.userProfile);
-        setUserData(res.data);
+        const payload = res.data?.data ?? res.data;
+        setUserData(payload);
       } catch (error) {
-        console.error('Erro ao buscar dados do usuário:', error);
         setUserData(null);
       } finally {
         setLoading(false);

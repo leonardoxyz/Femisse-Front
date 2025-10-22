@@ -54,12 +54,10 @@ export function useSecureCPFVerification(userId: string | undefined, isAuthentic
     try {
       const cached = secureSessionStorage.getItem<CPFCache>(CACHE_KEY);
       if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-        logger.log('CPF recuperado do cache', { masked: maskCPF(cached.cpf) });
         return cached.cpf;
       }
       return null;
     } catch (error) {
-      logger.error('Erro ao recuperar cache de CPF:', error);
       return null;
     }
   }, []);
@@ -117,54 +115,22 @@ export function useSecureCPFVerification(userId: string | undefined, isAuthentic
       }
 
       const userData = await response.json();
-      const cpf = userData.cpf || null;
+      const cpf = userData.data?.cpf || userData.cpf || null;
 
-      // Valida formato se houver CPF
-      if (cpf && !/^\d{11}$/.test(cpf.replace(/\D/g, ''))) {
-        logger.warn('CPF com formato inválido retornado pela API');
-      }
-
-      // Armazena no cache
       setCachedCPF(cpf);
-
-      setResult({
-        cpf,
-        isChecking: false,
-        error: null
-      });
-
-      logger.log('CPF verificado com sucesso', { 
-        masked: maskCPF(cpf),
-        fromCache: false 
-      });
+      setResult({ cpf, isChecking: false, error: null });
 
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        // Requisição cancelada, não é erro
-        logger.debug('Verificação de CPF cancelada');
-        return;
-      }
-
+      if (error.name === 'AbortError') return;
       if (!isMountedRef.current) return;
-
-      logger.error('Erro ao verificar CPF:', {
-        message: error.message,
-        status: error.response?.status
-      });
-
-      setResult({
-        cpf: null,
-        isChecking: false,
-        error: 'Erro ao verificar CPF. Tente novamente.'
-      });
+      setResult({ cpf: null, isChecking: false, error: 'Erro ao verificar CPF' });
     }
   }, [isAuthenticated, userId, getCachedCPF, setCachedCPF]);
 
-  // Verifica CPF ao montar
+  // Verifica CPF quando userId mudar
   useEffect(() => {
     isMountedRef.current = true;
     verifyCPF();
-
     return () => {
       isMountedRef.current = false;
       if (abortControllerRef.current) {
@@ -173,10 +139,8 @@ export function useSecureCPFVerification(userId: string | undefined, isAuthentic
     };
   }, [verifyCPF]);
 
-  // Método para invalidar cache (após atualização de CPF)
   const invalidateCache = useCallback(() => {
     secureSessionStorage.removeItem(CACHE_KEY);
-    logger.log('Cache de CPF invalidado');
   }, []);
 
   // Método para revalidar

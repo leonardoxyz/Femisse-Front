@@ -93,10 +93,15 @@ class OrderService {
       const response = await api.post('/api/orders/my', orderData, {
         withCredentials: true
       });
-      return response.data;
+      const payload = response.data;
+      return (payload && payload.data) ? payload.data : payload;
     } catch (error: any) {
       console.error('Error creating order:', error);
-      throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao criar pedido');
+      const payload = error.response?.data;
+      const details = typeof payload?.details === 'string' ? payload.details :
+        Array.isArray(payload?.details) ? payload.details.map((d:any)=> (d.message || JSON.stringify(d))).join(', ') :
+        payload?.error;
+      throw new Error(details || 'Erro ao criar pedido');
     }
   }
 
@@ -215,7 +220,7 @@ class OrderService {
    */
   formatCartItemsForOrder(cartItems: any[]): OrderItem[] {
     return cartItems.map(item => ({
-      product_id: item.id,
+      product_id: String(item.product_id || item.id),
       product_name: item.name,
       product_image: item.image || undefined,
       quantity: item.quantity,
