@@ -18,10 +18,10 @@ const NewInSection = () => {
     if (typeof window !== "undefined") {
       const width = Math.min(window.innerWidth, 1590);
 
-      if (width < 640) {
+      if (width < 768) {
+        // Mobile: cards largos que ocupam quase toda tela
         return {
-          slidesPerView: 1,
-          slideWidth: Math.min(350, width - 100),
+          slidesPerView: 1.15,
           slideMargin: 16,
         };
       }
@@ -29,7 +29,6 @@ const NewInSection = () => {
       if (width < 1024) {
         return {
           slidesPerView: 2,
-          slideWidth: Math.min(300, (width - 140) / 2),
           slideMargin: 20,
         };
       }
@@ -37,27 +36,24 @@ const NewInSection = () => {
       if (width < 1400) {
         return {
           slidesPerView: 3,
-          slideWidth: Math.min(380, (width - 180) / 3),
           slideMargin: 24,
         };
       }
 
       return {
         slidesPerView: 4,
-        slideWidth: Math.min(350, (width - 240) / 4),
         slideMargin: 24,
       };
     }
 
     return {
       slidesPerView: 4,
-      slideWidth: 350,
       slideMargin: 24,
     };
   }, []);
 
   const [cardDimensions, setCardDimensions] = useState(() => computeCardDimensions());
-  const { slidesPerView, slideWidth, slideMargin } = cardDimensions;
+  const { slidesPerView, slideMargin } = cardDimensions;
 
   useEffect(() => {
     fetch(API_ENDPOINTS.products)
@@ -83,34 +79,26 @@ const NewInSection = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [computeCardDimensions]);
 
-  const paddingClass = useMemo(() => {
-    if (slidesPerView === 1) return "px-6";
-    if (slidesPerView === 2) return "px-8";
-    if (slidesPerView === 3) return "px-10";
-    return "px-12";
-  }, [slidesPerView]);
-
   const showNavigation = products.length > slidesPerView;
 
   return (
     <section className="pb-12 bg-background">
-      <div className="container mx-auto max-w-[1590px]">
-        <div className="flex items-center justify-center mb-16 gap-2">
+      <div className="container mx-auto max-w-[1590px] px-4">
+        <div className="flex items-center justify-center mb-8 md:mb-12 gap-2">
           <div className="w-8 h-0.5 bg-gradient-to-r from-transparent to-[#58090d]"></div>
-          <h2 className="text-3xl md:text-4xl font-bold text-center font-display">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center font-display tracking-wide">
             NOVIDADES
           </h2>
           <div className="w-8 h-0.5 bg-gradient-to-l from-transparent to-[#58090d]"></div>
         </div>
 
         {loading ? (
-          <div className={`relative ${paddingClass}`}>
+          <div className="relative">
             <div className="flex gap-6 overflow-hidden">
               {[1, 2, 3, 4].map((item) => (
                 <div
                   key={item}
-                  className="flex w-full flex-col gap-4 rounded-xl border border-[#58090d]/20 bg-[#58090d]/5 p-4"
-                  style={{ maxWidth: `${slideWidth}px` }}
+                  className="flex w-full max-w-[350px] flex-col gap-4 rounded-xl border border-[#58090d]/20 bg-[#58090d]/5 p-4"
                 >
                   <Skeleton className="h-[320px] w-full rounded-lg bg-[#58090d]/15" />
                   <div className="space-y-2">
@@ -127,7 +115,7 @@ const NewInSection = () => {
           </div>
         ) : (
           <div className="shelf-wrapper relative">
-            <div className={`relative ${paddingClass}`}>
+            <div className="relative">
               <Swiper
                 modules={[Navigation]}
                 navigation={{
@@ -135,7 +123,7 @@ const NewInSection = () => {
                   nextEl: ".new-in-next",
                 }}
                 loop={showNavigation}
-                slidesPerView="auto"
+                slidesPerView={slidesPerView}
                 spaceBetween={slideMargin}
                 grabCursor
               >
@@ -143,7 +131,6 @@ const NewInSection = () => {
                   <SwiperSlide
                     key={product.id}
                     className="!h-auto"
-                    style={{ width: `${slideWidth}px` }}
                   >
                     <ShowcaseProductCard
                       product={product}
@@ -157,7 +144,7 @@ const NewInSection = () => {
               {showNavigation && (
                 <>
                   <button
-                    className="new-in-prev absolute -left-1 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-primary shadow-lg flex items-center justify-center cursor-pointer z-30 transition-all duration-300 hover:opacity-90"
+                    className="new-in-prev absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-primary shadow-lg hidden md:flex items-center justify-center cursor-pointer z-30 transition-all duration-300 hover:opacity-90"
                     type="button"
                     aria-label="Anterior"
                   >
@@ -168,7 +155,7 @@ const NewInSection = () => {
                   </button>
 
                   <button
-                    className="new-in-next absolute -right-1 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-primary shadow-lg flex items-center justify-center cursor-pointer z-30 transition-all duration-300 hover:opacity-90"
+                    className="new-in-next absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-primary shadow-lg hidden md:flex items-center justify-center cursor-pointer z-30 transition-all duration-300 hover:opacity-90"
                     type="button"
                     aria-label="Próximo"
                   >

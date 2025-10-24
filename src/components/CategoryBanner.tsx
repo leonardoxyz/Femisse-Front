@@ -67,7 +67,7 @@ const CategoryBanner = () => {
         </div>
 
         {/* Products Carousel - Tamanho Original */}
-        <div className="relative px-16">
+        <div className="relative">
           <Swiper
             modules={[Navigation]}
             navigation={{
@@ -75,10 +75,10 @@ const CategoryBanner = () => {
               nextEl: '.category-banner-next',
             }}
             loop={products.length > 3}
-            slidesPerView={1}
+            slidesPerView={1.15}
             spaceBetween={16}
             breakpoints={{
-              640: { slidesPerView: 2, spaceBetween: 24 },
+              768: { slidesPerView: 2, spaceBetween: 24 },
               1024: { slidesPerView: 3, spaceBetween: 32 },
             }}
             grabCursor
@@ -145,7 +145,7 @@ const CategoryBanner = () => {
           {products.length > 3 && (
             <>
               <button
-                className="category-banner-prev absolute -left-1 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-[#58090d] shadow-lg flex items-center justify-center cursor-pointer z-30 transition-all duration-300 hover:bg-[#6b0a10]"
+                className="category-banner-prev absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-[#58090d] shadow-lg hidden md:flex items-center justify-center cursor-pointer z-30 transition-all duration-300 hover:bg-[#6b0a10]"
                 type="button"
                 aria-label="Anterior"
               >
@@ -155,7 +155,7 @@ const CategoryBanner = () => {
               </button>
 
               <button
-                className="category-banner-next absolute -right-1 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-[#58090d] shadow-lg flex items-center justify-center cursor-pointer z-30 transition-all duration-300 hover:bg-[#6b0a10]"
+                className="category-banner-next absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-[#58090d] shadow-lg hidden md:flex items-center justify-center cursor-pointer z-30 transition-all duration-300 hover:bg-[#6b0a10]"
                 type="button"
                 aria-label="Próximo"
               >
