@@ -21,6 +21,7 @@ import type { ShippingLabel, ShippingEvent } from '@/services/shipping';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { logger } from '../utils/logger-unified';
 
 interface OrderTrackingProps {
   labelId: string;
@@ -68,7 +69,7 @@ export function OrderTracking({
     try {
       await printLabel(labelId);
     } catch (error) {
-      console.error('Erro ao imprimir etiqueta:', error);
+      logger.error('Erro ao imprimir etiqueta:', error);
     }
   };
 

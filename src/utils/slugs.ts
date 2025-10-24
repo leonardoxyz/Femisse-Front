@@ -1,3 +1,5 @@
+import { logger } from './/logger-unified';
+
 // Utilitários para trabalhar com slugs seguros
 
 /**
@@ -74,7 +76,7 @@ export function extractIdFromSlug(uniqueSlug: string): string | null {
         return decodedId;
       }
     } catch (error) {
-      console.warn('Erro ao decodificar ID do slug:', error);
+      logger.warn('Erro ao decodificar ID do slug:', error);
     }
   }
   

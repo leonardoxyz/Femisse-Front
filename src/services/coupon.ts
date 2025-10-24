@@ -1,4 +1,5 @@
 import api from '@/utils/api';
+import { logger } from '../utils/logger-unified';
 
 export interface Coupon {
   id: string;
@@ -75,7 +76,7 @@ class CouponService {
       const response = await api.post('/api/coupons/validate', request);
       return response.data;
     } catch (error: any) {
-      console.error('Error validating coupon:', error);
+      logger.error('Error validating coupon:', error);
       
       // Retornar mensagem de erro do backend
       if (error.response?.data) {
@@ -98,7 +99,7 @@ class CouponService {
       const response = await api.get('/api/coupons/active');
       return response.data.coupons || [];
     } catch (error: any) {
-      console.error('Error listing active coupons:', error);
+      logger.error('Error listing active coupons:', error);
       throw new Error(error.response?.data?.message || 'Erro ao listar cupons');
     }
   }
@@ -112,7 +113,7 @@ class CouponService {
       const response = await api.get('/api/coupons/my-history');
       return response.data.history || [];
     } catch (error: any) {
-      console.error('Error getting user coupon history:', error);
+      logger.error('Error getting user coupon history:', error);
       throw new Error(error.response?.data?.message || 'Erro ao buscar histórico de cupons');
     }
   }
@@ -126,7 +127,7 @@ class CouponService {
       const response = await api.post('/api/coupons', couponData);
       return response.data.coupon;
     } catch (error: any) {
-      console.error('Error creating coupon:', error);
+      logger.error('Error creating coupon:', error);
       throw new Error(error.response?.data?.message || 'Erro ao criar cupom');
     }
   }
@@ -140,7 +141,7 @@ class CouponService {
       const response = await api.put(`/api/coupons/${id}`, updates);
       return response.data.coupon;
     } catch (error: any) {
-      console.error('Error updating coupon:', error);
+      logger.error('Error updating coupon:', error);
       throw new Error(error.response?.data?.message || 'Erro ao atualizar cupom');
     }
   }
@@ -153,7 +154,7 @@ class CouponService {
     try {
       await api.delete(`/api/coupons/${id}`);
     } catch (error: any) {
-      console.error('Error deleting coupon:', error);
+      logger.error('Error deleting coupon:', error);
       throw new Error(error.response?.data?.message || 'Erro ao deletar cupom');
     }
   }

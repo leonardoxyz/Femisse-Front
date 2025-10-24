@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/formatters';
+import { logger } from '../../utils/logger-unified';
 
 interface ShippingCalculatorProps {
   products: any[];
@@ -84,7 +85,7 @@ export function ShippingCalculator({
         products: shippingProducts
       });
     } catch (error) {
-      console.error('Erro ao calcular frete:', error);
+      logger.error('Erro ao calcular frete:', error);
     }
   };
 

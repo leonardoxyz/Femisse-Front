@@ -1,3 +1,5 @@
+import { logger } from './/logger-unified';
+
 // Utilitários para integração com Mercado Pago SDK
 // Nota: O SDK será carregado dinamicamente quando necessário
 
@@ -67,9 +69,9 @@ class MercadoPagoService {
       });
 
       this.isInitialized = true;
-      console.log('Mercado Pago SDK inicializado com sucesso');
+      logger.log('Mercado Pago SDK inicializado com sucesso');
     } catch (error) {
-      console.error('Erro ao inicializar Mercado Pago SDK:', error);
+      logger.error('Erro ao inicializar Mercado Pago SDK:', error);
       throw new Error('Falha ao inicializar sistema de pagamentos');
     }
   }
@@ -129,7 +131,7 @@ class MercadoPagoService {
 
       return response;
     } catch (error) {
-      console.error('Erro ao criar token do cartão:', error);
+      logger.error('Erro ao criar token do cartão:', error);
       throw error;
     }
   }
@@ -146,7 +148,7 @@ class MercadoPagoService {
       const response = await this.mp.getPaymentMethods();
       return response;
     } catch (error) {
-      console.error('Erro ao obter métodos de pagamento:', error);
+      logger.error('Erro ao obter métodos de pagamento:', error);
       return [];
     }
   }
@@ -166,7 +168,7 @@ class MercadoPagoService {
 
       return response.results?.[0] || null;
     } catch (error) {
-      console.error('Erro ao obter informações do cartão:', error);
+      logger.error('Erro ao obter informações do cartão:', error);
       return null;
     }
   }

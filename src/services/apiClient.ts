@@ -17,6 +17,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import { API_ENDPOINTS } from '@/config/api';
 import { tokenStorage } from '@/utils/tokenStorage';
+import { logger } from '../utils/logger-unified';
 
 // ============================================
 // CONFIGURAÇÃO E TIPOS
@@ -37,22 +38,22 @@ interface RequestQueueItem {
 const logger = {
   debug: (message: string, data?: any) => {
     if (!IS_PRODUCTION) {
-      console.log(`🐛 [API] ${message}`, data || '');
+      logger.log(`🐛 [API] ${message}`, data || '');
     }
   },
   info: (message: string, data?: any) => {
     if (!IS_PRODUCTION) {
-      console.log(`ℹ️ [API] ${message}`, data || '');
+      logger.log(`ℹ️ [API] ${message}`, data || '');
     }
   },
   warn: (message: string, data?: any) => {
-    console.warn(`⚠️ [API] ${message}`, data || '');
+    logger.warn(`⚠️ [API] ${message}`, data || '');
   },
   error: (message: string, data?: any) => {
     if (IS_PRODUCTION) {
-      console.error(`❌ [API] Erro na requisição`);
+      logger.error(`❌ [API] Erro na requisição`);
     } else {
-      console.error(`❌ [API] ${message}`, data || '');
+      logger.error(`❌ [API] ${message}`, data || '');
     }
   }
 };

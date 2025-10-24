@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import "swiper/css";
 import "swiper/css/navigation";
+import { logger } from '../utils/logger-unified';
 
 const NewInSection = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -67,7 +68,7 @@ const NewInSection = () => {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Erro ao buscar produtos:", err);
+        logger.error("Erro ao buscar produtos:", err);
         setProducts([]);
         setLoading(false);
       });
@@ -118,7 +119,7 @@ const NewInSection = () => {
                   </div>
                   <div className="mt-auto flex flex-col gap-2">
                     <Skeleton className="h-4 w-1/3 bg-[#58090d]/20" />
-                    <Skeleton className="h-10 w-full rounded-md bg-[#58090d]/30" />
+                    <Skeleton className="h-10 w-full bg-[#58090d]/30" />
                   </div>
                 </div>
               ))}
@@ -156,7 +157,7 @@ const NewInSection = () => {
               {showNavigation && (
                 <>
                   <button
-                    className="new-in-prev absolute -left-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-primary shadow-lg flex items-center justify-center cursor-pointer z-30 transition-all duration-300 border border-gray-200"
+                    className="new-in-prev absolute -left-1 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-primary shadow-lg flex items-center justify-center cursor-pointer z-30 transition-all duration-300 hover:opacity-90"
                     type="button"
                     aria-label="Anterior"
                   >
@@ -167,7 +168,7 @@ const NewInSection = () => {
                   </button>
 
                   <button
-                    className="new-in-next absolute -right-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-primary shadow-lg flex items-center justify-center cursor-pointer z-30 transition-all duration-300 border border-gray-200"
+                    className="new-in-next absolute -right-1 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-primary shadow-lg flex items-center justify-center cursor-pointer z-30 transition-all duration-300 hover:opacity-90"
                     type="button"
                     aria-label="Próximo"
                   >

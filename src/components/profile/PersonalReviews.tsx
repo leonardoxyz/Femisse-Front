@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import api from "@/utils/api";
 import { API_ENDPOINTS } from "@/config/api";
 import { Skeleton } from "@/components/ui/skeleton";
+import { logger } from '../../utils/logger-unified';
 
 interface ProductReview {
   reviewId: string;
@@ -62,7 +63,7 @@ export function PersonalReviews() {
       const data = Array.isArray(payload?.data) ? payload.data : payload;
       setReviews(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Erro ao buscar avaliações:', error);
+      logger.error('Erro ao buscar avaliações:', error);
     }
   };
 
@@ -75,7 +76,7 @@ export function PersonalReviews() {
       const data = Array.isArray(payload?.data) ? payload.data : payload;
       setPurchasedProducts(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Erro ao buscar produtos comprados:', error);
+      logger.error('Erro ao buscar produtos comprados:', error);
     }
   };
 
@@ -200,10 +201,13 @@ export function PersonalReviews() {
       
       setShowReviewForm(false);
       await Promise.all([fetchReviews(), fetchPurchasedProducts()]);
-    } catch (error) {
+    } catch (error: any) {
+      
+      const errorMessage = error.response?.data?.error || error.response?.data?.details || error.message || "Não foi possível salvar sua avaliação. Tente novamente.";
+      
       toast({
         title: "Erro ao salvar",
-        description: "Não foi possível salvar sua avaliação. Tente novamente.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

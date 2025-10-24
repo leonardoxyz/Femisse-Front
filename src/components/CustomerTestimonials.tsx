@@ -7,6 +7,7 @@ import { getTestimonials, type Testimonial } from "@/services/testimonials";
 
 import "swiper/css";
 import "swiper/css/pagination";
+import { logger } from '../utils/logger-unified';
 
 const getRatingStars = (rating: number): string => {
   return '★'.repeat(rating);
@@ -22,7 +23,7 @@ const CustomerTestimonials = () => {
         const data = await getTestimonials();
         setTestimonials(data);
       } catch (error) {
-        console.error('Erro ao carregar depoimentos:', error);
+        logger.error('Erro ao carregar depoimentos:', error);
       } finally {
         setLoading(false);
       }
@@ -85,28 +86,35 @@ const CustomerTestimonials = () => {
                 key={`${testimonial.name}-${testimonial.city}`}
                 className="flex h-auto"
               >
-                <article className="flex flex-col justify-between gap-6 rounded-3xl bg-white/80 backdrop-blur-sm border shadow-[0_20px_45px_rgba(88,9,13,0.08)] px-6 py-8 md:px-8 md:py-10 transition-transform duration-500 min-h-[320px] md:min-h-[360px] lg:min-h-[380px]">
-                  <Quote className="h-10 w-10 text-[#58090d]" strokeWidth={1.5} />
+                <article className="flex flex-col gap-3 md:gap-4 rounded-3xl bg-white/80 backdrop-blur-sm border shadow-[0_20px_45px_rgba(88,9,13,0.08)] px-4 py-4 md:px-8 md:py-8 transition-transform duration-500 h-[320px] md:h-[360px] lg:h-[380px]">
+                  <Quote className="h-6 w-6 md:h-8 md:w-8 lg:h-10 lg:w-10 text-[#58090d] flex-shrink-0 mt-1 md:mt-2" strokeWidth={1.5} />
 
-                  <p className="text-base md:text-lg text-gray-700 leading-relaxed flex-1">
-                    “{testimonial.comment}”
-                  </p>
+                  <div className="flex-1 min-h-0">
+                    <p className="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed line-clamp-4 md:line-clamp-5 lg:line-clamp-6">
+                      {testimonial.comment.length > 200
+                        ? `"${testimonial.comment.substring(0, 200)}..."`
+                        : `"${testimonial.comment}"`
+                      }
+                    </p>
+                  </div>
 
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 md:gap-4 flex-shrink-0 mt-auto">
                     <img
                       src={testimonial.avatar}
                       alt={`Foto de ${testimonial.name}`}
-                      className="h-14 w-14 rounded-full object-cover border-2 border-[#58090d]/40 shadow-sm"
+                      className="h-12 w-12 md:h-14 md:w-14 rounded-full object-cover border-2 border-[#58090d]/40 shadow-sm flex-shrink-0"
                       loading="lazy"
                     />
-                    <div>
-                      <p className="text-base font-semibold text-gray-900">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm md:text-base font-semibold text-gray-900 truncate">
                         {testimonial.name}
                       </p>
-                      <p className="text-xs uppercase tracking-[0.2em] text-[#58090d] font-semibold">
+                      <p className="text-xs md:text-xs uppercase tracking-[0.2em] text-[#58090d] font-semibold">
                         {getRatingStars(testimonial.rating)}
                       </p>
-                      <p className="text-sm text-gray-500">{testimonial.city}</p>
+                      <p className="text-xs md:text-sm text-gray-500 truncate">
+                        {testimonial.city}
+                      </p>
                     </div>
                   </div>
                 </article>

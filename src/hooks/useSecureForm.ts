@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { z } from 'zod';
+import { logger } from '../utils/logger-unified';
 
 interface UseSecureFormOptions<T> {
   schema: z.ZodSchema<T>;
@@ -183,7 +184,7 @@ export function useSecureForm<T>({
           isSubmitting: false
         }));
       } else {
-        console.error('Form submission error:', error);
+        logger.error('Form submission error:', error);
         setState(prev => ({
           ...prev,
           isSubmitting: false

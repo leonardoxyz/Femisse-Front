@@ -16,12 +16,12 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import React from 'react';
 import { API_ENDPOINTS } from '@/config/api';
-import { extractIdFromSlug, slugToText, removeAccents, createSlug } from '@/utils/slugs';
-import { secureLog, obfuscateUrl } from '@/utils/secureApi';
+import { createSlug } from '@/utils/slugs';
 import ShippingCalculator from "@/components/ShippingCalculator";
 import { SEOHead } from '@/components/SEO/SEOHead';
 import { ProductSchema } from '@/components/SEO/ProductSchema';
 import { BreadcrumbSchema } from '@/components/SEO/BreadcrumbSchema';
+import { logger } from '../utils/logger-unified';
 
 // Funções utilitárias para favoritos
 async function fetchFavorites(token: string) {
@@ -136,18 +136,15 @@ const ProductDetails = () => {
 
     const fetchProduct = async () => {
       try {
-        secureLog('Buscando produtos:', obfuscateUrl(API_ENDPOINTS.products));
         const response = await fetch(API_ENDPOINTS.products);
         const payload = await response.json();
         const products = Array.isArray(payload?.data) ? payload.data : payload;
 
         // Converter slug de volta para nome e procurar produto correspondente
         const searchName = slug.replace(/-/g, ' ').toLowerCase();
-        console.log('Buscando produto com slug:', slug, 'searchName:', searchName);
 
         const foundProduct = products.find((product: any) => {
           const productName = product.name.toLowerCase();
-          console.log('Comparando com produto:', productName);
 
           // Criar slug do nome do produto para comparação exata
           const productSlug = productName
@@ -171,8 +168,6 @@ const ProductDetails = () => {
             .replace(/[ç]/g, 'c')
             .replace(/[^a-z0-9-]/g, '');
 
-          console.log('Comparando slugs:', normalizedSlug, 'vs', productSlug);
-
           // Primeiro tenta match exato do slug
           if (normalizedSlug === productSlug) {
             return true;
@@ -192,19 +187,16 @@ const ProductDetails = () => {
           return allWordsMatch;
         });
 
-        console.log('Produto encontrado:', foundProduct);
         if (foundProduct) {
           await processProductData(foundProduct);
-          console.log('Produto encontrado:', foundProduct);
 
           // Buscar produtos similares da mesma categoria
           fetchSimilarProducts(foundProduct, products);
         } else {
-          console.log('Produto não encontrado');
           navigate('/404');
         }
       } catch (error) {
-        console.error('Erro ao buscar produto:', error);
+        logger.error('Erro ao buscar produto:', error);
         navigate('/404');
       } finally {
         setLoading(false);
@@ -228,10 +220,6 @@ const ProductDetails = () => {
 
         // Combinar palavras-chave da URL e do nome (URL tem prioridade)
         const searchKeywords = [...new Set([...urlKeywords, ...nameKeywords])];
-
-        console.log(`Produto atual: "${currentProduct.name}"`);
-        console.log(`Slug da URL: "${slug}"`);
-        console.log('Palavras-chave para busca:', searchKeywords);
 
         // Filtrar produtos similares baseado nas palavras-chave
         const similar = allProducts
@@ -259,10 +247,8 @@ const ProductDetails = () => {
           .slice(0, 8); // Limitar a 8 produtos similares
 
         setSimilarProducts(similar);
-        console.log('Produtos similares encontrados:', similar.length);
-        console.log('Produtos similares:', similar.map(p => p.name));
       } catch (error) {
-        console.error('Erro ao buscar produtos similares:', error);
+        logger.error('Erro ao buscar produtos similares:', error);
         setSimilarProducts([]);
       } finally {
         setLoadingSimilar(false);
@@ -362,7 +348,7 @@ const ProductDetails = () => {
             <div className="hidden lg:flex flex-col gap-2">
               {product.images && product.images.map((image: string, index: number) => (
                 <img
-                  key={index}
+                  key={`product-thumb-${image}-${index}`}
                   src={image}
                   alt={`${product.name} ${index + 1}`}
                   className={`w-20 h-20 object-cover cursor-pointer rounded-sm border transition-opacity hover:opacity-80 ${mainImageIndex === index ? "border-primary" : "border-transparent"}`}
@@ -412,16 +398,15 @@ const ProductDetails = () => {
               <div className="mt-4 flex gap-2 overflow-x-auto lg:hidden">
                 {product.images && product.images.map((image: string, index: number) => (
                   <button
-                    key={index}
+                    key={`product-mobile-thumb-${image}-${index}`}
                     type="button"
                     className={`relative flex-shrink-0 border rounded-sm ${mainImageIndex === index ? "border-primary" : "border-transparent"}`}
                     onClick={() => setMainImageIndex(index)}
-                    aria-label={`Selecionar imagem ${index + 1}`}
                   >
                     <img
                       src={image}
-                      alt={`${product.name} ${index + 1}`}
-                      className="w-20 h-20 object-cover"
+                      alt={`${product.name} thumbnail ${index + 1}`}
+                      className="w-16 h-16 object-cover"
                     />
                   </button>
                 ))}

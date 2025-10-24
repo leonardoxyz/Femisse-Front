@@ -7,6 +7,7 @@ import { Edit, Save, X, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { CheckedState } from "@radix-ui/react-checkbox";
 import { toast } from "@/components/ui/use-toast";
+import { logger } from '../../utils/logger-unified';
 
 interface Address {
   id?: string;
@@ -141,7 +142,7 @@ export function AddressFormSimple({ address, onSave, onCancel, isEditing = false
         setHasChanges(true);
       }
     } catch (error) {
-      console.error('Erro ao buscar CEP:', error);
+      logger.error('Erro ao buscar CEP:', error);
     } finally {
       setIsFetchingCep(false);
     }

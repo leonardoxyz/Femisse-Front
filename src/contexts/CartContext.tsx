@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
-import { logger } from "@/utils/logger";
+import { logger } from "@/utils/logger-unified";
 import { secureLocalStorage } from "@/utils/secureStorage";
 
 export interface CartItem {

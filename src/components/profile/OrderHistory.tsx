@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Clock, CheckCircle, XCircle, CreditCard, AlertCircle } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, CreditCard, AlertCircle, Truck } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { orderService, Order } from '@/services/order';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatCurrency } from '@/utils/formatters';
+import { toast } from 'sonner';
+import { logger } from '../../utils/logger-unified';
 
 const OrderHistory = () => {
   const { isAuthenticated } = useAuth();
@@ -33,11 +35,10 @@ const OrderHistory = () => {
     try {
       setIsLoading(true);
       setError(null);
-      // orderService agora usa cookies automaticamente
       const response = await orderService.listUserOrders();
       setOrders(response || []);
     } catch (err) {
-      console.error('Erro ao carregar pedidos:', err);
+      logger.error('Erro ao carregar pedidos:', err);
       setError('Erro ao carregar histórico de pedidos');
     } finally {
       setIsLoading(false);
@@ -87,6 +88,13 @@ const OrderHistory = () => {
     navigate('/checkout', { state: { pendingOrder: order } });
   };
 
+  const handleTrackOrder = (order: Order) => {
+    toast.info(`Rastreamento do pedido ${orderService.formatOrderNumber(order.order_number)}`, {
+      description: 'Funcionalidade de rastreamento será implementada em breve com integração MelhorEnvio.',
+      duration: 4000,
+    });
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR', {
@@ -111,7 +119,7 @@ const OrderHistory = () => {
       {isLoading && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-lg border border-zinc-100 bg-white p-4 shadow-sm">
+            <div key={`order-skeleton-${i}`} className="rounded-lg border border-zinc-100 bg-white p-4 shadow-sm">
               <div className="h-4 w-24 animate-pulse rounded bg-zinc-200" />
               <div className="mt-4 h-24 animate-pulse rounded bg-zinc-200" />
             </div>
@@ -210,13 +218,24 @@ const OrderHistory = () => {
 
                     {/* Actions */}
                     <div className="flex gap-2 pt-1">
-                      <Button
-                        variant="outline"
-                        onClick={() => navigate(`/perfil/reviews`)}
-                        className="flex-1 h-8 text-xs"
-                      >
-                        Avaliar
-                      </Button>
+                      {order.status === 'delivered' ? (
+                        <Button
+                          variant="outline"
+                          onClick={() => navigate(`/perfil/reviews`)}
+                          className="flex-1 h-8 text-xs"
+                        >
+                          Avaliar
+                        </Button>
+                      ) : order.payment_status !== 'pending' ? (
+                        <Button
+                          variant="outline"
+                          onClick={() => handleTrackOrder(order)}
+                          className="flex-1 h-8 text-xs"
+                        >
+                          <Truck className="mr-1 h-3 w-3" />
+                          Rastrear
+                        </Button>
+                      ) : null}
 
                       {orderService.canPayOrder(order) && (
                         <Button

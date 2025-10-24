@@ -1,7 +1,7 @@
 import { Component, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from './ui/button';
-import { logger } from '@/utils/logger';
+import { logger } from '@/utils/logger-unified';
 
 interface Props {
   children: ReactNode;

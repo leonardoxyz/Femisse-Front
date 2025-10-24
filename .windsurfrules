@@ -1,3 +1,253 @@
-- You must analyze all project to provide your answer.
-- You must focus on best performance and HIGH level of security.
-- You must use the best practices of software development.
+# ⚛️ **Windsurf Front-End Rules**
+
+## 🧠 **Contexto e Análise Inicial**
+
+1. **Análise de Projeto:**
+   Antes de gerar qualquer código, a IA deve **analisar toda a estrutura do projeto** (pastas, dependências, scripts, build system, componentes reutilizáveis e padrão de design system).
+
+2. **Stack Padrão:**
+
+   * O projeto front-end utiliza **React (ou Next.js)** com **TypeScript**.
+   * Usa **TailwindCSS** e **Shadcn/UI** como base de estilização.
+   * Utiliza **Axios** para consumo de API e **React Query** ou **SWR** para gerenciamento de cache.
+   * A IA deve assumir esse stack como padrão, salvo instrução contrária.
+
+3. **Objetivo Principal:**
+   Garantir **performance**, **segurança**, **manutenibilidade** e **coerência visual e estrutural** entre todas as páginas e componentes.
+
+---
+
+## ⚙️ **Ambiente de Desenvolvimento**
+
+4. **Porta Padrão:**
+
+   * Sempre iniciar o projeto localmente em **localhost:8080**.
+   * Se a porta estiver ocupada, tentar liberá-la antes de iniciar o servidor:
+
+     ```powershell
+     Get-Process -Id (Get-NetTCPConnection -LocalPort 8080).OwningProcess | Stop-Process -Force
+     ```
+
+5. **Scripts de Execução:**
+
+   * Scripts obrigatórios no `package.json`:
+
+     * `dev` → inicia o servidor local
+     * `build` → compila o projeto para produção
+     * `start` → inicia o build de produção
+     * `lint` → executa lint
+     * `test` → roda testes unitários
+   * A IA **nunca deve criar scripts duplicados** ou conflitantes.
+
+6. **Build e Commits:**
+
+   * Antes de qualquer commit, sempre rodar `npm run build` e garantir **zero erros**.
+   * Não deve fazer commits automáticos após alterações — apenas quando o usuário solicitar.
+   * Mensagens de commit devem estar em **inglês técnico**, ex:
+
+     ```
+     feat: add responsive navbar with dropdown
+     fix: correct rendering issue on product grid
+     refactor: improve performance of checkout page
+     ```
+
+---
+
+## 🧱 **Arquitetura e Boas Práticas**
+
+7. **Princípios SOLID (adaptado ao front):**
+
+   * **S**ingle Responsibility → Cada componente deve ter apenas uma responsabilidade.
+   * **O**pen/Closed → Componentes devem ser extensíveis via props, não modificações diretas.
+   * **L**iskov Substitution → Componentes filhos devem se comportar como o pai espera.
+   * **I**nterface Segregation → Não forçar props desnecessárias em componentes genéricos.
+   * **D**ependency Inversion → Usar hooks e contextos para injetar dependências, não importações diretas.
+
+8. **Padrão de Pastas:**
+
+   ```
+   src/
+   ├── components/       → Componentes reutilizáveis (UI, Form, Layout)
+   ├── pages/            → Páginas do app
+   ├── hooks/            → Hooks customizados
+   ├── context/          → Contextos globais (ex: Auth, Theme)
+   ├── services/         → Consumo de APIs (Axios)
+   ├── utils/            → Funções auxiliares
+   ├── types/            → Tipos TypeScript globais
+   ├── assets/           → Imagens, ícones e fontes
+   └── styles/           → Arquivos Tailwind, CSS globais
+   ```
+
+9. **Reutilização:**
+
+   * Nunca duplicar componentes ou lógica — sempre reutilizar.
+   * Centralizar hooks e contextos globais.
+   * Se detectar duplicidade, a IA deve propor refatoração imediata.
+
+10. **Design System e UI:**
+
+    * Utilizar exclusivamente **componentes do Design System** definido (Shadcn/UI).
+    * Seguir paleta de cores e tokens definidos no Tailwind (`theme.extend`).
+    * Jamais sobrescrever estilos diretamente com `!important` — use classes utilitárias.
+
+---
+
+## 💾 **Comunicação com o Back-End**
+
+11. **APIs e Serviços:**
+
+    * Todas as chamadas HTTP devem ser centralizadas em `services/`.
+    * Usar **Axios Instance** configurada com interceptors de erro e token.
+    * Nunca chamar endpoints diretamente de componentes.
+
+12. **Autenticação:**
+
+    * Armazenar tokens apenas em `HttpOnly Cookies` ou `Secure Storage`.
+    * Nunca usar `localStorage` para tokens sensíveis.
+    * Implementar logout automático se o token expirar (401).
+
+13. **Tratamento de Erros:**
+
+    * Nenhum erro deve ser silencioso — sempre exibir mensagem de erro amigável.
+    * Logar erros críticos via **monitoramento externo** (Sentry, LogRocket, etc).
+
+14. **Documentação Swagger:**
+
+    * Se o backend mudar endpoints, a IA deve verificar se o front está usando a nova versão.
+    * Atualizar os serviços correspondentes com as novas rotas e parâmetros.
+
+---
+
+## 🧩 **Código, Testes e Qualidade**
+
+15. **Lint e Formatação:**
+
+    * O código deve estar 100% limpo pelo **ESLint** e formatado com **Prettier**.
+    * Regras de lint devem ser respeitadas, especialmente de acessibilidade (JSX a11y).
+
+16. **Testes:**
+
+    * Cada componente deve ter **testes unitários** (React Testing Library).
+    * Funções críticas (ex: carrinho, checkout, login) precisam de **testes de integração**.
+    * Cobertura mínima: **80%**.
+
+17. **Performance e Renderização:**
+
+    * Sempre usar **React.memo** para componentes pesados.
+    * Evitar re-renderizações desnecessárias com **useCallback** e **useMemo**.
+    * Lazy-load para rotas e imagens.
+    * Prefira **Suspense** e **dynamic imports** quando possível.
+
+18. **Controle de Estado:**
+
+    * Usar **Context API**, **Zustand** ou **Redux Toolkit**.
+    * Evitar múltiplas fontes de verdade — manter um estado global centralizado.
+
+19. **Responsividade e Acessibilidade:**
+
+    * Cada componente deve ser **totalmente responsivo** (mobile-first).
+    * Seguir normas **WCAG**: contraste, foco visível e leitura por screen readers.
+    * Usar labels adequadas e `aria-` tags sempre que necessário.
+
+---
+
+## 🔐 **Segurança no Front-end**
+
+20. **Proteção de Dados:**
+
+    * Nunca exibir dados sensíveis no DOM ou console.
+    * Remover logs antes de builds de produção.
+    * Evitar injeções com `dangerouslySetInnerHTML`.
+
+21. **CORS e HTTPS:**
+
+    * A comunicação com o backend deve ser sempre feita via **HTTPS**.
+    * Nunca aceitar requisições para origens não confiáveis.
+
+22. **Proteção contra ataques:**
+
+    * Implementar CSRF protection se necessário.
+    * Sanitizar qualquer dado renderizado dinamicamente.
+
+---
+
+## 📦 **Build e Deploy**
+
+23. **Builds:**
+
+    * Sempre otimizar o bundle final (`npm run build` deve gerar < 5MB de assets totais).
+    * Usar **Code Splitting**, **Tree Shaking** e **imagem otimizada** (`next/image` ou `vite-plugin-image-optimizer`).
+    * Remover código morto e dependências não usadas.
+
+24. **Env Files:**
+
+    * Variáveis devem vir de `.env` com prefixo `NEXT_PUBLIC_` (ou equivalente).
+    * Nunca incluir segredos de backend no front.
+
+25. **Cache e Offline:**
+
+    * Configurar cache inteligente via **Service Worker** (PWA) se aplicável.
+    * Atualizar cache após cada deploy.
+
+---
+
+## 🔍 **Documentação e Manutenibilidade**
+
+26. **Documentação:**
+
+    * Todo componente complexo deve ter JSDoc.
+    * Atualizar o README com instruções de setup e build.
+    * Adicionar comentários explicando hooks customizados complexos.
+
+27. **Naming Conventions:**
+
+    * Componentes: `PascalCase`
+    * Hooks: `useCamelCase`
+    * Variáveis e funções: `camelCase`
+    * Constantes globais: `UPPER_SNAKE_CASE`
+
+28. **Organização:**
+
+    * Cada página deve importar componentes apenas do design system ou do diretório `components`.
+    * Nunca importar arquivos diretos entre features (usar abstração).
+
+---
+
+## 🚫 **Comportamentos Proibidos**
+
+29. ❌ Nunca:
+
+* Usar `console.log` em produção.
+* Usar `any` no TypeScript.
+* Fazer manipulação direta do DOM (`document.querySelector`).
+* Duplicar componentes.
+* Importar CSS global dentro de componentes.
+* Usar hooks dentro de condicionais.
+* Usar inline styles (exceto em casos muito específicos).
+
+30. ✅ Sempre:
+
+* Reutilizar componentes.
+* Seguir o Design System.
+* Validar performance antes do commit.
+* Garantir acessibilidade.
+* Respeitar padrões de versionamento e lint.
+
+---
+
+## 🧰 **Automação e Deploy**
+
+31. **CI/CD:**
+
+* Pipeline deve conter: `lint`, `test`, `build`, `analyze`.
+* Nunca sugerir merge se houver erro de lint/test.
+
+32. **Hot Reload e Cache:**
+
+* Sempre ativar hot reload (`react-refresh` / `vite`).
+* Limpar cache quando houver alteração de envs ou assets críticos.
+
+33. **Monitoramento:**
+
+* Implementar integração com ferramentas de análise (Sentry, LogRocket, Vercel Analytics).
+* Monitorar erros de runtime e reportar via logging estruturado.

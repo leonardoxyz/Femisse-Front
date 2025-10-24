@@ -1,4 +1,4 @@
-import { logger } from './logger';
+import logger from "./logger-unified";
 
 /**
  * Registra Service Worker para PWA

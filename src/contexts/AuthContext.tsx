@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import api from '@/utils/api';
 import { API_ENDPOINTS } from '@/config/api';
 import { tokenStorage } from '@/utils/tokenStorage';
+import { logger } from '../utils/logger-unified';
 
 interface User {
   id: string;
@@ -33,22 +34,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     try {
+      logger.log('🔄 refreshUser: chamando API...');
       const response = await api.get(`${API_ENDPOINTS.users}/profile`);
-      const userData = response.data?.data || response.data;
+      logger.log('📦 refreshUser: resposta recebida:', response.data);
       
-      if (userData && userData.id) {
+      const userData = response.data?.data;
+      logger.log('👤 refreshUser: userData extraído:', userData);
+      
+      if (userData && (userData.nome || userData.email)) {
+        logger.log('✅ refreshUser: usuário válido, autenticando...');
         setUser(userData);
         setIsAuthenticated(true);
         setIsLoading(false);
         return true;
       } else {
+        logger.error('❌ refreshUser: userData inválido');
         setUser(null);
         setIsAuthenticated(false);
         setIsLoading(false);
         return false;
       }
     } catch (error) {
-      console.error('Erro ao atualizar usuário:', error);
+      logger.error('❌ refreshUser: erro na API:', error);
       setUser(null);
       setIsAuthenticated(false);
       setIsLoading(false);
@@ -67,9 +74,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       try {
         const response = await api.get(`${API_ENDPOINTS.users}/profile`);
-        const userData = response.data?.data || response.data;
+        // ✅ CRÍTICO: Backend retorna { success, data: { user } }
+        const userData = response.data?.data;
         
-        if (userData && userData.id) {
+        if (userData && (userData.nome || userData.email)) {
           setUser(userData);
           setIsAuthenticated(true);
         } else {
@@ -77,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
+        logger.error('Erro ao verificar autenticação:', error);
         setUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -95,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await api.post(`${API_ENDPOINTS.auth}/logout`);
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
+      logger.error('Erro ao fazer logout:', error);
     } finally {
       // ✅ Limpa estado imediatamente
       setUser(null);

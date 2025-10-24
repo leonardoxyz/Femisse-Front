@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { secureSessionStorage } from '@/utils/secureStorage';
+import { logger } from '../utils/logger-unified';
 // Logger wrapper para evitar erros
 const logger = {
-  log: (...args: any[]) => console.log('[CPF Verification]', ...args),
-  error: (...args: any[]) => console.error('[CPF Verification Error]', ...args),
-  warn: (...args: any[]) => console.warn('[CPF Verification Warning]', ...args),
-  debug: (...args: any[]) => console.debug('[CPF Verification]', ...args)
+  log: (...args: any[]) => logger.log('[CPF Verification]', ...args),
+  error: (...args: any[]) => logger.error('[CPF Verification Error]', ...args),
+  warn: (...args: any[]) => logger.warn('[CPF Verification Warning]', ...args),
+  debug: (...args: any[]) => logger.debug('[CPF Verification]', ...args)
 };
 
 interface CPFVerificationResult {

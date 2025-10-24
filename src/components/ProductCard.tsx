@@ -7,6 +7,7 @@ import { toast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { storeCurrentScrollPosition } from "@/hooks/useScrollRestoration";
 import { convertToCloudinary } from '@/utils/cloudinary';
+import { logger } from '../utils/logger-unified';
 
 interface ProductCardProps {
   id: string;
@@ -23,7 +24,6 @@ const ProductCard = React.memo(({
   name,
   price,
   images,
-  stock,
   image,
   onFavoriteChange,
 }: ProductCardProps) => {
@@ -110,7 +110,7 @@ const ProductCard = React.memo(({
         });
       }
     } catch (error) {
-      console.error('Erro ao gerenciar favoritos:', error);
+      logger.error('Erro ao gerenciar favoritos:', error);
       toast({
         title: 'Erro',
         description: 'Erro ao atualizar favoritos. Tente novamente.',
@@ -121,15 +121,10 @@ const ProductCard = React.memo(({
 
   return (
     <Card
-      className="bg-white border-0 shadow-sm hover:shadow-md cursor-pointer p-0 group transition-all duration-300 overflow-hidden mx-auto"
+      className="bg-white border-0 shadow-sm hover:shadow-md cursor-pointer p-0 group transition-all duration-300 overflow-hidden mx-auto w-full max-w-[320px]"
       onClick={handleNavigateToDetails}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{
-        width: '320px',
-        height: 'auto',
-        flexShrink: 0
-      }}
     >
       <div className="w-full bg-white flex items-center justify-center relative overflow-hidden" style={{ paddingTop: '150%' }}>
         <img

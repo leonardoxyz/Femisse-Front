@@ -1,3 +1,5 @@
+import { logger } from './/logger-unified';
+
 // Utilitário para requisições seguras e ofuscadas
 
 const isProduction = import.meta.env.PROD;
@@ -6,9 +8,9 @@ const isProduction = import.meta.env.PROD;
 export const secureLog = (message: string, data?: any) => {
   if (!isProduction) {
     if (data) {
-      console.log(message, data);
+      logger.log(message, data);
     } else {
-      console.log(message);
+      logger.log(message);
     }
   }
 };
@@ -17,18 +19,18 @@ export const secureLog = (message: string, data?: any) => {
 export const logger = {
   info: (message: string, data?: any) => {
     if (!isProduction) {
-      console.log(`ℹ️ ${message}`, data || '');
+      logger.log(`ℹ️ ${message}`, data || '');
     }
   },
   warn: (message: string, data?: any) => {
-    console.warn(`⚠️ ${message}`, data || '');
+    logger.warn(`⚠️ ${message}`, data || '');
   },
   error: (message: string, data?: any) => {
-    console.error(`❌ ${message}`, data || '');
+    logger.error(`❌ ${message}`, data || '');
   },
   debug: (message: string, data?: any) => {
     if (!isProduction && import.meta.env.DEV) {
-      console.debug(`🐛 ${message}`, data || '');
+      logger.debug(`🐛 ${message}`, data || '');
     }
   }
 };
@@ -69,15 +71,15 @@ export const secureFetch = async (url: string, options: RequestInit = {}): Promi
     const response = await fetch(url, secureOptions);
     
     if (!response.ok && !isProduction) {
-      console.warn('⚠️ Requisição falhou:', response.status, response.statusText);
+      logger.warn('⚠️ Requisição falhou:', response.status, response.statusText);
     }
     
     return response;
   } catch (error) {
     if (isProduction) {
-      console.error('Erro de rede');
+      logger.error('Erro de rede');
     } else {
-      console.error('Erro na requisição:', error);
+      logger.error('Erro na requisição:', error);
     }
     throw error;
   }

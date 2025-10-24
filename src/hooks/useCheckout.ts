@@ -53,8 +53,8 @@ export interface UseCheckoutReturn {
   removeCoupon: () => void;
   
   // Processamento
-  createOrder: () => Promise<void>;
-  processPayment: (paymentData?: Partial<PaymentData>) => Promise<PaymentResponse>;
+  createOrder: () => Promise<Order>;
+  processPayment: (paymentData?: Partial<PaymentData>, order?: Order) => Promise<PaymentResponse>;
   
   // Validações
   canProceedToPayment: boolean;
@@ -115,8 +115,8 @@ export function useCheckout(): UseCheckoutReturn {
   }, [canProceedToPayment, state.selectedPaymentMethod]);
 
   const canProcessPayment = useMemo(() => {
-    return canProceedToConfirmation && state.order !== null;
-  }, [canProceedToConfirmation, state.order]);
+    return canProceedToConfirmation;
+  }, [canProceedToConfirmation]);
 
   // Navegação entre steps
   const goToStep = useCallback((step: CheckoutStep) => {
@@ -264,7 +264,7 @@ export function useCheckout(): UseCheckoutReturn {
   }, [toast]);
 
   // Criar pedido
-  const createOrder = useCallback(async () => {
+  const createOrder = useCallback(async (): Promise<Order> => {
     if (!isAuthenticated || !user || !state.selectedAddress || !state.selectedPaymentMethod) {
       throw new Error('Dados insuficientes para criar pedido');
     }
@@ -337,6 +337,8 @@ export function useCheckout(): UseCheckoutReturn {
         description: `Pedido ${orderService.formatOrderNumber(order.order_number)} criado.`,
       });
 
+      return order;
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao criar pedido';
       
@@ -366,8 +368,11 @@ export function useCheckout(): UseCheckoutReturn {
   ]);
 
   // Processar pagamento
-  const processPayment = useCallback(async (additionalData?: Partial<PaymentData>) => {
-    if (!isAuthenticated || !user || !state.order || !state.selectedPaymentMethod || !state.selectedAddress) {
+  const processPayment = useCallback(async (additionalData?: Partial<PaymentData>, orderParam?: Order) => {
+    // Usar o pedido passado como parâmetro ou o do state
+    const currentOrder = orderParam || state.order;
+    
+    if (!isAuthenticated || !user || !currentOrder || !state.selectedPaymentMethod || !state.selectedAddress) {
       throw new Error('Dados insuficientes para processar pagamento');
     }
 
@@ -376,17 +381,17 @@ export function useCheckout(): UseCheckoutReturn {
     try {
       // IMPORTANTE: Usar o total do pedido já criado, não recalcular
       // O pedido já foi validado e salvo no banco com o total correto
-      const orderTotal = state.order.total;
+      const orderTotal = currentOrder.total;
 
       const paymentData: PaymentData = {
-        order_id: state.order.id,
+        order_id: currentOrder.id,
         payment_method: state.selectedPaymentMethod as 'pix' | 'credit_card' | 'debit_card',
         total_amount: orderTotal,
         payer: paymentService.formatPayerData(user),
         shipping_address: paymentService.formatShippingAddress(state.selectedAddress),
         metadata: {
           user_id: user.id,
-          order_number: state.order.order_number,
+          order_number: currentOrder.order_number,
           platform: 'feminisse-ecommerce'
         },
         ...additionalData

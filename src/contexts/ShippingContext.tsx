@@ -1,5 +1,5 @@
 import React from 'react';
-import { logger } from '@/utils/logger';
+import { logger } from '@/utils/logger-unified';
 import { secureLocalStorage } from '@/utils/secureStorage';
 
 export interface ShippingAddress {

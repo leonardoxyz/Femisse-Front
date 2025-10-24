@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import api from '@/utils/api';
 import { tokenStorage } from '@/utils/tokenStorage';
+import { logger } from '../utils/logger-unified';
 
 const AuthPage = () => {
   const { isAuthenticated, refreshUser } = useAuth();
@@ -63,32 +64,54 @@ const AuthPage = () => {
         withCredentials: true,
       });
       
+      logger.log('✅ Login response:', response.data);
+      
       // ✅ MOBILE FIX: Salva tokens em armazenamento seguro como fallback
       if (response.data.accessToken || response.data.refreshToken) {
         tokenStorage.setTokens({
           accessToken: response.data.accessToken ?? null,
           refreshToken: response.data.refreshToken ?? null,
         });
+        logger.log('✅ Tokens salvos no storage');
       }
       
-      // Aguarda um pouco para cookies serem processados
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Tenta atualizar o contexto (não bloqueia se falhar)
+      // ✅ CRÍTICO: Atualiza o contexto de autenticação ANTES de navegar
       if (refreshUser) {
+        logger.log('🔄 Chamando refreshUser()...');
         try {
-          await refreshUser();
+          const success = await refreshUser();
+          logger.log('✅ refreshUser() retornou:', success);
+          
+          if (!success) {
+            logger.error('❌ Falha ao atualizar contexto (success = false)');
+            throw new Error('Erro ao autenticar. Tente novamente.');
+          }
         } catch (refreshError) {
-          console.warn('Aviso ao atualizar contexto:', refreshError);
+          logger.error('❌ Erro no refreshUser():', refreshError);
+          throw refreshError;
         }
+      } else {
+        logger.warn('⚠️ refreshUser não está disponível');
       }
       
+      logger.log('🚀 Navegando para /perfil');
       // Navega para o perfil
       navigate('/perfil', { replace: true });
       
     } catch (err: any) {
-      console.error('❌ Erro no login:', err);
-      setError(err.response?.data?.error || err.response?.data?.message || 'Erro ao fazer login');
+      logger.error('❌ Erro no login:', err);
+      logger.error('❌ Tipo do erro:', typeof err);
+      logger.error('❌ Mensagem:', err?.message);
+      logger.error('❌ Response:', err?.response);
+      
+      const errorMessage = 
+        err?.message || 
+        err?.response?.data?.error || 
+        err?.response?.data?.message || 
+        'Erro ao fazer login';
+      
+      logger.error('❌ Mensagem final exibida:', errorMessage);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

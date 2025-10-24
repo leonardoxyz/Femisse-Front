@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 
 import { useUserData } from "@/hooks/useUserData";
 import { updateUserProfile, UpdateProfileData } from "@/services/userService";
+import { logger } from '../../utils/logger-unified';
 
 // Função auxiliar para formatar data
 const formatDateForInput = (dateString: string | null): string => {
@@ -187,18 +188,18 @@ export function PersonalData({ highlightCPF = false, onCPFUpdated }: PersonalDat
       setSaveSuccess(response.message);
       setIsEditing(false);
       
-      // Atualizar os dados locais com a resposta do servidor
+      // ✅ Atualizar os dados locais com a resposta do servidor (novo padrão)
       const updatedData = {
-        nome: response.user.nome || '',
-        data_nascimento: response.user.data_nascimento || '',
-        cpf: response.user.cpf || '',
-        telefone: response.user.telefone || ''
+        nome: response.data.nome || '',
+        data_nascimento: response.data.data_nascimento || '',
+        cpf: response.data.cpf || '',
+        telefone: response.data.telefone || ''
       };
       
       setEditedData(updatedData);
       
-      // Atualizar o contexto global do usuário (para atualizar header)
-      updateUserData(response.user);
+      // ✅ Atualizar o contexto global do usuário (para atualizar header)
+      updateUserData(response.data);
 
       if (onCPFUpdated) {
         onCPFUpdated(updatedData.cpf || null);
@@ -286,7 +287,7 @@ export function PersonalData({ highlightCPF = false, onCPFUpdated }: PersonalDat
     );
   }
   if (!userData) {
-    console.warn('⚠️ PersonalData - userData é null/undefined');
+    logger.warn('⚠️ PersonalData - userData é null/undefined');
     return <div>Não foi possível carregar os dados.</div>;
   }
 

@@ -1,4 +1,4 @@
-import { logger } from '@/utils/logger';
+import { logger } from "@/utils/logger-unified";
 import { secureSessionStorage } from '@/utils/secureStorage';
 
 const ACCESS_TOKEN_KEY = 'auth_access_token';

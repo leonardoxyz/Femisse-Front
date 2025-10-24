@@ -36,8 +36,8 @@ interface UseApiReturn<T, P extends any[]> {
  * const { data, loading, error, execute } = useApi(
  *   (id: string) => api.get(`/products/${id}`),
  *   {
- *     onSuccess: (product) => console.log('Produto carregado:', product),
- *     onError: (error) => console.error('Erro:', error),
+ *     onSuccess: (product) => logger.log('Produto carregado:', product),
+ *     onError: (error) => logger.error('Erro:', error),
  *   }
  * );
  * 

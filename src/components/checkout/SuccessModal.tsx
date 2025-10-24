@@ -35,6 +35,8 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
     if (isOpen && !hasShownConfetti) {
       setHasShownConfetti(true);
       
+      const timers: NodeJS.Timeout[] = [];
+      
       // Confete inicial
       confetti({
         particleCount: 100,
@@ -43,24 +45,29 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
       });
 
       // Confete adicional após 200ms
-      setTimeout(() => {
+      timers.push(setTimeout(() => {
         confetti({
           particleCount: 50,
           angle: 60,
           spread: 55,
           origin: { x: 0 }
         });
-      }, 200);
+      }, 200));
 
       // Confete final após 400ms
-      setTimeout(() => {
+      timers.push(setTimeout(() => {
         confetti({
           particleCount: 50,
           angle: 120,
           spread: 55,
           origin: { x: 1 }
         });
-      }, 400);
+      }, 400));
+
+      // Cleanup dos timers
+      return () => {
+        timers.forEach(timer => clearTimeout(timer));
+      };
     }
     
     // Resetar flag quando modal fechar completamente
@@ -71,12 +78,18 @@ export const SuccessModal: React.FC<SuccessModalProps> = ({
 
   const handleViewOrders = () => {
     onClose();
-    setTimeout(() => navigate('/perfil/orders'), 100);
+    // Usar requestAnimationFrame em vez de setTimeout para navegação
+    requestAnimationFrame(() => {
+      navigate('/perfil/orders');
+    });
   };
 
   const handleContinueShopping = () => {
     onClose();
-    setTimeout(() => navigate('/'), 100);
+    // Usar requestAnimationFrame em vez de setTimeout para navegação
+    requestAnimationFrame(() => {
+      navigate('/');
+    });
   };
 
   return (

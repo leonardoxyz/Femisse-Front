@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_ENDPOINTS } from '@/config/api';
+import { logger } from '../utils/logger-unified';
 
 export interface FilterState {
   categories: string[];
@@ -77,15 +78,15 @@ export function useProductFilters() {
       // Validação robusta do categorySlug
       if (categorySlug && categorySlug.trim() !== '') {
         const trimmedCategorySlug = categorySlug.trim();
-        console.log('🎯 Filtrando por categoria_slug:', trimmedCategorySlug);
+        logger.log('🎯 Filtrando por categoria_slug:', trimmedCategorySlug);
         params.append('categoria_slug', trimmedCategorySlug);
       } else {
-        console.warn('⚠️ Buscando TODOS os produtos (categorySlug não fornecido ou inválido)');
+        logger.warn('⚠️ Buscando TODOS os produtos (categorySlug não fornecido ou inválido)');
       }
       
       if (search && search.trim() !== '') {
         const trimmedSearch = search.trim();
-        console.log('🔍 Filtrando por busca:', trimmedSearch);
+        logger.log('🔍 Filtrando por busca:', trimmedSearch);
         params.append('search', trimmedSearch);
       }
       
@@ -93,7 +94,7 @@ export function useProductFilters() {
         url += `?${params.toString()}`;
       }
 
-      console.log('🌐 Requisição completa:', url);
+      logger.log('🌐 Requisição completa:', url);
       const response = await fetch(url);
       
       if (!response.ok) {
@@ -104,17 +105,17 @@ export function useProductFilters() {
       const data = Array.isArray(payload?.data) ? payload.data : payload;
       const productsArray = Array.isArray(data) ? data : [];
       
-      console.log(`✅ ${productsArray.length} produtos retornados da API`);
+      logger.log(`✅ ${productsArray.length} produtos retornados da API`);
       
       // Validação: se filtrou por categoria, TODOS devem ter essa categoria
       if (categorySlug && categorySlug.trim() !== '' && productsArray.length > 0) {
-        console.log('📊 Análise dos produtos retornados:', {
+        logger.log('📊 Análise dos produtos retornados:', {
           total: productsArray.length,
           categoriaEsperada: categorySlug.trim()
         });
         
         if (productsArray.length > 0) {
-          console.log('📦 Primeiros 3 produtos:', productsArray.slice(0, 3).map(p => ({ 
+          logger.log('📦 Primeiros 3 produtos:', productsArray.slice(0, 3).map(p => ({ 
             name: p.name, 
             categoriaId: p.categoriaId
           })));

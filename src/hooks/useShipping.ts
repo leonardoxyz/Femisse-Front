@@ -7,7 +7,8 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import * as shippingService from '@/services/shipping';
-import type {
+import { logger } from '../utils/logger-unified';
+import {
   ShippingQuote,
   ShippingLabel,
   ShippingEvent,
@@ -36,7 +37,7 @@ export function useShipping() {
       setAuthorized(status.authorized);
       return status;
     } catch (error: any) {
-      console.error('Erro ao verificar autorização:', error);
+      logger.error('Erro ao verificar autorização:', error);
       setAuthorized(false);
       return { authorized: false };
     }
@@ -56,7 +57,7 @@ export function useShipping() {
       
       return authorizationUrl;
     } catch (error: any) {
-      console.error('Erro ao iniciar autorização:', error);
+      logger.error('Erro ao iniciar autorização:', error);
       toast.error(error.response?.data?.error || 'Erro ao iniciar autorização');
       throw error;
     }
@@ -81,7 +82,7 @@ export function useShipping() {
       
       return result;
     } catch (error: any) {
-      console.error('Erro ao calcular frete:', error);
+      logger.error('Erro ao calcular frete:', error);
       
       // Verifica se é erro de autorização
       if (error.response?.status === 401 || error.response?.data?.error?.includes('autorizar')) {
@@ -107,7 +108,7 @@ export function useShipping() {
       setQuotes(result);
       return result;
     } catch (error: any) {
-      console.error('Erro ao listar cotações:', error);
+      logger.error('Erro ao listar cotações:', error);
       toast.error('Erro ao carregar cotações');
       throw error;
     } finally {
@@ -131,7 +132,7 @@ export function useShipping() {
       
       return result.label;
     } catch (error: any) {
-      console.error('Erro ao criar etiqueta:', error);
+      logger.error('Erro ao criar etiqueta:', error);
       toast.error(error.response?.data?.error || 'Erro ao criar etiqueta');
       throw error;
     } finally {
@@ -149,7 +150,7 @@ export function useShipping() {
       setLabels(result);
       return result;
     } catch (error: any) {
-      console.error('Erro ao listar etiquetas:', error);
+      logger.error('Erro ao listar etiquetas:', error);
       toast.error('Erro ao carregar etiquetas');
       throw error;
     } finally {
@@ -168,7 +169,7 @@ export function useShipping() {
       setEvents(result.events || []);
       return result;
     } catch (error: any) {
-      console.error('Erro ao buscar etiqueta:', error);
+      logger.error('Erro ao buscar etiqueta:', error);
       toast.error('Erro ao carregar etiqueta');
       throw error;
     } finally {
@@ -188,7 +189,7 @@ export function useShipping() {
       // Recarrega etiqueta
       await loadLabel(labelId);
     } catch (error: any) {
-      console.error('Erro ao gerar etiqueta:', error);
+      logger.error('Erro ao gerar etiqueta:', error);
       toast.error(error.response?.data?.error || 'Erro ao gerar etiqueta');
       throw error;
     } finally {
@@ -211,7 +212,7 @@ export function useShipping() {
       
       return result.url;
     } catch (error: any) {
-      console.error('Erro ao imprimir etiqueta:', error);
+      logger.error('Erro ao imprimir etiqueta:', error);
       toast.error(error.response?.data?.error || 'Erro ao imprimir etiqueta');
       throw error;
     } finally {
@@ -231,7 +232,7 @@ export function useShipping() {
       // Recarrega etiqueta
       await loadLabel(labelId);
     } catch (error: any) {
-      console.error('Erro ao cancelar etiqueta:', error);
+      logger.error('Erro ao cancelar etiqueta:', error);
       toast.error(error.response?.data?.error || 'Erro ao cancelar etiqueta');
       throw error;
     } finally {
@@ -252,7 +253,7 @@ export function useShipping() {
       const result = await shippingService.trackShipment(labelId);
       return result;
     } catch (error: any) {
-      console.error('Erro ao rastrear envio:', error);
+      logger.error('Erro ao rastrear envio:', error);
       toast.error('Erro ao rastrear envio');
       throw error;
     } finally {
@@ -269,7 +270,7 @@ export function useShipping() {
       setEvents(result);
       return result;
     } catch (error: any) {
-      console.error('Erro ao listar eventos:', error);
+      logger.error('Erro ao listar eventos:', error);
       throw error;
     }
   }, []);
@@ -282,7 +283,7 @@ export function useShipping() {
       try {
         await loadLabel(labelId);
       } catch (error) {
-        console.error('Erro ao atualizar rastreamento:', error);
+        logger.error('Erro ao atualizar rastreamento:', error);
       }
     }, intervalMs);
 

@@ -12,6 +12,7 @@ import type { ShippingQuote } from '@/services/shipping';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { logger } from '../utils/logger-unified';
 
 interface MelhorEnvioCalculatorProps {
   products: any[];
@@ -60,7 +61,7 @@ export function MelhorEnvioCalculator({
       
       setShowResults(true);
     } catch (error) {
-      console.error('Erro ao calcular frete:', error);
+      logger.error('Erro ao calcular frete:', error);
     }
   };
 

@@ -1,5 +1,6 @@
 import api from '@/utils/api';
 import { API_BASE_URL } from '@/config/api';
+import { logger } from '../utils/logger-unified';
 
 export interface OrderItem {
   product_id: string;
@@ -96,7 +97,7 @@ class OrderService {
       const payload = response.data;
       return (payload && payload.data) ? payload.data : payload;
     } catch (error: any) {
-      console.error('Error creating order:', error);
+      logger.error('Error creating order:', error);
       const payload = error.response?.data;
       const details = typeof payload?.details === 'string' ? payload.details :
         Array.isArray(payload?.details) ? payload.details.map((d:any)=> (d.message || JSON.stringify(d))).join(', ') :
@@ -116,7 +117,7 @@ class OrderService {
       });
       return response.data;
     } catch (error: any) {
-      console.error('Error fetching order:', error);
+      logger.error('Error fetching order:', error);
       throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao buscar pedido');
     }
   }
@@ -136,7 +137,7 @@ class OrderService {
       const data = Array.isArray(payload?.data) ? payload.data : payload;
       return Array.isArray(data) ? data : [];
     } catch (error: any) {
-      console.error('Error listing orders:', error);
+      logger.error('Error listing orders:', error);
       throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao listar pedidos');
     }
   }
@@ -151,7 +152,7 @@ class OrderService {
         withCredentials: true
       });
     } catch (error: any) {
-      console.error('Error cancelling order:', error);
+      logger.error('Error cancelling order:', error);
       throw new Error(error.response?.data?.details || error.response?.data?.error || 'Erro ao cancelar pedido');
     }
   }

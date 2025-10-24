@@ -1,5 +1,6 @@
 import { api as http } from '@/services/api';
 import { API_BASE_URL, API_ENDPOINTS } from '@/config/api';
+import { logger } from '../utils/logger-unified';
 
 export interface PaymentData {
   order_id: string;
@@ -72,7 +73,7 @@ class PaymentService {
       );
       return data;
     } catch (error: any) {
-      console.error('Error creating payment preference:', error);
+      logger.error('Error creating payment preference:', error);
       throw new Error(error?.details || error?.message || 'Erro ao criar preferência de pagamento');
     }
   }
@@ -92,7 +93,7 @@ class PaymentService {
       );
       return data;
     } catch (error: any) {
-      console.error('Error processing direct payment:', error);
+      logger.error('Error processing direct payment:', error);
       throw new Error(error?.details || error?.message || 'Erro ao processar pagamento');
     }
   }
@@ -111,7 +112,7 @@ class PaymentService {
       );
       return data;
     } catch (error: any) {
-      console.error('Error getting payment status:', error);
+      logger.error('Error getting payment status:', error);
       throw new Error(error?.details || error?.message || 'Erro ao consultar status do pagamento');
     }
   }
@@ -126,7 +127,7 @@ class PaymentService {
       );
       return data;
     } catch (error: any) {
-      console.error('Error getting public key:', error);
+      logger.error('Error getting public key:', error);
       throw new Error('Erro ao obter chave pública');
     }
   }

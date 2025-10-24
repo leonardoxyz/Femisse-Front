@@ -13,6 +13,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
+import { logger } from '../utils/logger-unified';
 
 const HeroBanner = () => {
   const [slides, setSlides] = useState<{ id: string; url: string; alt?: string|null; type?: 'image' | 'video' }[]>([]);
@@ -59,7 +60,7 @@ const HeroBanner = () => {
         setLoading(false);
       })
       .catch((error) => {
-        console.error('Erro ao carregar banners:', error);
+        logger.error('Erro ao carregar banners:', error);
         setSlides([]);
         setLoading(false);
       });
@@ -165,7 +166,7 @@ const HeroBanner = () => {
                 onLoadedData={ensureVideosPlaying}
                 onPause={ensureVideosPlaying}
                 onError={(e) => {
-                  console.warn('Erro ao carregar vídeo:', slide.url, e);
+                  logger.warn('Erro ao carregar vídeo:', slide.url, e);
                 }}
               />
             ) : (

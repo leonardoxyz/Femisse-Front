@@ -8,17 +8,18 @@ export interface UpdateProfileData {
   telefone: string;
 }
 
+export interface UserProfileData {
+  nome: string;
+  email: string;
+  data_nascimento: string | null;
+  cpf: string | null;
+  telefone: string | null;
+}
+
 export interface UpdateProfileResponse {
+  success: boolean;
   message: string;
-  user: {
-    id: number;
-    nome: string;
-    data_nascimento: string;
-    cpf: string;
-    telefone: string;
-    email: string;
-    created_at: string;
-  };
+  data: UserProfileData;
 }
 
 export const updateUserProfile = async (data: UpdateProfileData): Promise<UpdateProfileResponse> => {
@@ -29,6 +30,7 @@ export const updateUserProfile = async (data: UpdateProfileData): Promise<Update
       data
     );
 
+    // ✅ Backend agora retorna { success, message, data }
     return response.data;
   } catch (error: any) {
     // Erro da API

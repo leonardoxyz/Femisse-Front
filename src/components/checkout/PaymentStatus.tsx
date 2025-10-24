@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { PaymentResponse, PaymentStatus, paymentService } from '@/services/payment';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '../../utils/logger-unified';
 
 interface PaymentStatusProps {
   payment: PaymentResponse;
@@ -48,7 +49,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
           return;
         }
       } catch (error) {
-        console.error('Erro ao verificar status do pagamento:', error);
+        logger.error('Erro ao verificar status do pagamento:', error);
       }
     };
 
@@ -82,7 +83,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
   // Limpar intervalo quando componente desmontar ou sucesso for notificado
   useEffect(() => {
     if (hasNotifiedSuccess && intervalRef.current) {
-      console.log('🛑 Parando polling - pagamento aprovado');
+      logger.log('🛑 Parando polling - pagamento aprovado');
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
@@ -90,7 +91,7 @@ const PaymentStatusComponent: React.FC<PaymentStatusProps> = ({
     // Cleanup ao desmontar
     return () => {
       if (intervalRef.current) {
-        console.log('🛑 Limpando polling - componente desmontado');
+        logger.log('🛑 Limpando polling - componente desmontado');
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }

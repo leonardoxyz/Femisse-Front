@@ -12,6 +12,7 @@ import { API_ENDPOINTS } from '@/config/api';
 import { slugToText, createSlug, removeAccents } from '@/utils/slugs';
 import ShowcaseProductCard from '@/components/cards/ShowcaseProductCard';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { logger } from '../utils/logger-unified';
 
 const ProductsByCategory = () => {
   useScrollRestoration();
@@ -35,12 +36,12 @@ const ProductsByCategory = () => {
   useEffect(() => {
     const fetchCategoryAndProducts = async () => {
       if (!slug) {
-        console.warn('Slug não fornecido');
+        logger.warn('Slug não fornecido');
         return;
       }
 
       try {
-        console.log('🔍 Buscando categoria para slug:', slug);
+        logger.log('🔍 Buscando categoria para slug:', slug);
         
         // Buscar todas as categorias
         const response = await fetch(`${API_ENDPOINTS.categories}`);
@@ -55,13 +56,13 @@ const ProductsByCategory = () => {
           throw new Error('Formato de resposta inválido');
         }
 
-        console.log('📦 Categorias disponíveis:', categories.map(c => ({ name: c.name, id: c.id })));
+        logger.log('📦 Categorias disponíveis:', categories.map(c => ({ name: c.name, id: c.id })));
 
         // Buscar categoria correspondente ao slug
         const decodedSlug = decodeURIComponent(slug);
         const searchName = slugToText(decodedSlug).toLowerCase();
         
-        console.log('🔍 Buscando categoria:', { 
+        logger.log('🔍 Buscando categoria:', { 
           slugOriginal: slug, 
           decodedSlug, 
           searchName 
@@ -82,7 +83,7 @@ const ProductsByCategory = () => {
           );
           
           if (match) {
-            console.log('✅ Match encontrado:', { 
+            logger.log('✅ Match encontrado:', { 
               categoryName: category.name, 
               categoryId: category.id,
               matchType: categorySlug === slug ? 'slug-exato' : 
@@ -95,7 +96,7 @@ const ProductsByCategory = () => {
         });
 
         if (foundCategory) {
-          console.log('✅ Categoria encontrada:', { name: foundCategory.name, slug: foundCategory.slug });
+          logger.log('✅ Categoria encontrada:', { name: foundCategory.name, slug: foundCategory.slug });
           
           // Atualizar estados
           setCategoryName(foundCategory.name);
@@ -103,10 +104,10 @@ const ProductsByCategory = () => {
           setCategoryData(foundCategory);
           
           // Buscar produtos DESTA categoria específica (usando slug)
-          console.log('🔍 Buscando produtos da categoria:', foundCategory.slug);
+          logger.log('🔍 Buscando produtos da categoria:', foundCategory.slug);
           await fetchProducts(foundCategory.slug);
         } else {
-          console.warn('⚠️ Categoria não encontrada para slug:', slug);
+          logger.warn('⚠️ Categoria não encontrada para slug:', slug);
           setCategoryName(slugToText(slug));
           setCategoryId(null);
           setCategoryData(null);
@@ -114,7 +115,7 @@ const ProductsByCategory = () => {
         }
 
       } catch (error) {
-        console.error('❌ Erro ao buscar categoria:', error);
+        logger.error('❌ Erro ao buscar categoria:', error);
         setCategoryName(slugToText(slug));
         setCategoryId(null);
         setCategoryData(null);

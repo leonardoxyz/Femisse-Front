@@ -1,21 +1,51 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
 import { API_ENDPOINTS } from '@/config/api';
 import { createSlug } from '@/utils/slugs';
 
+import 'swiper/css';
+import 'swiper/css/navigation';
+
 const CategoryBanner = () => {
-  const [popularies, setPopularies] = React.useState<any[]>([]);
+  const navigate = useNavigate();
+  const [products, setProducts] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    fetch(API_ENDPOINTS.popular)
+    fetch(`${API_ENDPOINTS.popular}?page=1&limit=12`)
       .then(res => res.json())
       .then(payload => {
         const data = Array.isArray(payload?.data) ? payload.data : payload;
-        setPopularies(Array.isArray(data) ? data : []);
+        setProducts(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
+
+  const handleExploreAll = () => {
+    navigate('/mais-vendidos');
+  };
+
+  // Função para obter imagem principal e de hover
+  const getMainImage = (product: any) => {
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      const [firstImage] = product.images.filter(Boolean);
+      if (firstImage) return firstImage;
+    }
+    return product.image ?? "";
+  };
+
+  const getHoverImage = (product: any) => {
+    const mainImage = getMainImage(product);
+    if (Array.isArray(product.images) && product.images.length > 1) {
+      const [, ...rest] = product.images;
+      const next = rest.find(Boolean);
+      if (next) return next;
+    }
+    return mainImage;
+  };
 
   if (loading) return null;
 
@@ -36,73 +66,120 @@ const CategoryBanner = () => {
           </p>
         </div>
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-          {popularies.map((popular, index) => (
-            <div
-              key={popular.name}
-              className="group animate-fade-in"
-              style={{ animationDelay: `${index * 0.15}s` }}
-            >
-              <a
-                href={`/categoria/${createSlug(popular.name)}`}
-                className="block relative overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
-              >
-                {/* Image Container */}
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  <img
-                    src={popular.image}
-                    alt={popular.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    loading="lazy"
-                  />
+        {/* Products Carousel - Tamanho Original */}
+        <div className="relative px-16">
+          <Swiper
+            modules={[Navigation]}
+            navigation={{
+              prevEl: '.category-banner-prev',
+              nextEl: '.category-banner-next',
+            }}
+            loop={products.length > 3}
+            slidesPerView={1}
+            spaceBetween={16}
+            breakpoints={{
+              640: { slidesPerView: 2, spaceBetween: 24 },
+              1024: { slidesPerView: 3, spaceBetween: 32 },
+            }}
+            grabCursor
+          >
+            {products.map((product, index) => (
+              <SwiperSlide key={product.id}>
+                <div className="group animate-fade-in" style={{ animationDelay: `${index * 0.15}s` }}>
+                  <a
+                    href={`/produto/${createSlug(product.name)}`}
+                    className="block relative overflow-hidden shadow-lg transition-all duration-500"
+                  >
+                    {/* Image Container */}
+                    <div className="relative aspect-[3/4] overflow-hidden">
+                      {/* Imagem Principal */}
+                      <img
+                        src={getMainImage(product)}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-opacity duration-300 absolute inset-0"
+                        loading="lazy"
+                      />
 
-                  {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300" />
+                      {/* Imagem de Hover */}
+                      {getHoverImage(product) && getHoverImage(product) !== getMainImage(product) && (
+                        <img
+                          src={getHoverImage(product)}
+                          alt={product.name}
+                          className="w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute inset-0"
+                          loading="lazy"
+                        />
+                      )}
 
-                  {/* Floating Badge */}
-                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-lg">
-                    <span className="text-xs font-semibold text-[#58090d] uppercase tracking-wide">
-                      Popular
-                    </span>
-                  </div>
-                </div>
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60" />
 
-                {/* Content Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
-                  <div className="transform transition-transform duration-300 group-hover:translate-y-[-4px]">
-                    <h3 className="text-white font-display uppercase text-lg md:text-xl lg:text-2xl font-bold mb-2 leading-tight">
-                      {popular.name}
-                    </h3>
-
-                    {/* Action Indicator */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-white/90 text-sm font-medium">
-                        Ver coleção
-                      </span>
-                      <div className="w-6 h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></div>
-                      <div className="w-2 h-2 bg-white rounded-full transform scale-0 group-hover:scale-100 transition-transform duration-500 delay-200"></div>
+                      {/* Floating Badge */}
+                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-lg">
+                        <span className="text-xs font-semibold text-[#58090d] uppercase tracking-wide">
+                          Popular
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Hover Effect Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#58090d]/20 to-[#58090d]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </a>
-            </div>
-          ))}
+                    {/* Content Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
+                      <h3 className="text-white font-display uppercase text-lg md:text-xl lg:text-2xl font-bold mb-2 leading-tight">
+                        {product.name}
+                      </h3>
+
+                      {/* Action Indicator */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-white/90 text-sm font-medium">
+                          Ver produto
+                        </span>
+                      </div>
+                    </div>
+
+                  </a>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+
+          {/* Navigation Arrows */}
+          {products.length > 3 && (
+            <>
+              <button
+                className="category-banner-prev absolute -left-1 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-[#58090d] shadow-lg flex items-center justify-center cursor-pointer z-30 transition-all duration-300 hover:bg-[#6b0a10]"
+                type="button"
+                aria-label="Anterior"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" className="text-white">
+                  <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+
+              <button
+                className="category-banner-next absolute -right-1 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-[#58090d] shadow-lg flex items-center justify-center cursor-pointer z-30 transition-all duration-300 hover:bg-[#6b0a10]"
+                type="button"
+                aria-label="Próximo"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" className="text-white">
+                  <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </>
+          )}
         </div>
 
         {/* Bottom CTA */}
-        <div className="text-center mt-12 md:mt-16">
-          <div className="inline-flex items-center gap-3 text-gray-600 hover:text-[#58090d] transition-colors duration-300 cursor-pointer group">
+        <div className="text-center mt-12">
+          <button
+            onClick={handleExploreAll}
+            className="inline-flex items-center gap-3 text-gray-600 hover:text-[#58090d] transition-colors duration-300 cursor-pointer group"
+          >
             <span className="text-sm font-medium">Explore os mais vendidos</span>
             <div className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center group-hover:bg-[#58090d] group-hover:text-white transition-all duration-300">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </section>

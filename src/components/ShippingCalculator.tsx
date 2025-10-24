@@ -1,5 +1,6 @@
 import React from "react";
 import { useShipping, ShippingAddress } from "@/contexts/ShippingContext";
+import { logger } from '../utils/logger-unified';
 
 export interface ShippingCalculatorResult {
   cep: string;
@@ -105,7 +106,7 @@ const ShippingCalculator: React.FC<ShippingCalculatorProps> = ({
 
       handleResultUpdate(sanitized, data, cost, source);
     } catch (error) {
-      console.error('Erro ao calcular frete:', error);
+      logger.error('Erro ao calcular frete:', error);
       handleResultUpdate(sanitized, null, null, null);
       setCepError('Não foi possível calcular o frete. Tente novamente.');
     } finally {
@@ -133,7 +134,7 @@ const ShippingCalculator: React.FC<ShippingCalculatorProps> = ({
 
       await handleCalculateShipping(postalCode, "auto");
     } catch (error) {
-      console.error('Erro ao obter CEP por localização:', error);
+      logger.error('Erro ao obter CEP por localização:', error);
       setCepError('Não foi possível obter o CEP pela sua localização.');
     }
   }, [handleCalculateShipping]);
@@ -150,7 +151,7 @@ const ShippingCalculator: React.FC<ShippingCalculatorProps> = ({
       await resolveCepFromCoords(coords.latitude, coords.longitude);
       setLocating(false);
     }, (geoError) => {
-      console.error('Permissão de localização negada ou indisponível:', geoError);
+      logger.error('Permissão de localização negada ou indisponível:', geoError);
       setLocating(false);
       switch (geoError.code) {
         case geoError.PERMISSION_DENIED:

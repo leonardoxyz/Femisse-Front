@@ -2,6 +2,7 @@ import React from "react";
 import { useCart } from "@/contexts/CartContext";
 import { useShipping, ShippingAddress } from "@/contexts/ShippingContext";
 import { Link, useNavigate } from "react-router-dom";
+import { logger } from '../utils/logger-unified';
 
 interface SidebarCartProps {
   open: boolean;
@@ -99,7 +100,7 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
         setShippingContext(sanitized, data, cost, source);
       }
     } catch (error) {
-      console.error('Erro ao calcular frete:', error);
+      logger.error('Erro ao calcular frete:', error);
       setAddress(null);
       setShippingCost(null);
       setCepError('Não foi possível calcular o frete. Tente novamente.');
@@ -126,7 +127,7 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
         const data = await response.json();
         return await applyCep(data?.postal, "auto");
       } catch (error) {
-        console.error('Erro ao obter CEP via IP:', error);
+        logger.error('Erro ao obter CEP via IP:', error);
         return false;
       }
     };
@@ -141,7 +142,7 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
             const json = await result.json();
             return (json?.postcode || null);
           } catch (error) {
-            console.error('Erro no BigDataCloud:', error);
+            logger.error('Erro no BigDataCloud:', error);
             return null;
           }
         },
@@ -153,7 +154,7 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
             const json = await result.json();
             return (json?.address?.postcode || null);
           } catch (error) {
-            console.error('Erro no Maps.co:', error);
+            logger.error('Erro no Maps.co:', error);
             return null;
           }
         },
@@ -165,7 +166,7 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
             const json = await result.json();
             return (json?.address?.postcode || null);
           } catch (error) {
-            console.error('Erro no Nominatim:', error);
+            logger.error('Erro no Nominatim:', error);
             return null;
           }
         }
@@ -209,7 +210,7 @@ const SidebarCart: React.FC<SidebarCartProps> = ({ open, onClose }) => {
       }
       setLocatingCep(false);
     }, (geoError) => {
-      console.error('Permissão de localização negada ou indisponível:', geoError);
+      logger.error('Permissão de localização negada ou indisponível:', geoError);
       setLocatingCep(false);
       switch (geoError.code) {
         case geoError.PERMISSION_DENIED:

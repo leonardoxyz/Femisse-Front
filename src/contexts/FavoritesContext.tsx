@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import api from "@/utils/api";
 import { API_ENDPOINTS } from "@/config/api";
-import { logger } from "@/utils/logger";
 import { useAuth } from "@/hooks/useAuth";
+import { logger } from '../utils/logger-unified';
 
 interface FavoritesContextType {
   favoriteIds: string[];
@@ -48,7 +48,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       await api.post(`${API_ENDPOINTS.favorites}`, { productId: id });
       setFavoriteIds((prev) => prev.includes(id) ? prev : [...prev, id]);
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       throw error;
     }
   };
@@ -59,7 +59,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       await api.delete(`${API_ENDPOINTS.favorites}/${id}`);
       setFavoriteIds((prev) => prev.filter((fid) => fid !== id));
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       throw error;
     }
   };

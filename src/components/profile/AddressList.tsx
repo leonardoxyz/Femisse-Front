@@ -9,6 +9,7 @@ import { AddressForm } from "./AddressForm";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchUserAddresses, createAddress, updateAddress, deleteAddress } from "@/services/address";
+import { logger } from '../../utils/logger-unified';
 
 interface Address {
   id: string;
@@ -41,7 +42,7 @@ export function AddressList() {
       setError(null);
     } catch (err) {
       setError("Erro ao buscar endereços");
-      console.error("Erro ao buscar endereços:", err);
+      logger.error("Erro ao buscar endereços:", err);
     } finally {
       setLoading(false);
     }

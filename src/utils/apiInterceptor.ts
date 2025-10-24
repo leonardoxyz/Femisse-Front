@@ -6,7 +6,7 @@
  */
 
 import api from './api';
-import { logger } from './logger';
+import { logger } from './logger-unified';
 
 let isRefreshing = false;
 let failedQueue: Array<{

@@ -12,6 +12,7 @@ import { mercadoPagoService } from '@/utils/mercadopago';
 import { paymentService } from '@/services/payment';
 import { useToast } from '@/hooks/use-toast';
 import { validateCPF, formatCPF } from '@/utils/validators';
+import { logger } from '../../utils/logger-unified';
 
 // Schema de validação para dados de pagamento
 const paymentSchema = z.object({
@@ -105,7 +106,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         await mercadoPagoService.initialize(public_key);
         setMpInitialized(true);
       } catch (error) {
-        console.error('Erro ao inicializar Mercado Pago:', error);
+        logger.error('Erro ao inicializar Mercado Pago:', error);
         toast({
           title: "Erro de inicialização",
           description: "Não foi possível inicializar o sistema de pagamentos.",
@@ -192,7 +193,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         description: "Dados do cartão validados com sucesso.",
       });
     } catch (error) {
-      console.error('Erro ao gerar token do cartão:', error);
+      logger.error('Erro ao gerar token do cartão:', error);
       toast({
         title: "Erro na validação",
         description: error instanceof Error ? error.message : "Erro ao validar cartão.",
@@ -291,7 +292,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                 </div>
                 <ul className="space-y-1 text-xs text-muted-foreground">
                   {method.benefits.map((benefit, index) => (
-                    <li key={index} className="flex items-center gap-2">
+                    <li key={`benefit-${method.id}-${index}`} className="flex items-center gap-2">
                       <div className="h-1 w-1 rounded-full bg-primary" />
                       {benefit}
                     </li>

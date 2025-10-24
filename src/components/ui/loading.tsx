@@ -52,7 +52,7 @@ const Loading: React.FC<LoadingProps> = ({
         <div className="flex space-x-1">
           {[0, 1, 2].map((i) => (
             <div
-              key={i}
+              key={`loading-dot-${i}`}
               className={cn(
                 'bg-[#58090d] rounded-full animate-pulse',
                 size === 'sm' ? 'w-1 h-1' : 
@@ -121,7 +121,7 @@ export const ProductCardSkeleton: React.FC = () => (
 export const ListSkeleton: React.FC<{ items?: number }> = ({ items = 3 }) => (
   <div className="space-y-4">
     {Array.from({ length: items }).map((_, i) => (
-      <div key={i} className="animate-pulse flex space-x-4">
+      <div key={`skeleton-item-${i}`} className="animate-pulse flex space-x-4">
         <div className="rounded-lg bg-gray-200 h-16 w-16"></div>
         <div className="flex-1 space-y-2 py-1">
           <div className="h-4 bg-gray-200 rounded w-3/4"></div>

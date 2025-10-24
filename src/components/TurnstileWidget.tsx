@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
+import { logger } from '../utils/logger-unified';
 
 interface TurnstileWidgetProps {
   onVerify: (token: string) => void;
@@ -31,7 +32,7 @@ const TurnstileWidget = React.forwardRef<TurnstileInstance, TurnstileWidgetProps
   const isProduction = import.meta.env.PROD;
 
   // Log para debug (sempre ativo para diagnosticar problemas de domínio)
-  console.log('Turnstile Environment:', {
+  logger.log('Turnstile Environment:', {
     isDevelopment,
     isProduction,
     siteKey: siteKey ? 'Configured' : 'Missing',
@@ -42,7 +43,7 @@ const TurnstileWidget = React.forwardRef<TurnstileInstance, TurnstileWidgetProps
   });
 
   if (!siteKey) {
-    console.error('VITE_TURNSTILE_SITE_KEY não configurado');
+    logger.error('VITE_TURNSTILE_SITE_KEY não configurado');
     return (
       <div className={`p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm ${className}`}>
         ⚠️ Configuração do Turnstile não encontrada
@@ -52,19 +53,19 @@ const TurnstileWidget = React.forwardRef<TurnstileInstance, TurnstileWidgetProps
 
   const handleVerify = (token: string) => {
     if (isDevelopment) {
-      console.log('Turnstile verification successful:', token.substring(0, 20) + '...');
+      logger.log('Turnstile verification successful:', token.substring(0, 20) + '...');
     }
     onVerify(token);
   };
 
   const handleError = () => {
-    console.error('Turnstile verification failed');
+    logger.error('Turnstile verification failed');
     onError?.();
   };
 
   const handleExpire = () => {
     if (isDevelopment) {
-      console.log('Turnstile token expired');
+      logger.log('Turnstile token expired');
     }
     onExpire?.();
   };

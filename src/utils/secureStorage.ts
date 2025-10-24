@@ -9,7 +9,7 @@
  * - Limpeza automática de dados expirados
  */
 
-import { logger } from './logger';
+import { logger } from "@/utils/logger-unified";
 
 // Prefixo para evitar colisões com outras aplicações
 const APP_PREFIX = 'femisse_';

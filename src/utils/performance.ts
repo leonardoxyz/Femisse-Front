@@ -1,5 +1,6 @@
 // Utilitários para otimização de performance
 import React from 'react';
+import { logger } from './/logger-unified';
 
 // Debounce para evitar muitas chamadas seguidas
 export function debounce<T extends (...args: any[]) => any>(
@@ -244,7 +245,7 @@ export function measurePerformance(name: string) {
   return {
     end: () => {
       const duration = performance.now() - start;
-      console.log(`⚡ ${name}: ${duration.toFixed(2)}ms`);
+      logger.log(`⚡ ${name}: ${duration.toFixed(2)}ms`);
       return duration;
     }
   };

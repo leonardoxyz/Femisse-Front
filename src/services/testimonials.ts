@@ -1,5 +1,6 @@
 import api from './api';
 import { API_BASE_URL } from '@/config/api';
+import { logger } from '../utils/logger-unified';
 
 export interface Testimonial {
   name: string;
@@ -31,7 +32,7 @@ export const getTestimonials = async (): Promise<Testimonial[]> => {
     );
     return response.data ?? [];
   } catch (error) {
-    console.error('Erro ao buscar testimonials:', error);
+    logger.error('Erro ao buscar testimonials:', error);
     return [];
   }
 };
@@ -50,7 +51,7 @@ export const getTestimonialsAdmin = async (): Promise<TestimonialAdmin[]> => {
     );
     return response.data ?? [];
   } catch (error) {
-    console.error('Erro ao buscar testimonials (admin):', error);
+    logger.error('Erro ao buscar testimonials (admin):', error);
     throw error;
   }
 };
@@ -69,7 +70,7 @@ export const getTestimonialById = async (id: string): Promise<TestimonialAdmin> 
     );
     return response.data;
   } catch (error) {
-    console.error('Erro ao buscar testimonial:', error);
+    logger.error('Erro ao buscar testimonial:', error);
     throw error;
   }
 };
@@ -95,7 +96,7 @@ export const createTestimonial = async (data: Omit<Testimonial, 'createdAt'>): P
     );
     return response.data;
   } catch (error) {
-    console.error('Erro ao criar testimonial:', error);
+    logger.error('Erro ao criar testimonial:', error);
     throw error;
   }
 };
@@ -124,7 +125,7 @@ export const updateTestimonial = async (
     );
     return response.data;
   } catch (error) {
-    console.error('Erro ao atualizar testimonial:', error);
+    logger.error('Erro ao atualizar testimonial:', error);
     throw error;
   }
 };
@@ -137,7 +138,7 @@ export const deleteTestimonial = async (id: string): Promise<void> => {
   try {
     await api.delete(`${API_BASE_URL}/api/testimonials/${id}`, { requiresAuth: true });
   } catch (error) {
-    console.error('Erro ao deletar testimonial:', error);
+    logger.error('Erro ao deletar testimonial:', error);
     throw error;
   }
 };
@@ -155,7 +156,7 @@ export const toggleTestimonial = async (id: string): Promise<TestimonialAdmin> =
     );
     return response.data;
   } catch (error) {
-    console.error('Erro ao alternar testimonial:', error);
+    logger.error('Erro ao alternar testimonial:', error);
     throw error;
   }
 };

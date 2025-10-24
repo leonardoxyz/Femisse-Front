@@ -16,6 +16,7 @@ const ProductDetails = lazy(() => import("./pages/ProductDetails"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SearchResults = lazy(() => import("./pages/SearchResults"));
 const ProductsByCategory = lazy(() => import("./pages/ProductsByCategory"));
+const BestSellers = lazy(() => import("./pages/BestSellers"));
 const Profile = lazy(() => import("./pages/Profile"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const CheckoutPage = lazy(() => import("./pages/Checkout"));
@@ -78,6 +79,7 @@ const App = () => {
                         <Route path="/" element={<Index />} />
                         <Route path="/produto/:slug" element={<ProductDetails />} />
                         <Route path="/categoria/:slug" element={<ProductsByCategory />} />
+                        <Route path="/mais-vendidos" element={<BestSellers />} />
                         <Route path="/perfil" element={<PrivateRoute><Profile /></PrivateRoute>} />
                         <Route path="/perfil/:section" element={<PrivateRoute><Profile /></PrivateRoute>} />
                         <Route path="/perfil/pedidos" element={<PrivateRoute><OrderHistory /></PrivateRoute>} />

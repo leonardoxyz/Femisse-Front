@@ -18,6 +18,7 @@ import ShippingCalculator from "@/components/checkout/ShippingCalculator";
 import { formatCurrency, formatCep } from "@/utils/formatters";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { logger } from '../utils/logger-unified';
 
 const FREE_SHIPPING_TARGET = 120;
 
@@ -193,21 +194,11 @@ const CheckoutPage = () => {
         selectAddress(defaultAddress);
       }
     } catch (error) {
-      console.error("Erro ao carregar endereços:", error);
+      logger.error("Erro ao carregar endereços:", error);
     } finally {
       setIsLoadingAddresses(false);
     }
   }, [isAuthenticated, selectAddress]);
-
-  // Handlers para processar checkout
-  const handleCreateOrder = async () => {
-    try {
-      await createOrder();
-      goToNextStep();
-    } catch (error) {
-      console.error('Erro ao criar pedido:', error);
-    }
-  };
 
   // Handler para quando uma cotação de frete for selecionada
   const handleSelectShippingQuote = (quote: any, cost: number) => {
@@ -245,31 +236,23 @@ const CheckoutPage = () => {
     }
   };
 
-  // Handler para processar pagamento (chamado ao clicar em "Revisar pedido")
   const handleReviewOrder = async () => {
     if (!isPaymentValid || !paymentData) {
       return;
     }
 
-    try {
-      // Criar pedido
-      await createOrder();
-      
-      // Avançar para confirmação
-      goToNextStep();
-    } catch (error) {
-      console.error('Erro ao criar pedido:', error);
-    }
+    // Apenas avançar para confirmação sem criar pedido
+    goToNextStep();
   };
 
   // Handler para finalizar pedido (na tela de confirmação)
   const handleFinalizeOrder = async () => {
     try {
-      // Processar o pagamento (o hook já muda o step para 'processing')
-      await processPayment(paymentData);
+      const createdOrder = await createOrder();
+      
+      await processPayment(paymentData, createdOrder);
     } catch (error) {
-      console.error('Erro ao processar pagamento:', error);
-      // O hook já trata o erro e muda para 'error'
+      logger.error('Erro ao processar pagamento:', error);
     }
   };
 
@@ -459,7 +442,7 @@ const CheckoutPage = () => {
       >
         {checkoutState.currentStep === "address" && (isCheckingCPF ? "Verificando..." : "Continuar para pagamento")}
         {checkoutState.currentStep === "payment" && "Revisar pedido"}
-        {checkoutState.currentStep === "confirmation" && "Finalizar pedido"}
+        {checkoutState.currentStep === "confirmation" && (checkoutState.isLoading ? "Processando..." : "Finalizar pedido")}
       </Button>
       
       {checkoutState.currentStep === "confirmation" && (
@@ -564,7 +547,7 @@ const CheckoutPage = () => {
                     {isLoadingAddresses ? (
                       <div className="space-y-4">
                         {[1, 2, 3].map((i) => (
-                          <div key={i} className="animate-pulse bg-gray-100 h-20 rounded-sm" />
+                          <div key={`address-skeleton-${i}`} className="animate-pulse bg-gray-100 h-20 rounded-sm" />
                         ))}
                       </div>
                     ) : addresses.length > 0 ? (
@@ -747,16 +730,6 @@ const CheckoutPage = () => {
                           <p>{checkoutState.selectedPaymentMethod} - Método selecionado</p>
                         </div>
                       </div>
-                    )}
-
-                    {!checkoutState.order && (
-                      <Button
-                        onClick={handleCreateOrder}
-                        disabled={checkoutState.isLoading || !canProcessPayment}
-                        className="w-full mb-4"
-                      >
-                        {checkoutState.isLoading ? 'Criando pedido...' : 'Criar pedido'}
-                      </Button>
                     )}
 
                     {/* Shipping Info */}
