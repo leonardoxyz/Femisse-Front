@@ -33,7 +33,7 @@ const DeliverySection: React.FC = () => {
               <img
                 src={deliveryImage}
                 alt="Informações sobre entrega" 
-                className="h-full w-full object-contain md:object-cover md:object-center transition-transform duration-700 hover:scale-[1.02]"
+                className="h-full w-full object-contain md:object-cover md:object-center transition-transform duration-700"
                 loading="lazy"
                 onLoad={() => setImageLoading(false)}
                 onError={() => setImageLoading(false)}

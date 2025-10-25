@@ -1,15 +1,18 @@
 import React from "react";
-import { Search, ShoppingCart, User, Menu, X, Heart, ShoppingBag } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Search, ShoppingCart, User, Menu, X, Heart, ShoppingBag, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
+import { useFavorites } from "@/contexts/FavoritesContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserData } from "../hooks/useUserData";
 import SidebarCart from "./SidebarCart";
 import { API_ENDPOINTS } from "@/config/api";
 import { createSlug } from '@/utils/slugs';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { convertToCloudinary } from '@/utils/cloudinary';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/use-toast";
 import logo from "@/assets/logo.png";
 
 const promotionalMessages = [
@@ -26,17 +29,34 @@ const Header = () => {
   const [categories, setCategories] = React.useState<{ id: string, name: string }[]>([]);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [suggestions, setSuggestions] = React.useState<any[]>([]);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = React.useState(false);
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const searchInputRef = React.useRef<HTMLInputElement | null>(null);
-  const assignSearchInputRef = React.useCallback((node: HTMLInputElement | null) => {
-    searchInputRef.current = node;
-  }, []);
+  const [isInteractiveSearchOpen, setIsInteractiveSearchOpen] = React.useState(false);
   const [loadingSuggestions, setLoadingSuggestions] = React.useState(false);
   const navigate = useNavigate();
   const { cart } = useCart();
+  const { favoriteIds, addFavorite, removeFavorite } = useFavorites();
   const { isAuthenticated } = useAuth();
   const { userData } = useUserData();
+
+  const handleCloseInteractiveSearch = React.useCallback(() => {
+    setIsInteractiveSearchOpen(false);
+    setSearchTerm("");
+    setSuggestions([]);
+  }, []);
+
+  const handleOverlayOuterPointerDown = React.useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+
+    if (
+      target.closest('[data-interactive-search-card="true"]') ||
+      target.closest('[data-interactive-search-input="true"]') ||
+      target.closest('[data-interactive-search-action="true"]')
+    ) {
+      return;
+    }
+
+    handleCloseInteractiveSearch();
+  }, [handleCloseInteractiveSearch]);
 
   React.useEffect(() => {
     fetch(API_ENDPOINTS.categories)
@@ -48,7 +68,19 @@ const Header = () => {
       .catch(() => setCategories([]));
   }, []);
 
-  // Buscar sugestões ao digitar
+  React.useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isMenuOpen]);
+
   React.useEffect(() => {
     if (searchTerm.trim().length === 0) {
       setSuggestions([]);
@@ -59,58 +91,104 @@ const Header = () => {
     const timeout = setTimeout(() => {
       fetch(`${API_ENDPOINTS.products}?search=${encodeURIComponent(searchTerm)}`)
         .then(res => res.json())
-        .then(data => {
-          setSuggestions(data);
+        .then(payload => {
+          const data = Array.isArray(payload?.data) ? payload.data : payload;
+          setSuggestions(Array.isArray(data) ? data : []);
         })
+        .catch(() => setSuggestions([]))
         .finally(() => setLoadingSuggestions(false));
     }, 250);
     return () => clearTimeout(timeout);
   }, [searchTerm]);
 
-  // Fecha sugestões ao clicar fora
-  React.useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (isMobileSearchOpen) return;
-      if (
-        searchInputRef.current &&
-        !searchInputRef.current.contains(e.target as Node) &&
-        !(document.getElementById("search-suggestions")?.contains(e.target as Node))
-      ) {
-        setSuggestions([]);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [isMobileSearchOpen]);
-
-  // Fecha sugestões ao pressionar ESC
   React.useEffect(() => {
     function handleEsc(e: KeyboardEvent) {
       if (e.key === "Escape") {
         setSuggestions([]);
-        setIsMobileSearchOpen(false);
+        if (isInteractiveSearchOpen) {
+          setIsInteractiveSearchOpen(false);
+          setSearchTerm("");
+        }
       }
     }
     document.addEventListener("keydown", handleEsc);
     return () => document.removeEventListener("keydown", handleEsc);
-  }, []);
+  }, [isInteractiveSearchOpen]);
 
   React.useEffect(() => {
-    if (isMobileSearchOpen) {
-      const timeout = window.setTimeout(() => {
-        searchInputRef.current?.focus();
-      }, 50);
-      return () => window.clearTimeout(timeout);
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyPaddingRight = document.body.style.paddingRight;
+
+    if (isInteractiveSearchOpen) {
+      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+      if (scrollBarWidth > 0) {
+        document.body.style.paddingRight = `${scrollBarWidth}px`;
+      }
+
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
     }
-    return undefined;
-  }, [isMobileSearchOpen]);
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.paddingRight = originalBodyPaddingRight;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+    };
+  }, [isInteractiveSearchOpen]);
 
   function handleSuggestionClick(product: any) {
     navigate(`/produto/${createSlug(product.name || product.nome)}`);
     setSearchTerm("");
     setSuggestions([]);
-    setIsMobileSearchOpen(false);
   }
+
+  const handleFavoriteToggle = React.useCallback(async (product: any) => {
+    const productId = String(product.id);
+    const alreadyFavorite = favoriteIds.includes(productId);
+
+    if (!isAuthenticated) {
+      toast({
+        title: "Faça login",
+        description: "Entre na sua conta para salvar favoritos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      if (alreadyFavorite) {
+        await removeFavorite(productId);
+        toast({
+          title: "Removido dos favoritos",
+          description: `${product.name} foi removido da sua lista.`,
+        });
+      } else {
+        await addFavorite(productId);
+        toast({
+          title: "Adicionado aos favoritos",
+          description: `${product.name} foi adicionado à sua lista!`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Não foi possível atualizar",
+        description: "Tente novamente em instantes.",
+        variant: "destructive",
+      });
+    }
+  }, [favoriteIds, addFavorite, removeFavorite, isAuthenticated]);
+
+  const handleSubmitSearch = React.useCallback(() => {
+    const trimmed = searchTerm.trim();
+    if (!trimmed) return;
+
+    navigate(`/busca?q=${encodeURIComponent(trimmed)}`);
+    handleCloseInteractiveSearch();
+  }, [searchTerm, navigate, handleCloseInteractiveSearch]);
+
+  const limitedSuggestions = React.useMemo(() => suggestions.slice(0, 8), [suggestions]);
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -141,82 +219,67 @@ const Header = () => {
             {/* Left: Mobile menu + search (desktop keeps logo here) */}
             <div className="flex items-center gap-3 md:gap-4 flex-1 md:flex-none">
               {/* Menu mobile */}
-              <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden" aria-label="Menu">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[85%] p-0">
-                  <div className="p-6">
-                    <div className="space-y-4">
-                      <div>
-                        <nav className="flex flex-col gap-2">
-                          <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Categorias</h3>
-                          <div className="flex flex-col gap-2 text-sm">
-                            {categories.map((category) => (
-                              <Link
-                                key={`mobile-category-${category.id ?? category.name}`}
-                                to={`/categoria/${createSlug(category.name)}`}
-                                className="py-2 text-lg font-medium text-foreground border-b border-border/60"
-                              >
-                                {category.name}
-                              </Link>
-                            ))}
-                          </div>
-                        </nav>
-                      </div>
-                      <div key="mobile-account">
-                        <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Minha conta</h3>
-                        <div className="flex flex-col gap-2 text-sm">
-                          <Link
-                            key="mobile-favorites-link"
-                            to="/perfil/favorites"
-                            className="py-2 text-lg font-medium text-foreground border-b border-border/60"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            Meus favoritos
-                          </Link>
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">Ajuda</h3>
-                        <div className="flex flex-col gap-2 text-sm">
-                          <Link
-                            key="mobile-orders-link"
-                            to="/perfil/pedidos"
-                            className="py-2 text-lg font-medium text-foreground border-b border-border/60"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            Meus pedidos
-                          </Link>
-                          <Link
-                            key="mobile-help-link"
-                            to="/perfil/ajuda"
-                            className="py-2 text-lg font-medium text-foreground border-b border-border/60"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            Suporte & FAQ
-                          </Link>
-                        </div>
-                      </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                aria-label="Menu"
+                onClick={() => setIsMenuOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              {isMenuOpen && createPortal(
+                <div className="fixed inset-0 z-[999] md:hidden">
+                  <div
+                    className="absolute inset-0 bg-black/60"
+                    onClick={() => setIsMenuOpen(false)}
+                    aria-hidden="true"
+                  />
+                  <div className="absolute left-0 top-0 h-full w-[85%] max-w-sm bg-background shadow-2xl animate-in slide-in-from-left duration-300">
+                    <button
+                      type="button"
+                      onClick={() => setIsMenuOpen(false)}
+                      aria-label="Fechar menu"
+                      className="absolute right-4 top-4 p-2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-8 w-8" />
+                    </button>
+                    <div className="pt-16 pb-6 h-full overflow-y-auto">
+                      <nav className="flex flex-col text-sm">
+                        {categories.map((category, index) => (
+                          <React.Fragment key={`mobile-category-${category.id ?? category.name}`}>
+                            <Link
+                              to={`/categoria/${createSlug(category.name)}`}
+                              className="px-6 py-3 text-lg font-medium text-foreground"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              {category.name}
+                            </Link>
+                            {index < categories.length - 1 && (
+                              <div className="h-px bg-border/60 w-full" aria-hidden="true"></div>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </nav>
                     </div>
                   </div>
-                </SheetContent>
-              </Sheet>
+                </div>,
+                document.body
+              )}
 
-              {/* Desktop logo */}
+              {/* Search button mobile */}
               <Link to="/" className="hidden md:flex">
                 <img src={logo} alt="Femisse" className="h-10 md:h-12 lg:h-14 w-auto" />
               </Link>
 
-              {/* Search button mobile */}
+              {/* Search button desktop */}
               <Button
                 variant="ghost"
                 size="icon"
                 className="md:hidden"
                 onClick={() => {
-                  setIsMobileSearchOpen(true);
+                  setIsInteractiveSearchOpen(true);
+                  setSearchTerm("");
                   setSuggestions([]);
                 }}
                 aria-label="Buscar"
@@ -232,88 +295,17 @@ const Header = () => {
               </Link>
             </div>
 
-            {/* Center: Search Bar */}
-            <div className="hidden md:flex flex-1 max-w-md mx-4">
-              <div className="relative w-full">
-                <form
-                  onSubmit={e => {
-                    e.preventDefault();
-                    if (searchTerm.trim()) {
-                      navigate(`/busca?q=${encodeURIComponent(searchTerm)}`);
-                      setSuggestions([]);
-                      setIsMobileSearchOpen(false);
-                    }
-                  }}
-                  className="relative"
-                >
-                  <input
-                    ref={assignSearchInputRef}
-                    type="text"
-                    className="w-full px-4 py-2 pl-10 border-0 border-b-2 border-muted focus:outline-none focus:border-b-primary focus:ring-0 focus:shadow-none text-sm text-foreground bg-transparent transition-all duration-200 appearance-none"
-                    placeholder="Buscar produtos..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    style={{
-                      border: 'none',
-                      borderBottom: '2px solid hsl(var(--muted))',
-                      boxShadow: 'none',
-                      outline: 'none'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderBottom = '2px solid hsl(var(--primary))';
-                      e.target.style.boxShadow = 'none';
-                      e.target.style.outline = 'none';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderBottom = '2px solid hsl(var(--muted))';
-                    }}
-                  />
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  {searchTerm && (
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary text-lg"
-                      onClick={() => setSearchTerm("")}
-                      tabIndex={-1}
-                      aria-label="Limpar busca"
-                    >×</button>
-                  )}
-                  {/* Dropdown de sugestões */}
-                  {searchTerm && (
-                    <div id="search-suggestions" className="absolute left-0 mt-2 w-full bg-white border border-gray-200 shadow-lg z-50 max-h-64 overflow-y-auto">
-                      {loadingSuggestions ? (
-                        <div className="px-4 py-2 text-sm text-muted-foreground">Carregando...</div>
-                      ) : suggestions.length > 0 ? (
-                        suggestions.slice(0, 5).map((product) => (
-                          <div
-                            key={product.id}
-                            className="px-4 py-2 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                            onClick={() => handleSuggestionClick(product)}
-                          >
-                            <div className="flex items-center space-x-3">
-                              <img
-                                src={product.image_url || product.image}
-                                alt={product.name || product.nome}
-                                className="w-8 h-8 object-cover"
-                              />
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {product.name || product.nome}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  R$ {product.price?.toFixed(2) || '0,00'}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : searchTerm.trim() && !loadingSuggestions ? (
-                        <div className="px-4 py-2 text-sm text-muted-foreground">Nenhum produto encontrado</div>
-                      ) : null}
-                    </div>
-                  )}
-                </form>
-              </div>
+            {/* Center: Search field (desktop) */}
+            <div className="hidden md:flex flex-1 max-w-xl mx-4 justify-center">
+              <button
+                type="button"
+                className="group relative flex w-full items-center gap-3 border border-transparent bg-muted/30 py-2.5 pl-4 pr-3 text-left text-sm text-muted-foreground transition-all "
+                onClick={() => setIsInteractiveSearchOpen(true)}
+                aria-label="Buscar produtos"
+              >
+                <Search className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" strokeWidth={1.5} />
+                <span className="flex-1 truncate">Buscar produtos, marcas e mais...</span>
+              </button>
             </div>
 
             {/* Right: Actions */}
@@ -368,119 +360,171 @@ const Header = () => {
         </div>
       </header>
 
-      {isMobileSearchOpen && (
-        <div className="fixed inset-0 z-50 flex justify-center items-start bg-background/20 backdrop-blur-[2px] px-4 pt-12 pb-8 md:hidden">
-          <div
-            className="absolute inset-0"
-            onClick={() => {
-              setIsMobileSearchOpen(false);
-              setSuggestions([]);
-            }}
-          />
-          <div className="relative w-full max-w-sm border border-muted bg-white shadow-xl pointer-events-auto rounded-sm">
-            <div className="flex items-center justify-between px-4 pt-4">
-              <h2 className="text-base font-semibold text-foreground">O que está procurando?</h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setIsMobileSearchOpen(false);
-                  setSuggestions([]);
-                }}
-                aria-label="Fechar busca"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (searchTerm.trim()) {
-                  navigate(`/busca?q=${encodeURIComponent(searchTerm)}`);
-                  setSuggestions([]);
-                  setIsMobileSearchOpen(false);
-                }
-              }}
-              className="flex gap-2 px-4 pb-4"
-            >
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  ref={assignSearchInputRef}
-                  type="text"
-                  className="w-full border-0 border-b-2 border-muted bg-transparent px-10 py-2 text-sm text-foreground focus:border-b-primary focus:outline-none focus:ring-0"
-                  placeholder="Buscar produtos..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    border: 'none',
-                    borderBottom: '2px solid hsl(var(--muted))',
-                    boxShadow: 'none',
-                    outline: 'none'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderBottom = '2px solid hsl(var(--primary))';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderBottom = '2px solid hsl(var(--muted))';
-                  }}
-                />
-                {searchTerm && (
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary text-lg"
-                    onClick={() => {
-                      setSearchTerm("");
-                      setSuggestions([]);
-                      searchInputRef.current?.focus();
+      <SidebarCart open={cartOpen} onClose={() => setCartOpen(false)} />
+
+      {/* Interactive Search Overlay - Full Modal Experience */}
+      {isInteractiveSearchOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col animate-in fade-in duration-300"
+          onPointerDown={handleOverlayOuterPointerDown}
+        >
+          <div className="relative z-10 flex h-full flex-col pointer-events-auto">
+            {/* Header with close button and search bar */}
+            <div className="flex items-center justify-center py-12 px-6 border-b border-white/20 bg-black/20 backdrop-blur-sm animate-in slide-in-from-top-4 duration-500" data-interactive-search-input="true">
+              {/* Search bar centered */}
+              <div className="flex-1 max-w-md">
+                <div className="relative" data-interactive-search-input="true">
+                  <input
+                    type="text"
+                    className="w-full pl-12 pr-4 py-3 text-base text-white bg-transparent border-b-2 border-white/30 focus:border-white focus:bg-black/10 transition-all duration-300 outline-none placeholder:text-white/60"
+                    placeholder="Digite o que você procura"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        handleSubmitSearch();
+                      }
                     }}
-                    tabIndex={-1}
-                    aria-label="Limpar busca"
-                  >×</button>
-                )}
-              </div>
-              <Button type="submit" variant="default" className="px-4">
-                Buscar
-              </Button>
-            </form>
-            {searchTerm && (
-              <div id="search-suggestions" className="mx-4 mb-4 max-h-56 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow">
-                {loadingSuggestions ? (
-                  <div className="px-4 py-2 text-sm text-muted-foreground">Carregando...</div>
-                ) : suggestions.length > 0 ? (
-                  suggestions.slice(0, 5).map((product) => (
-                    <div
-                      key={product.id}
-                      className="px-4 py-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                      onClick={() => handleSuggestionClick(product)}
+                    autoFocus
+                  />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-white/60" />
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-xl transition-colors"
+                      onClick={() => {
+                        setSearchTerm("");
+                      }}
+                      aria-label="Limpar busca"
                     >
-                      <div className="flex items-center space-x-3">
-                        <img
-                          src={product.image_url || product.image}
-                          alt={product.name || product.nome}
-                          className="w-10 h-10 object-cover"
-                        />
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {product.name || product.nome}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            R$ {product.price?.toFixed(2) || '0,00'}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : searchTerm.trim() && !loadingSuggestions ? (
-                  <div className="px-4 py-2 text-sm text-muted-foreground">Nenhum produto encontrado</div>
-                ) : null}
+                      ×
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
+
+            {/* Content area - only results */}
+            <div className="flex-1 overflow-y-auto px-4 py-8">
+              {searchTerm && (
+                <div className="w-full px-0 md:max-w-[1500px] md:mx-auto md:px-4">
+                  {loadingSuggestions ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                      <span className="ml-3 text-white">Buscando produtos...</span>
+                    </div>
+                  ) : suggestions.length > 0 ? (
+                    <>
+                      {/* Products grid */}
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-6">
+                        {limitedSuggestions.map((product, index) => {
+                          const rawImages = Array.isArray(product.images)
+                            ? product.images.filter((img: string) => Boolean(img))
+                            : [];
+                          const fallbackImage = product.image_url || product.image || rawImages[0] || '';
+                          const mainImage = rawImages[0]
+                            ? convertToCloudinary(rawImages[0], { width: 320, height: 480, quality: 80, format: 'auto' })
+                            : fallbackImage;
+                          const hoverImageSource = rawImages[1] || rawImages[0] || fallbackImage;
+                          const hoverImage = hoverImageSource
+                            ? convertToCloudinary(hoverImageSource, { width: 320, height: 480, quality: 80, format: 'auto' })
+                            : mainImage;
+
+                          return (
+                            <div
+                              key={product.id}
+                              className="group cursor-pointer animate-fade-in-up transform transition-all duration-300 hover:scale-105"
+                              data-interactive-search-card="true"
+                              style={{ animationDelay: `${index * 0.1}s` }}
+                              onClick={() => {
+                                handleSuggestionClick(product);
+                                handleCloseInteractiveSearch();
+                              }}
+                            >
+                              <div className="bg-white overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 relative">
+                                {/* Wishlist button */}
+                                <div className="absolute top-3 right-3 z-10">
+                                  <button
+                                    className="w-10 h-10 bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors"
+                                    data-interactive-search-action="true"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      handleFavoriteToggle(product);
+                                    }}
+                                  >
+                                    <Heart
+                                      className={`w-5 h-5 transition-colors ${favoriteIds.includes(String(product.id)) ? 'text-red-500' : 'text-gray-600 hover:text-red-500'}`}
+                                      fill={favoriteIds.includes(String(product.id)) ? 'currentColor' : 'none'}
+                                    />
+                                  </button>
+                                </div>
+
+                                {/* Product images with hover swap */}
+                                <div className="relative aspect-[2/3] bg-gray-100 overflow-hidden">
+                                  <img
+                                    src={mainImage}
+                                    alt={product.name}
+                                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 group-hover:opacity-0"
+                                    loading="lazy"
+                                  />
+                                  <img
+                                    src={hoverImage}
+                                    alt={product.name}
+                                    className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                                    loading="lazy"
+                                  />
+                                </div>
+
+                                {/* Product info */}
+                                <div className="py-4 px-4 text-center">
+                                  <h3 className="flex items-center justify-center uppercase">
+                                    {product.name}
+                                  </h3>
+
+                                  <div className="flex items-center justify-center">
+                                    <div className="flex flex-col">
+                                      <span className="text-xl font-bold text-gray-900">
+                                        R$ {product.price?.toFixed(2) || '0,00'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* View more results */}
+                      {suggestions.length > limitedSuggestions.length && (
+                        <div className="text-center mt-8">
+                          <button
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleSubmitSearch();
+                            }}
+                            className="bg-white text-black px-8 py-3 font-bold text-base hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl"
+                            data-interactive-search-action="true"
+                          >
+                            VER MAIS
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  ) : searchTerm.trim() && !loadingSuggestions ? (
+                    <div className="text-center py-12">
+                      <p className="text-[#BFBFBF] text-lg">
+                        Nenhum produto encontrado para sua pesquisa.
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
-
-      <SidebarCart open={cartOpen} onClose={() => setCartOpen(false)} />
     </>
   );
 };

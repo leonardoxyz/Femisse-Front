@@ -4,6 +4,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import { API_ENDPOINTS } from '@/config/api';
 import { createSlug } from '@/utils/slugs';
+import ShowcaseProductCard from '@/components/cards/ShowcaseProductCard';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -66,8 +67,35 @@ const CategoryBanner = () => {
           </p>
         </div>
 
-        {/* Products Carousel - Tamanho Original */}
-        <div className="relative">
+        {/* Mobile layout matching NewInSection */}
+        <div className="md:hidden">
+          <Swiper
+            modules={[Navigation]}
+            slidesPerView={1.15}
+            spaceBetween={16}
+            grabCursor
+          >
+            {products.map((product) => (
+              <SwiperSlide key={product.id} className="!h-auto">
+                <ShowcaseProductCard
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    images: product.images,
+                    image: product.image,
+                    stock: product.stock,
+                    originalPrice: product.originalPrice ?? product.original_price,
+                  }}
+                  className="h-full"
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+
+        {/* Desktop carousel */}
+        <div className="relative hidden md:block">
           <Swiper
             modules={[Navigation]}
             navigation={{
@@ -114,7 +142,7 @@ const CategoryBanner = () => {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60" />
 
                       {/* Floating Badge */}
-                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-lg">
+                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-sm px-3 py-1 shadow-lg">
                         <span className="text-xs font-semibold text-[#58090d] uppercase tracking-wide">
                           Popular
                         </span>
@@ -168,13 +196,13 @@ const CategoryBanner = () => {
         </div>
 
         {/* Bottom CTA */}
-        <div className="text-center mt-12">
+        <div className="hidden md:block text-center mt-12">
           <button
             onClick={handleExploreAll}
             className="inline-flex items-center gap-3 text-gray-600 hover:text-[#58090d] transition-colors duration-300 cursor-pointer group"
           >
             <span className="text-sm font-medium">Explore os mais vendidos</span>
-            <div className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center group-hover:bg-[#58090d] group-hover:text-white transition-all duration-300">
+            <div className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center group-hover:bg-[#58090d] group-hover:text-white transition-all duração-300">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>

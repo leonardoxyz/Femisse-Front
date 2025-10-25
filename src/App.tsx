@@ -53,6 +53,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { ShippingProvider } from "@/contexts/ShippingContext";
 import { CookieConsentProvider } from "@/contexts/CookieConsentContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import WhatsAppButton from './components/WhatsAppButton';
 
 const App = () => {
   // ✅ Configura interceptor de API ao montar
@@ -96,6 +97,7 @@ const App = () => {
                       </Routes>
                     </Suspense>
                   </BrowserRouter>
+                  <WhatsAppButton />
                 </CookieConsentProvider>
               </ShippingProvider>
             </FavoritesProvider>

@@ -33,16 +33,17 @@ const CustomerTestimonials = () => {
   }, []);
 
   return (
-    <section className="md:py-16 py-12">
+    <section className="md:py-12 py-12">
       <div className="max-w-[1590px] mx-auto px-4">
         <div className="mb-10 md:mb-14 text-center">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#58090d]/10 text-[#58090d] text-xs font-semibold tracking-wide uppercase">
-            Depoimentos reais
-          </span>
-          <h2 className="mt-4 text-3xl md:text-4xl font-bold text-gray-900">
-            O que nossas clientes estão dizendo
-          </h2>
-          <p className="mt-3 text-sm md:text-base text-gray-600 max-w-2xl mx-auto">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="w-8 h-0.5 bg-gradient-to-r from-transparent to-[#58090d]"></div>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center font-display tracking-wide">
+              O QUE AS DIVAS ACHAM?
+            </h2>
+            <div className="w-8 h-0.5 bg-gradient-to-l from-transparent to-[#58090d]"></div>
+          </div>
+          <p className="text-sm md:text-base text-gray-600 max-w-2xl mx-auto">
             Feedbacks de mulheres que já vivem a experiência Femisse.
           </p>
         </div>

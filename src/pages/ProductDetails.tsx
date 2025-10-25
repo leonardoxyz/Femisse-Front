@@ -351,7 +351,7 @@ const ProductDetails = () => {
                   key={`product-thumb-${image}-${index}`}
                   src={image}
                   alt={`${product.name} ${index + 1}`}
-                  className={`w-20 h-20 object-cover cursor-pointer rounded-sm border transition-opacity hover:opacity-80 ${mainImageIndex === index ? "border-primary" : "border-transparent"}`}
+                  className={`w-20 h-20 object-cover cursor-pointer border transition-opacity hover:opacity-80 ${mainImageIndex === index ? "border-primary" : "border-transparent"}`}
                   onClick={() => setMainImageIndex(index)}
                 />
               ))}
@@ -400,7 +400,7 @@ const ProductDetails = () => {
                   <button
                     key={`product-mobile-thumb-${image}-${index}`}
                     type="button"
-                    className={`relative flex-shrink-0 border rounded-sm ${mainImageIndex === index ? "border-primary" : "border-transparent"}`}
+                    className={`relative flex-shrink-0 border ${mainImageIndex === index ? "border-primary" : "border-transparent"}`}
                     onClick={() => setMainImageIndex(index)}
                   >
                     <img
@@ -417,9 +417,9 @@ const ProductDetails = () => {
           {/* Product Info */}
           <div className="space-y-6">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">
+              <h2 className="text-3xl text-foreground uppercase max-w-[500px]">
                 {product.name}
-              </h1>
+              </h2>
             </div>
 
             {/* Price */}
@@ -469,6 +469,93 @@ const ProductDetails = () => {
               </div>
             )}
 
+            {similarProducts.length > 0 && (
+              <div className="">
+                {loadingSimilar ? (
+                  <p className="text-sm text-muted-foreground">Carregando produtos similares...</p>
+                ) : (
+                  <div className="relative">
+                    <Swiper
+                      modules={[Navigation, Pagination, Autoplay]}
+                      spaceBetween={10}
+                      slidesPerView={4}
+                      navigation={similarProducts.length > 4 ? {
+                        nextEl: '.swiper-button-next-similar',
+                        prevEl: '.swiper-button-prev-similar',
+                      } : false}
+                      pagination={{
+                        el: '.swiper-pagination-similar',
+                        clickable: true,
+                        bulletClass: 'swiper-pagination-bullet-similar',
+                        bulletActiveClass: 'swiper-pagination-bullet-active-similar',
+                      }}
+                      autoplay={similarProducts.length > 8 ? {
+                        delay: 4000,
+                        disableOnInteraction: false,
+                      } : false}
+                      breakpoints={{
+                        640: {
+                          slidesPerView: 5,
+                          spaceBetween: 12,
+                        },
+                        768: {
+                          slidesPerView: 6,
+                          spaceBetween: 14,
+                        },
+                        1024: {
+                          slidesPerView: 7,
+                          spaceBetween: 16,
+                        },
+                      }}
+                      className="similar-products-swiper"
+                      style={{
+                        '--swiper-navigation-color': '#000',
+                        '--swiper-pagination-color': '#000',
+                      } as React.CSSProperties}
+                    >
+                      {similarProducts.map((similarProduct, index) => (
+                        <SwiperSlide key={similarProduct.id}>
+                          <a
+                            href={`/produto/${createSlug(similarProduct.name)}`}
+                            className="block w-full max-w-[72px] mx-auto"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate(`/produto/${createSlug(similarProduct.name)}`);
+                            }}
+                            aria-label={similarProduct.name}
+                          >
+                            <img
+                              src={similarProduct.images?.[0] || similarProduct.image}
+                              alt={similarProduct.name}
+                              title={similarProduct.name}
+                              className="w-full h-auto transition-transform duration-200 hover:scale-[1.02]"
+                            />
+                          </a>
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+
+                    {similarProducts.length > 4 && (
+                      <>
+                        <div className="swiper-button-prev-similar absolute -left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white hover:bg-gray-50 shadow-lg flex items-center justify-center cursor-pointer z-10 transition-all duration-300 hover:scale-110">
+                          <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </div>
+                        <div className="swiper-button-next-similar absolute -right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white hover:bg-gray-50 shadow-lg flex items-center justify-center cursor-pointer z-10 transition-all duration-300 hover:scale-110">
+                          <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="swiper-pagination-similar flex justify-center mt-6 gap-2"></div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div>
               {/* Action Buttons */}
               <div className="space-y-3 w-full md:max-w-[450px] lg:max-w-[450px] xl:max-w-[450px]">
@@ -503,7 +590,7 @@ const ProductDetails = () => {
                   }}
                 >
                   <ShoppingBag className="h-5 w-5 mr-2" />
-                  {product.stock > 0 ? "Adicionar ao Carrinho" : "Produto Esgotado"}
+                  {product.stock > 0 ? "Adicionar ao Carrinho" : "PRODUTO ESGOTADO"}
                 </Button>
 
                 <div className="flex gap-2 w-full">
@@ -540,172 +627,6 @@ const ProductDetails = () => {
           </div>
         </div>
       </div>
-
-      {/* Seção de Produtos Similares */}
-      {similarProducts.length > 0 && (
-        <section className="py-16 bg-gradient-to-br from-background to-muted/20">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4 animate-fade-in">
-                PRODUTOS SIMILARES
-              </h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto animate-fade-in">
-                Descubra outros produtos da mesma categoria que você pode gostar.
-              </p>
-            </div>
-
-            {loadingSimilar ? (
-              <div className="text-center py-12">Carregando produtos similares...</div>
-            ) : (
-              <div className="relative">
-                <Swiper
-                  modules={[Navigation, Pagination, Autoplay]}
-                  spaceBetween={24}
-                  slidesPerView={1}
-                  navigation={similarProducts.length > 4 ? {
-                    nextEl: '.swiper-button-next-similar',
-                    prevEl: '.swiper-button-prev-similar',
-                  } : false}
-                  pagination={{
-                    el: '.swiper-pagination-similar',
-                    clickable: true,
-                    bulletClass: 'swiper-pagination-bullet-similar',
-                    bulletActiveClass: 'swiper-pagination-bullet-active-similar',
-                  }}
-                  autoplay={similarProducts.length > 4 ? {
-                    delay: 4000,
-                    disableOnInteraction: false,
-                  } : false}
-                  breakpoints={{
-                    640: {
-                      slidesPerView: 2,
-                      spaceBetween: 20,
-                    },
-                    768: {
-                      slidesPerView: 3,
-                      spaceBetween: 24,
-                    },
-                    1024: {
-                      slidesPerView: 4,
-                      spaceBetween: 32,
-                    },
-                  }}
-                  className="similar-products-swiper"
-                  style={{
-                    '--swiper-navigation-color': '#000',
-                    '--swiper-pagination-color': '#000',
-                  } as React.CSSProperties}
-                >
-                  {similarProducts.map((similarProduct, index) => (
-                    <SwiperSlide key={similarProduct.id}>
-                      <div
-                        className="animate-fade-in h-full flex justify-center"
-                        style={{ animationDelay: `${index * 0.1}s` }}
-                      >
-                        <div className="flex-shrink-0" style={{ width: '320px' }}>
-                          <div>
-                            <div className="relative overflow-hidden bg-primary/5 group" style={{ paddingTop: '150%' }}>
-                              <a
-                                href={`/produto/${createSlug(similarProduct.name)}`}
-                                className="absolute inset-0 block"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  navigate(`/produto/${createSlug(similarProduct.name)}`);
-                                }}
-                                aria-label={similarProduct.name}
-                              >
-                                <div className="absolute inset-0 bg-gray-100"></div>
-
-                                <img
-                                  src={similarProduct.images?.[0] || similarProduct.image}
-                                  alt={similarProduct.name}
-                                  title={similarProduct.name}
-                                  className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
-                                  style={{ height: '100%' }}
-                                />
-
-                                {(similarProduct.images?.[1] || similarProduct.images?.[0]) && (
-                                  <img
-                                    src={similarProduct.images?.[1] || similarProduct.images?.[0]}
-                                    alt={similarProduct.name}
-                                    title={similarProduct.name}
-                                    className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                    style={{ height: '100%' }}
-                                  />
-                                )}
-                              </a>
-
-                              <button
-                                className={`w-5/6 absolute bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10 ${similarProduct.stock === 0
-                                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                  : 'bg-primary text-white hover:bg-primary/90'
-                                  }`}
-                                onClick={(e) => handleAddSimilarToCart(similarProduct, e)}
-                                disabled={similarProduct.stock === 0}
-                                title={similarProduct.stock === 0 ? 'Produto esgotado' : 'Adicionar ao carrinho'}
-                              >
-                                {similarProduct.stock === 0 ? 'ESGOTADO' : 'ADICIONAR AO CARRINHO'}
-                              </button>
-                            </div>
-
-                            <div className="mt-4 text-center">
-                              <h3 className="mb-2">
-                                <a
-                                  href={`/produto/${createSlug(similarProduct.name)}`}
-                                  className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors line-clamp-2 uppercase"
-                                  title={similarProduct.name}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    navigate(`/produto/${createSlug(similarProduct.name)}`);
-                                  }}
-                                >
-                                  {similarProduct.name}
-                                </a>
-                              </h3>
-
-                              <div className="mb-3">
-                                <div>
-                                  <span className="text-lg font-bold text-gray-900">
-                                    R$ {similarProduct.price?.toFixed(2).replace('.', ',')}
-                                  </span>
-                                  {similarProduct.original_price && similarProduct.original_price > similarProduct.price && (
-                                    <span className="text-sm text-gray-500 line-through ml-2">
-                                      R$ {similarProduct.original_price.toFixed(2).replace('.', ',')}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-
-                {/* Navegação customizada - só aparece se houver mais de 4 produtos */}
-                {similarProducts.length > 4 && (
-                  <>
-                    <div className="swiper-button-prev-similar absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-gray-50 shadow-lg flex items-center justify-center cursor-pointer z-10 transition-all duration-300 hover:scale-110">
-                      <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </div>
-                    <div className="swiper-button-next-similar absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white hover:bg-gray-50 shadow-lg flex items-center justify-center cursor-pointer z-10 transition-all duration-300 hover:scale-110">
-                      <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                  </>
-                )}
-
-                {/* Indicadores customizados */}
-                <div className="swiper-pagination-similar flex justify-center mt-8 gap-2"></div>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
 
       {/* Estilos customizados para o Swiper */}
       <style jsx global>{`

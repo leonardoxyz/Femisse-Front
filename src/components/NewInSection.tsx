@@ -84,13 +84,17 @@ const NewInSection = () => {
   return (
     <section className="pb-12 bg-background">
       <div className="container mx-auto max-w-[1590px] px-4">
-        <div className="flex items-center justify-center mb-8 md:mb-12 gap-2">
+        <div className="flex items-center justify-center mb-4 md:mb-4 gap-2">
           <div className="w-8 h-0.5 bg-gradient-to-r from-transparent to-[#58090d]"></div>
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center font-display tracking-wide">
             NOVIDADES
           </h2>
           <div className="w-8 h-0.5 bg-gradient-to-l from-transparent to-[#58090d]"></div>
         </div>
+
+        <p className="text-center text-sm md:text-base text-muted-foreground max-w-2xl mx-auto mb-10">
+          Peças recém-chegadas para atualizar seu guarda-roupa com estilo e exclusividade Femisse.
+        </p>
 
         {loading ? (
           <div className="relative">

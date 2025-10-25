@@ -172,7 +172,7 @@ const ShowcaseProductCard: React.FC<ShowcaseProductCardProps> = ({
           )}
         </a>
 
-        {availableSizes.length > 0 && (
+        {availableSizes.length > 0 && !isOutOfStock && (
           <div
             className={cn(
               "absolute bottom-16 left-1/2 z-10 flex w-5/6 -translate-x-1/2 flex-wrap justify-center gap-2",

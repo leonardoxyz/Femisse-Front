@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inclusive+Sans:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,11 +6,18 @@
 
 @layer base {
   * {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inclusive Sans', system-ui, sans-serif;
+    font-weight: 400;
   }
-  
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', Georgia, serif;
+
+  strong,
+  b,
+  h1, h3, h4, h5, h6 {
+    font-weight: 700;
+  }
+
+  h2{
+    font-weight: 300;
   }
 
   /* Correções para mobile */
@@ -218,4 +225,21 @@
   100% {
     transform: translateX(-50%);
   }
+}
+
+/* Animações para busca interativa */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out forwards;
+  opacity: 0;
 }
